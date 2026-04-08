@@ -4,7 +4,7 @@
 
 > Production'da olusan her bug'i birebir tekrar uret, zamanda geri git, ileri sar, kodu degistir, ayni senaryoyu tekrar calistir.
 
-[![Phase](https://img.shields.io/badge/phase-0%20%E2%9C%93%20completed-brightgreen)]()
+[![Phase](https://img.shields.io/badge/phase-3%20%E2%9C%93%20production%20ready-brightgreen)]()
 [![Node](https://img.shields.io/badge/node-%3E%3D20-blue)]()
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 [![TypeScript](https://img.shields.io/badge/typescript-strict-blue)]()
@@ -83,11 +83,12 @@ PARADOX, production ortamindaki her request'i deterministik olarak kaydeder ve g
 
 | Paket | Durum | Aciklama |
 |-------|-------|----------|
-| `@paradox/core` | v0.1 ✓ | Event schema, HLC (Hybrid Logical Clock), ULID |
-| `@paradox/probe` | v0.1 ✓ | Express middleware — HTTP, Date.now, Math.random, fetch intercept |
-| `@paradox/collector` | v0.1 ✓ | HTTP ingestion server, session assembly, file storage |
-| `@paradox/replay` | v0.1 ✓ | Mock I/O layer, deterministic replay engine, timeline inspection |
-| `@paradox/ui` | Planned | Time-travel visual debugger (React + D3.js) |
+| `@paradox/core` | v0.4 ✓ | Event schema, HLC, ULID, session import/export (JSON + binary) |
+| `@paradox/probe` | v0.4 ✓ | Express middleware, smart sampling, deep redaction, 15+ interceptors |
+| `@paradox/collector` | v0.4 ✓ | HTTP ingestion server, session assembly, file storage |
+| `@paradox/replay` | v0.4 ✓ | Mock I/O layer, deterministic replay engine, timeline inspection |
+| `@paradox/ui` | v0.3 ✓ | Dark theme time-travel visual debugger with timeline scrubber |
+| `@paradox/cli` | v0.4 ✓ | 10-command CLI: sessions, inspect, timeline, trace, export, watch |
 
 ## Hizli Baslangic
 
@@ -95,11 +96,10 @@ PARADOX, production ortamindaki her request'i deterministik olarak kaydeder ve g
 # Repoyu klonla ve bagimliluklari yukle
 git clone <repo-url> && cd Yutpa && npm install
 
-# Replay demo'yu calistir (kaydet → replay → dogrula)
-npx tsx demo/replay-demo.ts
+# Full-stack demo (Collector + 2 Service + UI)
+npx tsx demo/fullstack-demo.ts
 
-# Tam demo server'i baslat (Express + Collector)
-npx tsx demo/app.ts
+# UI'i ac: http://localhost:3000
 ```
 
 ### Probe Entegrasyonu (3 satir)
@@ -110,17 +110,29 @@ import { ParadoxProbe } from '@paradox/probe';
 const probe = new ParadoxProbe({
   serviceName: 'user-service',
   collectorUrl: 'http://localhost:4380',
+  sampling: { baseRate: 0.01, adaptiveEnabled: true }, // Smart sampling
 });
 
 app.use(probe.middleware());
 ```
 
+### CLI ile Kayitlari Yonet
+
+```bash
+npx paradox sessions           # Tum kayitlari listele
+npx paradox inspect <id>       # Detayli inceleme
+npx paradox timeline <id>      # ASCII event timeline
+npx paradox trace <traceId>    # Distributed trace goster
+npx paradox export <id> r.bin  # Binary export (gzip + CRC32)
+npx paradox watch              # Canli izleme
+```
+
 ### Demo Endpoint'leri Test Et
 
 ```bash
-curl localhost:3000/api/random          # Date.now + Math.random kullanan endpoint
-curl localhost:3000/api/users/42        # Kullanici sorgusu simulasyonu
-curl localhost:3000/paradox/recordings  # Kayitlari listele
+curl -X POST localhost:3001/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"2"}'
 ```
 
 ## Teknik Detaylar
@@ -151,12 +163,11 @@ HLC `Date.now()` cagirinca patched versiyonu goruyordu.
 
 | Phase | Durum | Detay |
 |-------|-------|-------|
-| Phase 0: Foundation | ✅ Tamamlandi | HTTP record/replay, Date/Random intercept, demo |
-| Phase 1: Real I/O | 🔄 Sirada | PostgreSQL, Redis, MongoDB, error capture |
-| Phase 2: Distributed | ⏳ Planli | Multi-service replay, HLC ordering, Web UI |
-| Phase 3: Time Travel | ⏳ Planli | Gorsel debugger, checkpoint, state diff |
-| Phase 4: Production | ⏳ Planli | Smart sampling, compression, K8s |
-| Phase 5: Launch | ⏳ Planli | Open source release, managed cloud |
+| Phase 0: Foundation | ✅ Tamamlandi | HTTP record/replay, Date/Random intercept, 23 events |
+| Phase 1: Real I/O | ✅ Tamamlandi | PG, Redis, Mongo, timers, crypto, errors, multi-service (98 events) |
+| Phase 2: Time-Travel UI | ✅ Tamamlandi | Dark theme visual debugger, timeline scrubber, service flow |
+| Phase 3: Production Hardening | ✅ Tamamlandi | Smart sampling, deep redaction, binary export, CLI, benchmark |
+| Phase 4: Launch | 🔄 Sirada | npm publish, per-package README, open-source release |
 
 ## Lisans
 

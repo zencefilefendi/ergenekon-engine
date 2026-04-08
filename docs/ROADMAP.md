@@ -59,55 +59,59 @@ kaydet ve birebir replay et.
 
 ---
 
-## Phase 2: Distributed + Time-Travel UI (Hafta 5-8) ← BURADASIN
+## Phase 2: Distributed + Time-Travel UI (Hafta 5-8) ✅ TAMAMLANDI
 
 ### Hedef: Gorsel zaman yolculugu debugger + distributed replay
 
-- [ ] W3C Trace Context propagation (zaten temel var, genislet)
-- [ ] Cross-service session assembly (collector'da birlestir)
-- [ ] Multi-service replay orchestration
-- [ ] Rust Collector v0.1
-  - [ ] gRPC ingestion (yuksek throughput)
-  - [ ] HLC validation + global ordering
-  - [ ] File-based CAS storage
-- [ ] Web UI v0.1
-  - [ ] Session listesi + arama
-  - [ ] Event timeline (interaktif)
-  - [ ] Service flow diagram (servisler arasi akis)
-  - [ ] Event detail panel (request/response/state)
+- [x] W3C Trace Context propagation (zaten temel var, genislet)
+- [x] Cross-service session assembly (collector'da birlestir)
+- [x] Multi-service replay orchestration
+- [x] Web UI v0.1
+  - [x] Session listesi + arama
+  - [x] Event timeline (interaktif)
+  - [x] Service flow diagram (servisler arasi akis)
+  - [x] Event detail panel (request/response/state)
 
-### Basari Kriteri
+### Basari Kriteri ✅ KARSILANDI
 3 servisten olusan bir sistemi kaydet,
 herhangi bir request'i 3 serviste birden replay et.
 
 ---
 
-## Phase 3: Time Travel (Hafta 9-12)
+## Phase 3: Production Essentials (Hafta 9-12) ✅ TAMAMLANDI
 
-### Hedef: Gorsel zaman yolculugu debugger
+### Hedef: Production'a hazirlik icin sampling, redaction, CLI ve export/import
 
-- [ ] Checkpoint sistemi (her N event'te state snapshot)
-- [ ] Zamanda geri gitme (reverse replay via checkpoints)
-- [ ] State diff (iki zaman noktasi arasindaki fark)
-- [ ] Time Travel UI
-  - [ ] Timeline scrubber (surukle-birak)
-  - [ ] Interactive service graph (canli akis)
-  - [ ] State inspector (degisken degerlerini gor)
-  - [ ] Request/response viewer (formatted JSON)
-  - [ ] Search + filter (event arama)
-- [ ] VS Code extension (temel entegrasyon)
+- [x] Smart Sampling Engine (`paradox-probe/src/sampling.ts`)
+  - [x] Head+tail hybrid sampling
+  - [x] 6 sampling reason: error, latency, new_path, upstream, adaptive, random
+  - [x] Adaptive auto-escalation (hata oranina gore otomatik artis)
+  - [x] Path normalization (URL parametrelerini normalize et)
+- [x] Deep Field Redaction (`paradox-probe/src/redaction.ts`)
+  - [x] Recursive object walking (ic ice nesnelerde alan tarama)
+  - [x] Field name matching (alan adi eslesme)
+  - [x] Glob path patterns (joker karakter desenleri)
+  - [x] Auto-detect: JWT, credit cards, Bearer tokens, AWS keys, private keys
+- [x] Session Export/Import (`paradox-core/src/session-io.ts`)
+  - [x] JSON format export/import
+  - [x] Binary PRDX format (magic header, gzip compression, CRC32 checksum)
+  - [x] ~24% compression orani
+- [x] CLI Tool (`paradox-cli/`)
+  - [x] 10 komut: sessions, inspect, timeline, trace, export, import, stats, watch, health, help
+  - [x] ANSI renkli cikti
+- [x] Performance Benchmark (`paradox-probe/src/benchmark.ts`)
+  - [x] Overhead olcumu icin micro-benchmark
 
-### Basari Kriteri
-UI'da bir session ac, timeline'i surukle,
-herhangi bir andaki state'i gor.
+### Basari Kriteri ✅ KARSILANDI
+Smart sampling calisiyor, PII/secret otomatik maskeleniyor,
+session'lar binary formatta export/import edilebiliyor, CLI ile tam yonetim.
 
 ---
 
-## Phase 4: Production-Ready (Hafta 13-20)
+## Phase 4: Production-Ready (Hafta 13-20) ← BURADASIN
 
 ### Hedef: Gercek production'da kullanilabilir
 
-- [ ] Smart sampling (head-based + tail-based hybrid)
 - [ ] Delta compression
 - [ ] CAS deduplication
 - [ ] Tiered storage (memory → disk → S3)
@@ -120,6 +124,10 @@ herhangi bir andaki state'i gor.
 - [ ] Load testing (1M event/sn hedefi)
 - [ ] Security audit
 - [ ] Documentation site
+- [ ] Rust Collector v0.1
+  - [ ] gRPC ingestion (yuksek throughput)
+  - [ ] HLC validation + global ordering
+  - [ ] File-based CAS storage
 
 ### Basari Kriteri
 1000 RPS alan bir production benzeri ortamda

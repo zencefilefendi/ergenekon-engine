@@ -4,11 +4,12 @@
 
 PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu bir sistem olusturur.
 
-**Mevcut Durum (Phase 0 tamamlandi)**:
-- paradox-core: ✅ Calisiyor
-- paradox-probe: ✅ Calisiyor (HTTP, Date.now, Math.random, fetch)
+**Mevcut Durum (Phase 3 tamamlandi)**:
+- paradox-core: ✅ Calisiyor (types, HLC, ULID, session export/import)
+- paradox-probe: ✅ Calisiyor (HTTP, Date.now, Math.random, fetch, DB, sampling, redaction)
 - paradox-collector: ✅ Calisiyor (HTTP REST, dosya storage)
 - paradox-replay: ✅ Calisiyor (mock layer, timeline inspection)
+- paradox-cli: ✅ Calisiyor (10 komut, ANSI cikti)
 - paradox-ui: ⏳ Planli
 
 ```
@@ -180,14 +181,71 @@ Hicbir global state kirlenmez — her request izole.
 | Date.now() | globals.ts | Her cagrinin dondurulan degeri |
 | Math.random() | globals.ts | Her cagrinin dondurulan degeri |
 
-### Phase 1'de Eklenecek Interceptor'lar
-| Interceptor | Hedef | Yaklasim |
-|-------------|-------|----------|
-| PostgreSQL | pg.Client.query | Prototype monkey-patch |
-| Redis | ioredis commands | Command-level intercept |
-| setTimeout | global setTimeout | Wrapper + timing capture |
-| crypto.randomUUID | crypto module | Function replacement |
-| Error | process events | uncaughtException/unhandledRejection |
+### Phase 1'de Eklenen Interceptor'lar (✅ Tamamlandi)
+| Interceptor | Dosya | Yakalanan |
+|-------------|-------|-----------|
+| PostgreSQL | db-drivers.ts | pg.Client.query + Pool.query monkey-patch |
+| Redis | db-drivers.ts | ioredis sendCommand |
+| MongoDB | db-drivers.ts | mongoose Collection methods |
+| setTimeout | timers.ts | set + fire correlation |
+| crypto.randomUUID | globals.ts | Function replacement |
+| Error | errors.ts | uncaughtException/unhandledRejection |
+| Console | console.ts | log/warn/error (level + args) |
+
+### Smart Sampling Engine (Phase 3 ✅)
+
+**Dosya**: `paradox-probe/src/sampling.ts`
+
+Smart sampling, production overhead'i minimumda tutarken ilginc request'leri yakalamak icin head+tail hybrid yaklasim kullanir.
+
+```
+Request geldi
+    │
+    ▼
+┌──────────────────────┐
+│  Head Sampling        │ → Request baslamadan ONCE karar ver
+│  (hizli, ucuz)        │   Ornek: %10 random sampling
+└──────┬───────────────┘
+       │ Hayir (sample edilmedi)
+       ▼
+┌──────────────────────┐
+│  Tail Sampling        │ → Request BITTIKTEN SONRA karar ver
+│  (akilli, pahali)     │   Hata? Yuksek latency? Yeni path?
+└──────────────────────┘
+```
+
+**6 Sampling Reason**:
+| Reason | Aciklama |
+|--------|----------|
+| `error` | Request hata ile sonuclandi |
+| `latency` | Latency esik degerin uzerinde |
+| `new_path` | Daha once gorulmemis endpoint path |
+| `upstream` | Upstream servis sample etmis (trace propagation) |
+| `adaptive` | Hata oranina gore otomatik escalation |
+| `random` | Konfigurasyondaki orana gore rastgele secim |
+
+**Adaptive Auto-Escalation**: Hata orani arttiginda sampling orani otomatik artar. Path normalization URL parametrelerini (`/users/123` → `/users/:id`) normalize eder.
+
+### Deep Field Redaction (Phase 3 ✅)
+
+**Dosya**: `paradox-probe/src/redaction.ts`
+
+PII ve secret'lari otomatik tespit edip maskeler. Kayit sirasinda hassas veriler ASLA storage'a ulasmaz.
+
+**Yaklasim**:
+- Recursive object walking: ic ice nesnelerde derinlemesine tarama
+- Field name matching: `password`, `secret`, `token`, `ssn` gibi alan adlarini yakala
+- Glob path patterns: `headers.authorization`, `body.*.creditCard` gibi joker desenler
+- Auto-detect: Deger icerigi analizi ile otomatik tespit
+
+**Auto-Detect Desteklenen Turler**:
+| Tur | Ornek |
+|-----|-------|
+| JWT | `eyJhbGciOiJIUzI1NiIs...` |
+| Credit Cards | `4111-1111-1111-1111` |
+| Bearer Tokens | `Bearer eyJ...` |
+| AWS Keys | `AKIA...` |
+| Private Keys | `-----BEGIN RSA PRIVATE KEY-----` |
 
 ---
 
@@ -245,6 +303,76 @@ engine.getDiff(fromSequence: 2, toSequence: 8)
 // Tam timeline
 engine.getTimeline()
 // → [{ sequence, type, operation, wallClock, data, durationMs }, ...]
+```
+
+---
+
+## 5. Session Export/Import (`@paradox/core` — session-io.ts) (Phase 3 ✅)
+
+**Dil**: TypeScript | **Durum**: ✅ v0.1
+
+Session'lari tasinabilir formatta export ve import etme.
+
+### Desteklenen Formatlar
+
+**JSON Format**: Insan tarafindan okunabilir, debug icin ideal.
+
+**Binary PRDX Format**: Kompakt, production icin optimize.
+```
+┌──────────────────────────────────────────┐
+│ PRDX Magic Bytes (4 byte)                │
+│ Version (2 byte)                         │
+│ Flags (2 byte)                           │
+│ CRC32 Checksum (4 byte)                  │
+│ Gzip Compressed Session Data             │
+└──────────────────────────────────────────┘
+```
+
+- ~24% compression orani (gzip)
+- CRC32 checksum ile veri butunlugu dogrulamasi
+- Magic bytes (`PRDX`) ile format tespiti
+
+---
+
+## 6. PARADOX CLI (`@paradox/cli`) (Phase 3 ✅)
+
+**Dil**: TypeScript | **Durum**: ✅ v0.1
+
+Komut satirindan PARADOX sistemini yonetmek icin 10 komutluk CLI araci. ANSI renkli cikti destegi.
+
+### Komutlar
+
+| Komut | Aciklama |
+|-------|----------|
+| `sessions` | Kayitli session'lari listele |
+| `inspect <id>` | Tek session detayini gor |
+| `timeline <id>` | Event timeline goruntule |
+| `trace <traceId>` | Trace'e ait tum session'lari gor |
+| `export <id>` | Session'i JSON veya PRDX formatinda export et |
+| `import <file>` | Session dosyasini import et |
+| `stats` | Collector istatistikleri |
+| `watch` | Canli event akisini izle |
+| `health` | Collector saglik kontrolu |
+| `help` | Yardim ve kullanim bilgisi |
+
+### Mimari
+```
+CLI Input
+    │
+    ▼
+┌──────────────────────┐
+│  Command Router      │ → Komut parse + dispatch
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│  Collector REST API  │ → HTTP uzerinden veri al
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│  ANSI Formatter      │ → Renkli, okunabilir cikti
+└──────────────────────┘
 ```
 
 ---

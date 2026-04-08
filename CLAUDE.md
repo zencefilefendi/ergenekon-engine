@@ -5,7 +5,7 @@ PARADOX is a deterministic record & replay engine for distributed systems.
 It enables time-travel debugging of production incidents by recording all I/O boundaries
 and replaying them deterministically on a developer's machine.
 
-**Status**: Phase 0 ✅, Phase 1 ✅. Phase 2 (Time-Travel UI) in progress.
+**Status**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅. Phase 4 (Production-Ready) next.
 
 ## Repository Structure
 ```
@@ -26,12 +26,16 @@ Yutpa/
 │   │       ├── types.ts       # ParadoxEvent, RecordingSession, ProbeConfig
 │   │       ├── hlc.ts         # Hybrid Logical Clock implementation
 │   │       ├── ulid.ts        # Time-sortable unique ID generator
+│   │       ├── session-io.ts  # Session export/import (JSON + PRDX binary)
 │   │       └── index.ts       # Public API exports
 │   ├── paradox-probe/         # Node.js recording middleware
 │   │   └── src/
 │   │       ├── index.ts       # ParadoxProbe class (main entry)
 │   │       ├── recording-context.ts  # AsyncLocalStorage session management
 │   │       ├── internal-clock.ts     # Original Date.now/Math.random refs
+│   │       ├── sampling.ts           # Smart sampling engine (head+tail hybrid)
+│   │       ├── redaction.ts          # Deep field redaction (PII, secrets)
+│   │       ├── benchmark.ts          # Performance overhead micro-benchmark
 │   │       ├── interceptors/
 │   │       │   ├── globals.ts        # Date.now, Math.random monkey-patch
 │   │       │   ├── http-incoming.ts  # Express middleware (req/res capture)
@@ -48,6 +52,9 @@ Yutpa/
 │   │       ├── index.ts       # Public API exports
 │   │       ├── mock-layer.ts  # Mock I/O (replays recorded values)
 │   │       └── replay-engine.ts # Orchestrator + timeline inspection
+│   ├── paradox-cli/           # CLI tool (10 commands, ANSI output)
+│   │   └── src/
+│   │       └── index.ts       # CLI entry point + command router
 │   └── paradox-ui/            # (PLANNED) Time-travel visual debugger
 └── demo/
     ├── app.ts                 # Full demo: Express + Collector + routes
@@ -91,6 +98,13 @@ Yutpa/
 npm install                       # Install all workspace deps
 npx tsx demo/replay-demo.ts       # Quick proof: record → replay → verify
 npx tsx demo/app.ts               # Full demo server on :3000 + collector on :4380
+
+# CLI tool
+npx tsx packages/paradox-cli/src/index.ts sessions   # List recorded sessions
+npx tsx packages/paradox-cli/src/index.ts inspect <id> # Inspect a session
+npx tsx packages/paradox-cli/src/index.ts timeline <id> # View event timeline
+npx tsx packages/paradox-cli/src/index.ts export <id>   # Export session (JSON/PRDX)
+npx tsx packages/paradox-cli/src/index.ts health       # Collector health check
 ```
 
 ## What's Been Proven (Phase 0)
@@ -109,8 +123,23 @@ npx tsx demo/app.ts               # Full demo server on :3000 + collector on :43
 - Multi-service distributed recording (98 events, 2 services) ✓
 - Cross-service trace context propagation ✓
 
-## Current Focus: Phase 2
-- Time-Travel Web UI (visual debugger)
-- Cross-service session assembly
-- Interactive timeline scrubber
-- Service flow visualization
+## What's Been Proven (Phase 2)
+- Time-Travel Web UI (visual debugger) ✓
+- Cross-service session assembly ✓
+- Interactive timeline scrubber ✓
+- Service flow visualization ✓
+
+## What's Been Proven (Phase 3)
+- Smart Sampling Engine: head+tail hybrid, 6 reasons (error, latency, new_path, upstream, adaptive, random) ✓
+- Adaptive auto-escalation + path normalization ✓
+- Deep Field Redaction: recursive walking, glob paths, auto-detect (JWT, credit cards, Bearer, AWS keys, private keys) ✓
+- Session Export/Import: JSON + binary PRDX format (magic header, gzip, CRC32), ~24% compression ✓
+- CLI Tool: 10 commands (sessions, inspect, timeline, trace, export, import, stats, watch, health, help) ✓
+- Performance Benchmark: micro-benchmark for overhead measurement ✓
+
+## Current Focus: Phase 4
+- Production-Ready hardening
+- Delta compression + CAS deduplication
+- Tiered storage (memory → disk → S3)
+- Kubernetes operator + Helm chart
+- CI/CD pipeline + load testing

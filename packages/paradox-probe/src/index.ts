@@ -20,22 +20,30 @@ import { installErrorInterceptors, uninstallErrorInterceptors } from './intercep
 import { installPgInterceptor, installRedisInterceptor, installMongoInterceptor, uninstallDatabaseInterceptors } from './interceptors/database.js';
 import { createHttpIncomingMiddleware } from './interceptors/http-incoming.js';
 import { CollectorClient } from './transport/collector-client.js';
+import { SamplingEngine, type SamplingConfig, DEFAULT_SAMPLING_CONFIG } from './sampling.js';
 
 export type { SessionCallback } from './interceptors/http-incoming.js';
+export { SamplingEngine, type SamplingConfig, type SamplingDecision, type SamplingReason } from './sampling.js';
+export { redactDeep, redactHeaders, type RedactionConfig, DEFAULT_REDACTION_CONFIG } from './redaction.js';
 
 export class ParadoxProbe {
   private readonly config: ProbeConfig;
   private readonly hlc: HybridLogicalClock;
   private readonly collector: CollectorClient;
+  private readonly sampler: SamplingEngine;
   private started = false;
 
-  constructor(userConfig: Partial<ProbeConfig> & { serviceName: string }) {
+  constructor(userConfig: Partial<ProbeConfig> & { serviceName: string } & { sampling?: Partial<SamplingConfig> }) {
     this.config = { ...DEFAULT_PROBE_CONFIG, ...userConfig };
     this.hlc = new HybridLogicalClock(`${this.config.serviceName}-${ulid().slice(0, 8)}`);
     this.collector = new CollectorClient({
       collectorUrl: this.config.collectorUrl,
       flushIntervalMs: this.config.flushIntervalMs,
       maxBufferSize: this.config.bufferSize,
+    });
+    this.sampler = new SamplingEngine({
+      baseRate: this.config.samplingRate,
+      ...userConfig.sampling,
     });
   }
 
@@ -49,7 +57,7 @@ export class ParadoxProbe {
     }
     return createHttpIncomingMiddleware(this.config, this.hlc, (session) => {
       this.collector.enqueue(session);
-    });
+    }, this.sampler);
   }
 
   /**
@@ -73,10 +81,11 @@ export class ParadoxProbe {
 
     this.collector.start();
 
+    const samplingInfo = `smart (base: ${this.config.samplingRate * 100}%, errors: 100%, adaptive: on)`;
     console.log(
       `[PARADOX] Probe started for "${this.config.serviceName}" ` +
       `→ collector: ${this.config.collectorUrl} ` +
-      `| sampling: ${this.config.samplingRate * 100}%` +
+      `| sampling: ${samplingInfo}` +
       (dbDrivers.length > 0 ? ` | db: ${dbDrivers.join(', ')}` : '')
     );
   }
@@ -130,6 +139,22 @@ export class ParadoxProbe {
   /** Dynamically change sampling rate */
   setSamplingRate(rate: number): void {
     this.config.samplingRate = Math.max(0, Math.min(1, rate));
+    this.sampler.updateConfig({ baseRate: this.config.samplingRate });
+  }
+
+  /** Get smart sampling statistics */
+  getSamplingStats() {
+    return this.sampler.getStats();
+  }
+
+  /** Update smart sampling configuration at runtime */
+  updateSamplingConfig(partial: Partial<SamplingConfig>): void {
+    this.sampler.updateConfig(partial);
+  }
+
+  /** Force record next N requests (debug mode) */
+  forceRecord(count: number = 1): void {
+    this.sampler.forceRecord(count);
   }
 }
 

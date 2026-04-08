@@ -13,6 +13,8 @@ import type { ProbeConfig } from '@paradox/core';
 import { HybridLogicalClock, ulid } from '@paradox/core';
 import { RecordingSession, runWithSession } from '../recording-context.js';
 import { originalDateNow } from './globals.js';
+import type { SamplingEngine, SamplingDecision } from '../sampling.js';
+import { redactDeep, redactHeaders } from '../redaction.js';
 
 // W3C Trace Context header names
 const TRACEPARENT_HEADER = 'traceparent';
@@ -50,23 +52,6 @@ function generateTraceId(): string {
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Sanitize headers by redacting sensitive values.
- */
-function sanitizeHeaders(
-  headers: Record<string, string | string[] | undefined>,
-  redactList: string[]
-): Record<string, string | string[] | undefined> {
-  const result: Record<string, string | string[] | undefined> = {};
-  for (const [key, value] of Object.entries(headers)) {
-    if (redactList.includes(key.toLowerCase())) {
-      result[key] = '[REDACTED]';
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
 
 export type SessionCallback = (session: import('@paradox/core').RecordingSession) => void;
 
@@ -76,13 +61,36 @@ export type SessionCallback = (session: import('@paradox/core').RecordingSession
 export function createHttpIncomingMiddleware(
   config: ProbeConfig,
   hlc: HybridLogicalClock,
-  onSessionComplete: SessionCallback
+  onSessionComplete: SessionCallback,
+  samplingEngine?: SamplingEngine
 ) {
   return function paradoxMiddleware(req: Request, res: Response, next: NextFunction): void {
-    // Sampling decision
-    if (!config.enabled || Math.random() > config.samplingRate) {
+    if (!config.enabled) {
       next();
       return;
+    }
+
+    // ── Smart Sampling: HEAD decision (at request start) ──────────
+    const upstreamSampled = req.headers[TRACEPARENT_HEADER]
+      ? (req.headers[TRACEPARENT_HEADER] as string).endsWith('-01')
+      : false;
+    const path = req.path;
+
+    let headDecision: SamplingDecision | null = null;
+
+    if (samplingEngine) {
+      headDecision = samplingEngine.headDecision({ path, upstreamSampled });
+      if (!headDecision.shouldRecord) {
+        // HEAD says no — but we still need to let the request proceed
+        // and check TAIL decision at response end (tail-based sampling).
+        // We MUST still wrap the request to capture outcome for tail decision.
+      }
+    } else {
+      // Legacy: simple random sampling (no SamplingEngine)
+      if (Math.random() > config.samplingRate) {
+        next();
+        return;
+      }
     }
 
     // Extract or generate trace context
@@ -111,14 +119,14 @@ export function createHttpIncomingMiddleware(
       hlc,
     });
 
-    // Record the incoming request
+    // Record the incoming request (with deep redaction)
     session.record('http_request_in', `${req.method} ${req.path}`, {
       method: req.method,
       url: req.originalUrl,
       path: req.path,
-      query: req.query,
-      headers: sanitizeHeaders(req.headers as Record<string, string>, config.redactHeaders),
-      body: req.body,
+      query: redactDeep(req.query, { fieldNames: config.redactFields }),
+      headers: redactHeaders(req.headers as Record<string, string>, config.redactHeaders),
+      body: redactDeep(req.body, { fieldNames: config.redactFields }),
       ip: req.ip,
     });
 
@@ -157,10 +165,26 @@ export function createHttpIncomingMiddleware(
         {
           statusCode: res.statusCode,
           headers: res.getHeaders(),
-          body: responseBody,
+          body: redactDeep(responseBody, { fieldNames: config.redactFields }),
         },
         { durationMs }
       );
+
+      // ── Smart Sampling: TAIL decision (at request end) ──────────
+      if (samplingEngine && headDecision) {
+        const tailDecision = samplingEngine.tailDecision(headDecision, {
+          path: req.path,
+          statusCode: res.statusCode,
+          durationMs,
+          hasError: res.statusCode >= 500,
+        });
+
+        if (!tailDecision.shouldRecord) {
+          // Both HEAD and TAIL said no — discard the recording
+          return originalEnd.call(this, chunk, encoding, callback) as unknown as Response;
+        }
+        // TAIL upgraded to yes (error, latency, etc.) — continue to emit
+      }
 
       // Finalize and emit the recording
       const recording = session.finalize();

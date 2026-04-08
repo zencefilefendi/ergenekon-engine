@@ -1,0 +1,14 @@
+{
+  "name": "@paradox/cli",
+  "version": "0.4.0",
+  "description": "PARADOX Engine CLI — record, replay, inspect, export distributed system recordings",
+  "type": "module",
+  "main": "./src/index.ts",
+  "bin": {
+    "paradox": "./src/index.ts"
+  },
+  "dependencies": {
+    "@paradox/core": "*",
+    "@paradox/replay": "*"
+  }
+}
