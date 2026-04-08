@@ -38,20 +38,20 @@ BYTE-FOR-BYTE ayni sonuc replay edildi.
 
 ---
 
-## Phase 1: Real I/O (Hafta 3-4) ← BURADASIN
+## Phase 1: Real I/O (Hafta 3-4) ✅ TAMAMLANDI
 
 ### Hedef: Gercek uygulamalarda kullanilabilir probe
 
-- [ ] PostgreSQL intercept (pg driver monkey-patch)
-- [ ] Redis intercept (ioredis monkey-patch)
-- [ ] MongoDB intercept (mongoose/mongodb driver)
-- [ ] setTimeout/setInterval intercept
-- [ ] crypto.randomUUID() intercept
-- [ ] Error capture (uncaughtException, unhandledRejection)
-- [ ] Hassas veri maskeleme iyilestirmesi (body field masking)
-- [ ] Console.log/warn/error capture
-- [ ] Event batching optimizasyonu
-- [ ] Multi-service demo (2 Express servisi konusuyor)
+- [x] PostgreSQL intercept (pg Client.query + Pool.query monkey-patch)
+- [x] Redis intercept (ioredis sendCommand)
+- [x] MongoDB intercept (mongoose Collection methods)
+- [x] setTimeout/setInterval intercept (set + fire correlation)
+- [x] crypto.randomUUID() intercept
+- [x] Error capture (uncaughtException, unhandledRejection)
+- [x] Console.log/warn/error capture (level + args)
+- [x] Auto-detection: probe otomatik olarak mevcut DB driver'lari bulur
+- [x] Multi-service demo (Order Service → User Service, 98 event, 2 servis)
+- [x] Replay mock layer genisletildi (DB, Redis, Timer, UUID, Console, Error)
 
 ### Basari Kriteri
 Gercek bir microservice uygulamasini (Express + PostgreSQL + Redis)
@@ -59,9 +59,9 @@ kaydet ve birebir replay et.
 
 ---
 
-## Phase 2: Distributed (Hafta 5-8)
+## Phase 2: Distributed + Time-Travel UI (Hafta 5-8) ← BURADASIN
 
-### Hedef: Multi-service record/replay
+### Hedef: Gorsel zaman yolculugu debugger + distributed replay
 
 - [ ] W3C Trace Context propagation (zaten temel var, genislet)
 - [ ] Cross-service session assembly (collector'da birlestir)

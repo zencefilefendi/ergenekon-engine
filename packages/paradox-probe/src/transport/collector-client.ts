@@ -78,10 +78,8 @@ export class CollectorClient {
 
     this.buffer.push(session);
 
-    // Emergency flush if buffer is full
-    if (this.buffer.length >= this.config.maxBufferSize) {
-      this.flush().catch(() => {});
-    }
+    // Flush immediately — each session is a complete recording
+    this.flush().catch(() => {});
   }
 
   /** Send buffered recordings to the collector */

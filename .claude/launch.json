@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "paradox-fullstack",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "demo/fullstack-demo.ts"],
+      "port": 3000
+    }
+  ]
+}

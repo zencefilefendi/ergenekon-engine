@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARADOX — Time-Travel Debugger</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">
+          <span class="logo-icon">&#9776;</span>
+          PARADOX
+        </h1>
+        <span class="badge">Time-Travel Debugger</span>
+      </div>
+      <div class="header-right">
+        <button id="btn-refresh" class="btn btn-secondary" onclick="loadSessions()">Refresh</button>
+        <span id="status-indicator" class="status-dot status-disconnected"></span>
+        <span id="status-text" class="status-text">Disconnected</span>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="layout">
+      <!-- Left Panel: Session List -->
+      <aside class="panel panel-sessions" id="panel-sessions">
+        <div class="panel-header">
+          <h2>Recordings</h2>
+          <span id="session-count" class="count-badge">0</span>
+        </div>
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search sessions..." oninput="filterSessions()">
+        </div>
+        <div id="session-list" class="session-list">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </aside>
+
+      <!-- Center: Timeline + Event Detail -->
+      <main class="panel panel-main" id="panel-main">
+        <!-- No session selected state -->
+        <div id="empty-main" class="empty-main">
+          <div class="empty-icon">&#8634;</div>
+          <h2>Select a Recording</h2>
+          <p>Choose a recording from the left panel to inspect its timeline.</p>
+          <p class="hint">Or run: <code>npx tsx demo/app.ts</code> and make requests.</p>
+        </div>
+
+        <!-- Session Detail (hidden until session selected) -->
+        <div id="session-detail" class="session-detail" style="display:none">
+          <!-- Session Header -->
+          <div class="session-header">
+            <div class="session-info">
+              <h2 id="session-title"></h2>
+              <div class="session-meta">
+                <span id="session-service" class="tag tag-service"></span>
+                <span id="session-trace" class="tag tag-trace"></span>
+                <span id="session-duration" class="tag tag-duration"></span>
+                <span id="session-event-count" class="tag tag-events"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline Scrubber -->
+          <div class="timeline-container">
+            <div class="timeline-controls">
+              <button class="btn btn-icon" onclick="seekFirst()" title="First event">&#9198;</button>
+              <button class="btn btn-icon" onclick="seekPrev()" title="Previous event">&#9664;</button>
+              <button id="btn-play" class="btn btn-icon btn-play" onclick="togglePlay()" title="Play/Pause">&#9654;</button>
+              <button class="btn btn-icon" onclick="seekNext()" title="Next event">&#9654;</button>
+              <button class="btn btn-icon" onclick="seekLast()" title="Last event">&#9197;</button>
+              <span id="timeline-position" class="timeline-pos">0 / 0</span>
+            </div>
+            <div class="timeline-track" id="timeline-track" onclick="onTimelineClick(event)">
+              <div class="timeline-progress" id="timeline-progress"></div>
+              <div class="timeline-cursor" id="timeline-cursor"></div>
+              <!-- Event markers will be injected here -->
+            </div>
+            <div class="timeline-labels">
+              <span id="timeline-start">0ms</span>
+              <span id="timeline-end">0ms</span>
+            </div>
+          </div>
+
+          <!-- Service Flow (visual graph) -->
+          <div class="flow-container" id="flow-container">
+            <h3>Service Flow</h3>
+            <div class="flow-graph" id="flow-graph"></div>
+          </div>
+
+          <!-- Event List + Detail Split -->
+          <div class="detail-split">
+            <!-- Event List -->
+            <div class="event-list-container">
+              <h3>Events <span id="event-filter-count"></span></h3>
+              <div class="event-filters">
+                <button class="filter-btn active" data-type="all" onclick="filterEvents('all')">All</button>
+                <button class="filter-btn" data-type="http" onclick="filterEvents('http')">HTTP</button>
+                <button class="filter-btn" data-type="db" onclick="filterEvents('db')">DB</button>
+                <button class="filter-btn" data-type="random" onclick="filterEvents('random')">Random</button>
+                <button class="filter-btn" data-type="error" onclick="filterEvents('error')">Errors</button>
+              </div>
+              <div id="event-list" class="event-list"></div>
+            </div>
+
+            <!-- Event Detail -->
+            <div class="event-detail-container" id="event-detail-container">
+              <div id="event-detail-empty" class="empty-state">
+                Click an event to inspect
+              </div>
+              <div id="event-detail" style="display:none">
+                <div class="detail-header">
+                  <span id="detail-type" class="event-type-badge"></span>
+                  <span id="detail-operation" class="detail-op"></span>
+                </div>
+                <div class="detail-timing">
+                  <span id="detail-sequence"></span>
+                  <span id="detail-wallclock"></span>
+                  <span id="detail-duration"></span>
+                </div>
+                <div class="detail-section">
+                  <h4>Data</h4>
+                  <pre id="detail-data" class="json-view"></pre>
+                </div>
+                <div class="detail-section" id="detail-error-section" style="display:none">
+                  <h4>Error</h4>
+                  <pre id="detail-error" class="json-view json-error"></pre>
+                </div>
+                <div class="detail-section">
+                  <h4>Metadata</h4>
+                  <pre id="detail-meta" class="json-view json-meta"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

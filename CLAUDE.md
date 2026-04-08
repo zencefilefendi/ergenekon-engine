@@ -5,7 +5,7 @@ PARADOX is a deterministic record & replay engine for distributed systems.
 It enables time-travel debugging of production incidents by recording all I/O boundaries
 and replaying them deterministically on a developer's machine.
 
-**Status**: Phase 0 COMPLETED. Phase 1 in progress.
+**Status**: Phase 0 ✅, Phase 1 ✅. Phase 2 (Time-Travel UI) in progress.
 
 ## Repository Structure
 ```
@@ -101,10 +101,16 @@ npx tsx demo/app.ts               # Full demo server on :3000 + collector on :43
 - HLC timestamp generation ✓
 - 23 events captured and replayed with BYTE-FOR-BYTE identical results ✓
 
-## Current Focus: Phase 1
-- PostgreSQL driver intercept (pg)
-- Redis driver intercept (ioredis)
-- setTimeout/setInterval intercept
-- crypto.randomUUID() intercept
-- Error capture (uncaughtException, unhandledRejection)
-- Sensitive data masking improvements
+## What's Been Proven (Phase 1)
+- PostgreSQL/Redis/MongoDB driver intercept (auto-detection) ✓
+- setTimeout/setInterval timing capture ✓
+- crypto.randomUUID() capture ✓
+- Error + Console capture ✓
+- Multi-service distributed recording (98 events, 2 services) ✓
+- Cross-service trace context propagation ✓
+
+## Current Focus: Phase 2
+- Time-Travel Web UI (visual debugger)
+- Cross-service session assembly
+- Interactive timeline scrubber
+- Service flow visualization
