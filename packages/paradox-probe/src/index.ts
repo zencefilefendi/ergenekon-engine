@@ -15,6 +15,9 @@ import type { ProbeConfig, RecordingSession } from '@paradox/core';
 import { DEFAULT_PROBE_CONFIG, HybridLogicalClock, ulid } from '@paradox/core';
 import { installGlobalInterceptors, uninstallGlobalInterceptors } from './interceptors/globals.js';
 import { installFetchInterceptor, uninstallFetchInterceptor } from './interceptors/http-outgoing.js';
+import { installTimerInterceptors, uninstallTimerInterceptors } from './interceptors/timers.js';
+import { installErrorInterceptors, uninstallErrorInterceptors } from './interceptors/errors.js';
+import { installPgInterceptor, installRedisInterceptor, installMongoInterceptor, uninstallDatabaseInterceptors } from './interceptors/database.js';
 import { createHttpIncomingMiddleware } from './interceptors/http-incoming.js';
 import { CollectorClient } from './transport/collector-client.js';
 
@@ -59,12 +62,22 @@ export class ParadoxProbe {
 
     installGlobalInterceptors();
     installFetchInterceptor();
+    installTimerInterceptors();
+    installErrorInterceptors();
+
+    // Auto-detect and install database interceptors
+    const dbDrivers: string[] = [];
+    if (installPgInterceptor()) dbDrivers.push('pg');
+    if (installRedisInterceptor()) dbDrivers.push('ioredis');
+    if (installMongoInterceptor()) dbDrivers.push('mongoose');
+
     this.collector.start();
 
     console.log(
       `[PARADOX] Probe started for "${this.config.serviceName}" ` +
       `→ collector: ${this.config.collectorUrl} ` +
-      `| sampling: ${this.config.samplingRate * 100}%`
+      `| sampling: ${this.config.samplingRate * 100}%` +
+      (dbDrivers.length > 0 ? ` | db: ${dbDrivers.join(', ')}` : '')
     );
   }
 
@@ -77,6 +90,9 @@ export class ParadoxProbe {
 
     uninstallGlobalInterceptors();
     uninstallFetchInterceptor();
+    uninstallTimerInterceptors();
+    uninstallErrorInterceptors();
+    uninstallDatabaseInterceptors();
     await this.collector.stop();
 
     console.log(`[PARADOX] Probe stopped for "${this.config.serviceName}"`);

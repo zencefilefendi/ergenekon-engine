@@ -152,8 +152,10 @@ export class MockLayer {
     };
   }
 
-  /** Mock db.query() — returns the recorded result */
+  /** Mock db.query() — returns the recorded PostgreSQL result */
   mockDbQuery(): { rows: unknown[]; rowCount: number } | null {
+    // Consume the db_query event first (the query itself)
+    this.nextOfType('db_query');
     const event = this.nextOfType('db_result');
     if (!event) return null;
 
@@ -161,6 +163,55 @@ export class MockLayer {
       rows: event.data['rows'] as unknown[],
       rowCount: event.data['rowCount'] as number,
     };
+  }
+
+  /** Mock Redis command — returns the recorded result */
+  mockRedisCommand(): unknown {
+    // Consume the cache_get event (the command)
+    this.nextOfType('cache_get');
+    const event = this.nextOfType('cache_set');
+    if (!event) return null;
+    return event.data['result'];
+  }
+
+  /** Mock crypto.randomUUID() — returns the recorded UUID */
+  mockRandomUUID(): string {
+    const event = this.nextOfType('uuid');
+    if (!event) return crypto.randomUUID();
+    return event.data['value'] as string;
+  }
+
+  /** Mock setTimeout — returns timing data */
+  mockTimer(): { timerId: string; delay: number } | null {
+    const event = this.nextOfType('timer_set');
+    if (!event) return null;
+    return {
+      timerId: event.data['timerId'] as string,
+      delay: event.data['delay'] as number,
+    };
+  }
+
+  /** Get console output events for replay inspection */
+  getConsoleEvents(): Array<{ level: string; args: string[]; timestamp: number }> {
+    return this.events
+      .filter(e => e.type === 'custom' && ['console.log', 'console.warn', 'console.error'].includes(e.operationName))
+      .map(e => ({
+        level: e.data['level'] as string,
+        args: e.data['args'] as string[],
+        timestamp: e.data['timestamp'] as number,
+      }));
+  }
+
+  /** Get error events for replay inspection */
+  getErrorEvents(): Array<{ type: string; name: string; message: string; stack: string | null }> {
+    return this.events
+      .filter(e => e.type === 'error')
+      .map(e => ({
+        type: e.data['type'] as string,
+        name: e.data['name'] as string,
+        message: e.data['message'] as string,
+        stack: e.data['stack'] as string | null,
+      }));
   }
 
   // ── State inspection ────────────────────────────────────────────
