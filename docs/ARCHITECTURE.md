@@ -4,6 +4,13 @@
 
 PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu bir sistem olusturur.
 
+**Mevcut Durum (Phase 0 tamamlandi)**:
+- paradox-core: ✅ Calisiyor
+- paradox-probe: ✅ Calisiyor (HTTP, Date.now, Math.random, fetch)
+- paradox-collector: ✅ Calisiyor (HTTP REST, dosya storage)
+- paradox-replay: ✅ Calisiyor (mock layer, timeline inspection)
+- paradox-ui: ⏳ Planli
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        KULLANICI UYGULAMASI                     │
@@ -18,15 +25,15 @@ PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu 
 │          │                 │                 │                 │
 └──────────┼─────────────────┼─────────────────┼─────────────────┘
            │                 │                 │
-           │    gRPC/HTTP    │    gRPC/HTTP    │
+           │    HTTP/gRPC    │    HTTP/gRPC    │
            ▼                 ▼                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      PARADOX COLLECTOR (Rust)                    │
+│                      PARADOX COLLECTOR                           │
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │ Event        │  │ HLC          │  │ Compression  │         │
-│  │ Ingestion    │──│ Ordering     │──│ Pipeline     │         │
-│  │ (async)      │  │ Engine       │  │ (delta+CAS)  │         │
+│  │ Event        │  │ HLC          │  │ Storage      │         │
+│  │ Ingestion    │──│ Ordering     │──│ Engine       │         │
+│  │ (REST API)   │  │ Engine       │  │ (File JSON)  │         │
 │  └──────────────┘  └──────────────┘  └──────┬───────┘         │
 │                                              │                 │
 └──────────────────────────────────────────────┼─────────────────┘
@@ -38,13 +45,9 @@ PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu 
           │   STORAGE    │          │  REPLAY    │ │  TIME   │
           │   ENGINE     │          │  ENGINE    │ │  TRAVEL │
           │              │          │            │ │  UI     │
-          │ ┌──────────┐ │          │ ┌────────┐ │ │         │
-          │ │ Hot: RAM  │ │          │ │Sandbox │ │ │ React + │
-          │ ├──────────┤ │          │ │Runtime │ │ │ WebGL   │
-          │ │ Warm: SSD │ │◄────────│ │        │ │ │         │
-          │ ├──────────┤ │          │ │Mock    │ │ │ D3.js   │
-          │ │ Cold: S3  │ │          │ │Layer   │ │ │         │
-          │ └──────────┘ │          │ └────────┘ │ │         │
+          │ Sessions as  │          │ MockLayer  │ │         │
+          │ JSON files   │◄────────│ +Timeline  │ │ (Plan)  │
+          │              │          │ Inspection │ │         │
           └──────────────┘          └────────────┘ └─────────┘
 
 ```
@@ -53,337 +56,204 @@ PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu 
 
 ---
 
-## 1. PARADOX PROBE (`paradox-probe`)
+## 1. PARADOX CORE (`@paradox/core`)
 
-**Dil**: TypeScript
-**Hedef**: Node.js uygulamalarina sifir-konfigurasyonla eklenen kayit middleware'i
+**Dil**: TypeScript | **Bagimlilik**: Sifir | **Durum**: ✅ v0.1
 
-### Sorumluluklar
-- HTTP request/response intercept (incoming + outgoing)
-- Database query/response intercept (pg, mysql, mongodb, redis)
-- Non-determinizm kaynaklarini intercept (`Date.now`, `Math.random`, `crypto.randomUUID`)
-- Timer intercept (`setTimeout`, `setInterval`)
-- Trace context propagation (W3C Trace Context standardi)
-- Async event buffer + batch gonderim
+Tum paketlerin paylastigi temel tipler ve yardimci araclar.
 
-### Intercept Stratejisi
+### Icerik
+- **types.ts**: `ParadoxEvent`, `RecordingSession`, `ProbeConfig`, `HLCTimestamp` — sistemin DNA'si
+- **hlc.ts**: Hybrid Logical Clock — distributed event ordering
+- **ulid.ts**: Zaman-sirali benzersiz ID uretici (sifir bagimlilik)
 
-```
-            Gelen Request
-                 │
-                 ▼
-        ┌────────────────┐
-        │  HTTP Interceptor │ ──► Kaydeder: method, url, headers, body, timing
-        └───────┬────────┘
-                │
-                ▼
-        ┌────────────────┐
-        │  App Logic      │
-        │                │
-        │  Date.now() ───────► Kaydeder: timestamp
-        │  Math.random() ────► Kaydeder: deger
-        │  db.query() ──────► Kaydeder: query + result
-        │  fetch() ─────────► Kaydeder: request + response
-        │                │
-        └───────┬────────┘
-                │
-                ▼
-        ┌────────────────┐
-        │  HTTP Response  │ ──► Kaydeder: status, headers, body, timing
-        └────────────────┘
-```
-
-### Event Schema
+### Event Schema (Cekirdek)
 
 ```typescript
 interface ParadoxEvent {
-  // Kimlik
-  id: string;                    // ULID (zamana gore siralanabilir)
-  traceId: string;               // W3C Trace ID (distributed tracing)
-  spanId: string;                // Bu event'in span'i
-  parentSpanId?: string;         // Parent span (causal ordering)
-
-  // Zamanlama
-  hlcTimestamp: HLCTimestamp;    // Hybrid Logical Clock
-  wallClock: number;             // Gercek zaman (ms)
-
-  // Icerik
-  type: EventType;               // 'http_in' | 'http_out' | 'db_query' | 'random' | 'timer' | ...
-  serviceName: string;           // Hangi servis
-  operationName: string;         // Ne yapiyordu
-
-  // Veri (content-addressed)
-  inputHash: string;             // Input verisinin CAS hash'i
-  outputHash: string;            // Output verisinin CAS hash'i
-
-  // Metadata
-  duration: number;              // Operasyon suresi (ns)
-  error?: ErrorInfo;             // Hata varsa
-  tags: Record<string, string>;  // Ozel etiketler
+  id: string;                    // ULID
+  traceId: string;               // W3C Trace ID
+  spanId: string;                // Operation span
+  parentSpanId: string | null;   // Causal parent
+  hlc: HLCTimestamp;             // Hybrid Logical Clock
+  wallClock: number;             // Human-readable time
+  type: EventType;               // 'http_request_in' | 'timestamp' | 'random' | ...
+  serviceName: string;           // Source service
+  operationName: string;         // Human-readable op name
+  sequence: number;              // Order within session
+  data: Record<string, unknown>; // Captured payload
+  durationMs: number;            // Operation duration
+  error: ErrorInfo | null;       // Error if any
+  tags: Record<string, string>;  // Custom tags
 }
-
-interface HLCTimestamp {
-  wallTime: number;    // Fiziksel saat (ms)
-  logical: number;     // Mantiksal sayac
-  nodeId: string;      // Hangi node
-}
-
-type EventType =
-  | 'http_request_in'      // Gelen HTTP request
-  | 'http_request_out'     // Giden HTTP request (fetch/axios)
-  | 'http_response_in'     // Gelen HTTP response
-  | 'http_response_out'    // Giden HTTP response
-  | 'db_query'             // Database sorgusu
-  | 'db_result'            // Database sonucu
-  | 'cache_get'            // Cache okuma
-  | 'cache_set'            // Cache yazma
-  | 'random'               // Math.random() cagrisi
-  | 'timestamp'            // Date.now() cagrisi
-  | 'timer_set'            // setTimeout/setInterval
-  | 'timer_fire'           // Timer ates etti
-  | 'error'                // Yakalanmamis hata
-  | 'custom';              // Kullanici tanimli
 ```
 
-### Monkey-Patching Stratejisi
-
-Non-determinizm kaynaklarini intercept etmek icin monkey-patching kullaniyoruz:
-
-```typescript
-// Date.now() intercept
-const originalDateNow = Date.now;
-Date.now = () => {
-  const value = originalDateNow.call(Date);
-  if (recording) {
-    recorder.record({ type: 'timestamp', value });
-  }
-  return value;
-};
-
-// Replay modunda:
-Date.now = () => {
-  return replayer.next('timestamp').value;
-};
+### HLC Garantisi
 ```
+Eger A → B (A, B'den once olustuysa):
+  HLC(A) < HLC(B) HER ZAMAN GARANTILI
 
-Bu yaklasim `rr` ve `Hermit`'in application-level karsiligi.
+Constructor'da raw Date.now referansi capture edilir:
+  const _rawDateNow = Date.now.bind(Date);
+Bu sayede monkey-patched Date.now ile interferans OLMAZ.
+```
 
 ---
 
-## 2. PARADOX COLLECTOR (`paradox-collector`)
+## 2. PARADOX PROBE (`@paradox/probe`)
 
-**Dil**: Rust
-**Hedef**: Yuksek performansli event toplama, siralama ve sikistirma
+**Dil**: TypeScript | **Durum**: ✅ v0.1
 
-### Sorumluluklar
-- Event ingestion (gRPC + HTTP)
-- HLC timestamp dogrulama ve global ordering
-- Delta compression + content-addressable storage
-- Tiered storage yonetimi (RAM → SSD → S3)
-- Recording session management
-- Sampling kararlari
-
-### Veri Akisi
+### Mimari
 
 ```
-Events (gRPC stream)
+  Express Request
        │
        ▼
-┌──────────────┐     ┌──────────────┐
-│ Ingestion    │────►│ HLC          │
-│ Buffer       │     │ Validator    │
-│ (lock-free)  │     │              │
-└──────────────┘     └──────┬───────┘
-                            │
-                     ┌──────▼───────┐
-                     │ Session      │
-                     │ Assembler    │ ──► Trace ID'ye gore gruplama
-                     └──────┬───────┘
-                            │
-                ┌───────────┼───────────┐
-                ▼           ▼           ▼
-         ┌──────────┐ ┌──────────┐ ┌──────────┐
-         │ Content  │ │ Delta    │ │ Index    │
-         │ Store    │ │ Encoder  │ │ Builder  │
-         │ (CAS)    │ │          │ │          │
-         └──────────┘ └──────────┘ └──────────┘
+┌──────────────────────┐
+│ http-incoming.ts     │ → RecordingSession olustur
+│ (Express middleware)  │ → AsyncLocalStorage'a koy
+└──────┬───────────────┘
+       │
+       ▼ (AsyncLocalStorage propagation)
+┌──────────────────────┐
+│ Application Code     │
+│                      │
+│ Date.now() ─────────────→ globals.ts → session.record('timestamp')
+│ Math.random() ──────────→ globals.ts → session.record('random')
+│ fetch() ────────────────→ http-outgoing.ts → session.record('http_*')
+│                      │
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ http-incoming.ts     │ → res.end() intercept
+│ (response capture)   │ → session.finalize()
+└──────┬───────────────┘
+       │
+       ▼
+┌──────────────────────┐
+│ collector-client.ts  │ → Buffer + batch send
+└──────────────────────┘
 ```
 
-### Content-Addressable Storage (CAS)
+### Kritik Tasarim Kararlari
 
+**1. Re-Entrancy Guard**
 ```
-Gelen veri: {"user": "ali", "age": 30}
-     │
-     ▼
-Hash: SHA256 → "a1b2c3..."
-     │
-     ├── Hash zaten var mi? → Evet → Sadece referansi kaydet
-     │
-     └── Hayir → Veriyi kaydet + hash'i indexle
+Problem: session.record() → ulid() → Date.now() → session.record() → SONSUZ DONGU
+
+Cozum: _recording flag
+  Date.now = () => {
+    const value = _originalDateNow();
+    if (_recording) return value;  // Guard: ic cagrilarda kayit yapma
+    _recording = true;
+    try { session.record(...) }
+    finally { _recording = false; }
+    return value;
+  }
 ```
 
-Avantaj: Ayni DB sonucu 1000 kez donerse, 1 kez saklanir.
-
-### Hybrid Logical Clock (HLC) Implementasyonu
-
+**2. Internal Clock Isolation**
 ```
-HLC = (physical_time, logical_counter, node_id)
+Problem: Circular import: globals.ts ↔ recording-context.ts
 
-Kurallar:
-1. Yerel event: hlc.physical = max(hlc.physical, wall_clock); hlc.logical++
-2. Mesaj gonderme: mesaja hlc'yi ekle
-3. Mesaj alma: hlc.physical = max(hlc.physical, msg.hlc.physical, wall_clock)
-                hlc.logical = uygun sekilde artir
+Cozum: internal-clock.ts (bagimsiz modul)
+  // Module yukleme aninda, TUM patching'den ONCE capture edilir
+  export const originalDateNow = Date.now.bind(Date);
+  export const originalMathRandom = Math.random.bind(Math);
+```
 
-Sonuc: Tum event'ler GLOBAL olarak siralanabilir, fiziksel saat senkronizasyonu GEREKMEZ.
+**3. AsyncLocalStorage Context Propagation**
+```
+Her request icin bir RecordingSession olusturulur.
+AsyncLocalStorage sayesinde tum async operasyonlar
+(db query, fetch, setTimeout) ayni session'a baglanir.
+Hicbir global state kirlenmez — her request izole.
+```
+
+### Mevcut Interceptor'lar
+| Interceptor | Dosya | Yakalanan |
+|-------------|-------|-----------|
+| HTTP Incoming | http-incoming.ts | Request method/url/headers/body, Response status/headers/body |
+| HTTP Outgoing | http-outgoing.ts | fetch() calls — request + response |
+| Date.now() | globals.ts | Her cagrinin dondurulan degeri |
+| Math.random() | globals.ts | Her cagrinin dondurulan degeri |
+
+### Phase 1'de Eklenecek Interceptor'lar
+| Interceptor | Hedef | Yaklasim |
+|-------------|-------|----------|
+| PostgreSQL | pg.Client.query | Prototype monkey-patch |
+| Redis | ioredis commands | Command-level intercept |
+| setTimeout | global setTimeout | Wrapper + timing capture |
+| crypto.randomUUID | crypto module | Function replacement |
+| Error | process events | uncaughtException/unhandledRejection |
+
+---
+
+## 3. PARADOX COLLECTOR (`@paradox/collector`)
+
+**Dil**: TypeScript (Phase 0), Rust (Phase 2+) | **Durum**: ✅ v0.1
+
+### REST API
+
+| Method | Path | Aciklama |
+|--------|------|----------|
+| POST | /api/v1/sessions | Probe'lardan recording al |
+| GET | /api/v1/sessions | Tum session'lari listele |
+| GET | /api/v1/sessions/:id | Tek session detayi |
+| GET | /api/v1/traces/:traceId | Trace'e ait tum session'lar |
+| GET | /api/v1/stats | Collector istatistikleri |
+| GET | /health | Saglik kontrolu |
+
+### Storage (Phase 0)
+```
+.paradox-recordings/
+├── sessions/
+│   ├── 01ABC123DEF456.json    # Her session ayri dosya
+│   ├── 01ABC789GHI012.json
+│   └── ...
+└── index/                      # (Gelecek: CAS index)
 ```
 
 ---
 
-## 3. PARADOX REPLAY ENGINE (`paradox-replay`)
+## 4. PARADOX REPLAY (`@paradox/replay`)
 
-**Dil**: TypeScript + Rust (core)
-**Hedef**: Kaydedilmis session'lari birebir replay etme
+**Dil**: TypeScript | **Durum**: ✅ v0.1
 
-### Sorumluluklar
-- Recording session yukle
-- Sandbox ortami olustur
-- I/O mock layer'i kur
-- Deterministik replay calistir
-- Breakpoint + step debugging
-- Zamanda ileri/geri gitme
-
-### Replay Mimarisi
+### MockLayer — I/O Replacement
 
 ```
-┌─────────────────────────────────────────────────┐
-│              REPLAY SANDBOX                      │
-│                                                  │
-│  ┌─────────────────────────────────────┐        │
-│  │         Mock I/O Layer              │        │
-│  │                                     │        │
-│  │  HTTP In  ──► Kaydedilen request    │        │
-│  │  HTTP Out ──► Kaydedilen response   │        │
-│  │  DB Query ──► Kaydedilen result     │        │
-│  │  Date.now ──► Kaydedilen zaman      │        │
-│  │  Random   ──► Kaydedilen deger      │        │
-│  └────────────────┬────────────────────┘        │
-│                   │                              │
-│  ┌────────────────▼────────────────────┐        │
-│  │        Application Code             │        │
-│  │    (degistirilmemis, orijinal)      │        │
-│  └────────────────┬────────────────────┘        │
-│                   │                              │
-│  ┌────────────────▼────────────────────┐        │
-│  │        State Inspector              │        │
-│  │    Her adimda state snapshot        │        │
-│  └─────────────────────────────────────┘        │
-│                                                  │
-└─────────────────────────────────────────────────┘
+Recording sirasinda:              Replay sirasinda:
+  Date.now() → 1712345678        Date.now() → MockLayer → 1712345678 (recorded)
+  Math.random() → 0.7342          Math.random() → MockLayer → 0.7342 (recorded)
+  fetch(url) → {data: ...}       fetch(url) → MockLayer → {data: ...} (recorded)
 ```
 
-### Zamanda Yolculuk Mekanizmasi
+### Timeline Inspection (Time-Travel Foundation)
 
+```typescript
+// Herhangi bir noktadaki durumu sor
+engine.getStateAt(sequence: 5)
+// → { events: [E0..E5], currentEvent: E5, progress: 0.25 }
+
+// Iki nokta arasindaki farki gor
+engine.getDiff(fromSequence: 2, toSequence: 8)
+// → { added: [E3, E4, E5, E6, E7, E8], range: [2, 8] }
+
+// Tam timeline
+engine.getTimeline()
+// → [{ sequence, type, operation, wallClock, data, durationMs }, ...]
 ```
-Event Timeline:
-  E1 ──── E2 ──── E3 ──── E4 ──── E5 ──── E6
-  │              │                        │
-  t=0ms         t=50ms                   t=200ms
-
-Kullanici "E3'e git" dediginde:
-1. Son checkpoint'ten baslat (E1)
-2. E1 → E2 → E3 replay et
-3. E3'teki state'i goster
-4. Kullanici ileri/geri gidebilir
-
-Optimizasyon: Her N event'te bir checkpoint kaydet
-→ Herhangi bir noktaya O(N/checkpoint_interval) ile ulas
-```
-
----
-
-## 4. PARADOX UI (`paradox-ui`)
-
-**Dil**: TypeScript (React + D3.js)
-**Hedef**: Gorsel zaman yolculugu debugger'i
-
-### Ana Gorunum
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  PARADOX                                    ▶ ⏸ ⏮ ⏭  🔍     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Timeline Bar                                                   │
-│  ═══════════●════════════════════════════════════════           │
-│  0ms     50ms    100ms    150ms    200ms    250ms    300ms      │
-│                                                                 │
-├──────────────────────┬──────────────────────────────────────────┤
-│                      │                                          │
-│  Service Flow        │  Event Detail                            │
-│                      │                                          │
-│  ┌──────────┐        │  Type: http_request_out                  │
-│  │ API GW   │──┐     │  Service: user-service                   │
-│  └──────────┘  │     │  Time: 50ms                              │
-│                ▼     │  Duration: 23ms                           │
-│  ┌──────────┐  │     │                                          │
-│  │ User Svc │──┤     │  Request:                                │
-│  └──────────┘  │     │  GET /api/users/123                      │
-│                ▼     │  Authorization: Bearer eyJ...             │
-│  ┌──────────┐  │     │                                          │
-│  │ Auth Svc │──┘     │  Response:                               │
-│  └──────────┘        │  200 OK                                  │
-│                      │  {"id": 123, "name": "Ali"}              │
-│  ┌──────────┐        │                                          │
-│  │ DB       │        │  State @ this point:                     │
-│  └──────────┘        │  { authenticated: true, userId: 123 }    │
-│                      │                                          │
-├──────────────────────┴──────────────────────────────────────────┤
-│  Console: Request completed in 73ms — 4 services, 12 events    │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Ozellikler
-- **Timeline scrubbing**: Zaman cubugunu surukleyerek herhangi bir ana git
-- **Service graph**: Servislerin birbirleriyle iletisimini canli gor
-- **State inspector**: Her event anindaki uygulama state'ini incele
-- **Diff view**: Iki zaman noktasi arasindaki state farkini gor
-- **Search**: Event'ler icinde arama yap
-- **Bookmarks**: Onemli anlari isaretla
-
----
-
-## Teknik Kararlar
-
-### Neden Node.js Probe'u Monkey-Patching Kullaniyor?
-- Sifir konfigurasyonla calisir — `app.use(probe.middleware())` yeterli
-- Mevcut kodu degistirmek gerekmiyor
-- V8 engine monkey-patching'e uygun
-
-### Neden Collector Rust?
-- Yuksek throughput gerekli (milyonlarca event/sn)
-- Dusuk ve tahmin edilebilir latency
-- Memory safety (production'da crash olmamalı)
-- Async runtime (tokio) ile verimli I/O
-
-### Neden HLC (NTP yerine)?
-- NTP dogrulugu ~1ms, bu yeterli degil
-- HLC causality (nedensellik) GARANTI eder
-- Saat kaymalarina dayanikli
-- Kanıtlanmis akademik teori (Kulkarni et al., 2014)
-
-### Neden CAS (Content-Addressable Storage)?
-- Ayni veri tekrar tekrar gorulur (ornegin ayni DB query sonucu)
-- Deduplication otomatik
-- Integrity verification ucretsiz (hash = adres)
-- Git'in blob storage'ina benzer — kanitlanmis yontem
 
 ---
 
 ## Guvenlik Notlari
 
-- Probe'lar hassas veriyi (sifre, token, PII) otomatik maskelemeli
-- Collector ile probe arasinda TLS zorunlu
-- Storage encryption at rest
-- RBAC: Kim hangi recording'i gorebilir
-- Data retention politikalari (GDPR/KVKK uyumu)
+- Probe varsayilan olarak `authorization`, `cookie`, `x-api-key` header'larini maskeler
+- Body field maskeleme konfigurasyonla ayarlanabilir
+- Collector ile probe arasinda TLS zorunlu (production'da)
+- Storage encryption at rest (Phase 4)
+- RBAC: Kim hangi recording'i gorebilir (Phase 4)
+- KVKK/GDPR uyumlu data retention (Phase 4)

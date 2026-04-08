@@ -1,48 +1,57 @@
 # PARADOX Engine — Yol Haritasi
 
-## Phase 0: Foundation (Hafta 1-2) ← BURADASIN
+## Phase 0: Foundation (Hafta 1-2) ✅ TAMAMLANDI
 
 ### Hedef: Calisir bir proof-of-concept
 
-- [ ] Proje yapisini olustur (monorepo, TypeScript + Rust)
-- [ ] Temel event schema'yi tanimla (protobuf)
-- [ ] Node.js Probe v0.1
-  - [ ] HTTP incoming intercept (Express middleware)
-  - [ ] HTTP outgoing intercept (fetch monkey-patch)
-  - [ ] Date.now() intercept
-  - [ ] Math.random() intercept
-  - [ ] AsyncLocalStorage ile context propagation
-  - [ ] In-memory event buffer
-- [ ] In-Memory Collector v0.1
-  - [ ] Event ingestion (HTTP endpoint)
-  - [ ] Session assembly (trace ID ile gruplama)
-  - [ ] Basit dosya-tabanli storage
-- [ ] Replay Engine v0.1
-  - [ ] Recording yukleme
-  - [ ] Mock layer (HTTP, Date, Random)
-  - [ ] Basit CLI replay (node replay.js --session=xxx)
-- [ ] Demo: Express app + probe → kaydet → replay et → ayni sonuc
+- [x] Proje yapisini olustur (monorepo, TypeScript, npm workspaces)
+- [x] Temel event schema'yi tanimla (TypeScript interfaces)
+- [x] Node.js Probe v0.1
+  - [x] HTTP incoming intercept (Express middleware)
+  - [x] HTTP outgoing intercept (fetch monkey-patch)
+  - [x] Date.now() intercept
+  - [x] Math.random() intercept
+  - [x] AsyncLocalStorage ile context propagation
+  - [x] In-memory event buffer + collector client
+- [x] Collector v0.1 (TypeScript)
+  - [x] HTTP ingestion endpoint (REST API)
+  - [x] Session assembly (trace ID ile gruplama)
+  - [x] Dosya-tabanli storage (JSON)
+  - [x] Session listeleme + sorgulama API
+- [x] Replay Engine v0.1
+  - [x] Recording yukleme (file + in-memory)
+  - [x] Mock layer (Date.now, Math.random, fetch)
+  - [x] Timeline inspection (time-travel data)
+  - [x] State-at-point-in-time sorgulama
+- [x] Demo: Express app + probe → kaydet → replay et → BIREBIR ayni sonuc
+- [x] Re-entrancy guard (sonsuz dongu problemi cozuldu)
+- [x] Internal clock isolation (HLC + ULID icin)
 
-### Basari Kriteri
-Bir Express uygulamasinda bir request'i kaydet,
-replay et, ve birebir ayni sonucu al.
+### Basari Kriteri ✅ KARSILANDI
+23 event (Date.now, Math.random, HTTP) yakalanip
+BYTE-FOR-BYTE ayni sonuc replay edildi.
+
+### Cozulen Muhendislik Zorluklar
+1. **Re-entrancy**: `record()` → `ulid()` → `Date.now()` → `record()` sonsuz dongu → `_recording` flag
+2. **Circular import**: `globals.ts` ↔ `recording-context.ts` → `internal-clock.ts` ile kopardi
+3. **Clock isolation**: HLC patched `Date.now` goruyordu → raw ref capture at module load
 
 ---
 
-## Phase 1: Real I/O (Hafta 3-4)
+## Phase 1: Real I/O (Hafta 3-4) ← BURADASIN
 
 ### Hedef: Gercek uygulamalarda kullanilabilir probe
 
-- [ ] PostgreSQL intercept (pg driver)
-- [ ] Redis intercept (ioredis)
-- [ ] MongoDB intercept (mongoose)
-- [ ] axios/node-fetch intercept
+- [ ] PostgreSQL intercept (pg driver monkey-patch)
+- [ ] Redis intercept (ioredis monkey-patch)
+- [ ] MongoDB intercept (mongoose/mongodb driver)
 - [ ] setTimeout/setInterval intercept
 - [ ] crypto.randomUUID() intercept
 - [ ] Error capture (uncaughtException, unhandledRejection)
-- [ ] Sensitive data masking (headers, body fields)
-- [ ] Event batching + async flush
-- [ ] npm paketi olarak yayinla (@paradox/probe)
+- [ ] Hassas veri maskeleme iyilestirmesi (body field masking)
+- [ ] Console.log/warn/error capture
+- [ ] Event batching optimizasyonu
+- [ ] Multi-service demo (2 Express servisi konusuyor)
 
 ### Basari Kriteri
 Gercek bir microservice uygulamasini (Express + PostgreSQL + Redis)
@@ -54,19 +63,18 @@ kaydet ve birebir replay et.
 
 ### Hedef: Multi-service record/replay
 
-- [ ] W3C Trace Context propagation
-- [ ] HLC implementation (TypeScript)
-- [ ] Cross-service session assembly
+- [ ] W3C Trace Context propagation (zaten temel var, genislet)
+- [ ] Cross-service session assembly (collector'da birlestir)
 - [ ] Multi-service replay orchestration
 - [ ] Rust Collector v0.1
-  - [ ] gRPC ingestion
-  - [ ] HLC validation
+  - [ ] gRPC ingestion (yuksek throughput)
+  - [ ] HLC validation + global ordering
   - [ ] File-based CAS storage
-- [ ] Basit Web UI v0.1
-  - [ ] Session listesi
-  - [ ] Event timeline
-  - [ ] Service flow diagram
-  - [ ] Event detail panel
+- [ ] Web UI v0.1
+  - [ ] Session listesi + arama
+  - [ ] Event timeline (interaktif)
+  - [ ] Service flow diagram (servisler arasi akis)
+  - [ ] Event detail panel (request/response/state)
 
 ### Basari Kriteri
 3 servisten olusan bir sistemi kaydet,
@@ -78,16 +86,16 @@ herhangi bir request'i 3 serviste birden replay et.
 
 ### Hedef: Gorsel zaman yolculugu debugger
 
-- [ ] Checkpoint sistemi (her N event'te snapshot)
-- [ ] Zamanda geri gitme (reverse replay)
+- [ ] Checkpoint sistemi (her N event'te state snapshot)
+- [ ] Zamanda geri gitme (reverse replay via checkpoints)
 - [ ] State diff (iki zaman noktasi arasindaki fark)
 - [ ] Time Travel UI
-  - [ ] Timeline scrubber
-  - [ ] Interactive service graph
-  - [ ] State inspector
-  - [ ] Request/response viewer
-  - [ ] Search + filter
-- [ ] VS Code extension (temel)
+  - [ ] Timeline scrubber (surukle-birak)
+  - [ ] Interactive service graph (canli akis)
+  - [ ] State inspector (degisken degerlerini gor)
+  - [ ] Request/response viewer (formatted JSON)
+  - [ ] Search + filter (event arama)
+- [ ] VS Code extension (temel entegrasyon)
 
 ### Basari Kriteri
 UI'da bir session ac, timeline'i surukle,
@@ -111,7 +119,7 @@ herhangi bir andaki state'i gor.
 - [ ] CI/CD pipeline
 - [ ] Load testing (1M event/sn hedefi)
 - [ ] Security audit
-- [ ] Documentation
+- [ ] Documentation site
 
 ### Basari Kriteri
 1000 RPS alan bir production benzeri ortamda
@@ -127,7 +135,7 @@ herhangi bir andaki state'i gor.
 - [ ] Open source release (Community Edition)
 - [ ] Pro plan ozellikleri
 - [ ] Managed cloud beta
-- [ ] Integration guides (Express, NestJS, Fastify)
+- [ ] Integration guides (Express, NestJS, Fastify, Koa)
 - [ ] Demo video + blog post
 - [ ] Product Hunt launch
 - [ ] Hacker News post

@@ -4,6 +4,11 @@
 
 > Production'da olusan her bug'i birebir tekrar uret, zamanda geri git, ileri sar, kodu degistir, ayni senaryoyu tekrar calistir.
 
+[![Phase](https://img.shields.io/badge/phase-0%20%E2%9C%93%20completed-brightgreen)]()
+[![Node](https://img.shields.io/badge/node-%3E%3D20-blue)]()
+[![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
+[![TypeScript](https://img.shields.io/badge/typescript-strict-blue)]()
+
 ## Problem
 
 Modern yazilim dunyasinin en buyuk cozulmemis problemi: **production debugging.**
@@ -12,76 +17,147 @@ Bir request 10 microservice'den geciyor. Bir yerde bir sey bozuluyor. Log'lara b
 
 Sonuc: Muhendisler saatlerce, bazen gunlerce bug'i reproduce etmeye calisiyor. Cogu zaman edemiyorlar bile.
 
+**Datadog** gozlem yapar — ama replay yapamaz.
+**Sentry** hatayi gorur — ama reproduce edemez.
+**Jaeger** timing gorur — ama state goremez.
+**rr** tek process kayit eder — ama distributed calismaz.
+
+Kimse production'daki bir distributed bug'i birebir replay edemiyor. **PARADOX bunu yapiyor.**
+
 ## Cozum
 
 PARADOX, production ortamindaki her request'i deterministik olarak kaydeder ve gelistirici makinesinde birebir replay edebilir. Bir VCR gibi — ama distributed sistemler icin.
 
 ### Temel Yetenekler
 
-- **Deterministic Record**: Tum I/O boundary'lerini (HTTP, DB, time, random) sifir-overhead ile kaydet
+- **Deterministic Record**: Tum I/O boundary'lerini (HTTP, DB, time, random) yakala
 - **Time-Travel Replay**: Herhangi bir request'i yerelde birebir oynat, zamanda ileri/geri git
 - **Distributed Tracing+**: Sadece trace degil, her servisin tam STATE'ini gor
-- **Fix Verification**: Kodu degistir, ayni senaryoyu tekrar calistir — fix'in gercekten calisiyor mu?
+- **Fix Verification**: Kodu degistir, ayni senaryoyu tekrar calistir — fix'in calisiyor mu?
 - **Smart Sampling**: Akilli ornekleme ile production overhead'i %1'in altinda tut
+
+## Kanitlanmis: Calisiyor
+
+```
+━━━ STEP 3: VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  PERFECT REPLAY — Results are BYTE-FOR-BYTE IDENTICAL
+
+  Original requestId:  57wbkit6
+  Replayed requestId:  57wbkit6
+  Original score:      68
+  Replayed score:      68
+
+  Date.now()    → deterministic
+  Math.random() → deterministic
+  Response body → identical
+```
+
+23 event (Date.now, Math.random, HTTP request/response) yakalanip birebir ayni sonuclari uretecek sekilde replay edildi.
 
 ## Mimari
 
 ```
-Service A          Service B          Service C
-   |                  |                  |
-   | [Probe]          | [Probe]          | [Probe]
-   |                  |                  |
-   +--------+---------+--------+---------+
-            |                  |
-            v                  v
-     +------+------------------+------+
-     |       Event Collector (Rust)    |
-     |    HLC Ordering + Compression   |
-     +----------------+----------------+
-                      |
-          +-----------+-----------+
-          |           |           |
-          v           v           v
-     +--------+  +--------+  +--------+
-     |Storage |  |Replay  |  |Time    |
-     |Engine  |  |Engine  |  |Travel  |
-     |(CAS)   |  |(Det.)  |  |UI      |
-     +--------+  +--------+  +--------+
+  Your Application
+  ┌──────────┐  ┌──────────┐  ┌──────────┐
+  │Service A │  │Service B │  │Service C │
+  │ [PROBE]  │  │ [PROBE]  │  │ [PROBE]  │
+  └────┬─────┘  └────┬─────┘  └────┬─────┘
+       │              │              │
+       ▼              ▼              ▼
+  ┌─────────────────────────────────────────┐
+  │         PARADOX COLLECTOR               │
+  │    HLC Ordering + Event Storage         │
+  └─────────────┬───────────────────────────┘
+                │
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+  ┌────────┐ ┌────────┐ ┌────────┐
+  │Storage │ │Replay  │ │Time    │
+  │Engine  │ │Engine  │ │Travel  │
+  └────────┘ └────────┘ │UI     │
+                         └────────┘
 ```
 
 ## Packages
 
-| Paket | Dil | Aciklama |
-|-------|-----|----------|
-| `paradox-probe` | TypeScript | Node.js icin kayit middleware'i |
-| `paradox-collector` | Rust | Event toplama, siralama, sikistirma |
-| `paradox-replay` | TypeScript/Rust | Deterministik replay motoru |
-| `paradox-ui` | TypeScript (React) | Zaman yolculugu gorsel debugger |
+| Paket | Durum | Aciklama |
+|-------|-------|----------|
+| `@paradox/core` | v0.1 ✓ | Event schema, HLC (Hybrid Logical Clock), ULID |
+| `@paradox/probe` | v0.1 ✓ | Express middleware — HTTP, Date.now, Math.random, fetch intercept |
+| `@paradox/collector` | v0.1 ✓ | HTTP ingestion server, session assembly, file storage |
+| `@paradox/replay` | v0.1 ✓ | Mock I/O layer, deterministic replay engine, timeline inspection |
+| `@paradox/ui` | Planned | Time-travel visual debugger (React + D3.js) |
 
 ## Hizli Baslangic
 
 ```bash
-# Probe'u uygulamana ekle
-npm install @paradox/probe
+# Repoyu klonla ve bagimliluklari yukle
+git clone <repo-url> && cd Yutpa && npm install
 
-# Collector'u baslat
-paradox-collector start
+# Replay demo'yu calistir (kaydet → replay → dogrula)
+npx tsx demo/replay-demo.ts
 
-# UI'i ac
-paradox-ui --port 3000
+# Tam demo server'i baslat (Express + Collector)
+npx tsx demo/app.ts
 ```
+
+### Probe Entegrasyonu (3 satir)
 
 ```typescript
 import { ParadoxProbe } from '@paradox/probe';
 
 const probe = new ParadoxProbe({
   serviceName: 'user-service',
-  collectorUrl: 'http://localhost:4000',
+  collectorUrl: 'http://localhost:4380',
 });
 
 app.use(probe.middleware());
 ```
 
+### Demo Endpoint'leri Test Et
+
+```bash
+curl localhost:3000/api/random          # Date.now + Math.random kullanan endpoint
+curl localhost:3000/api/users/42        # Kullanici sorgusu simulasyonu
+curl localhost:3000/paradox/recordings  # Kayitlari listele
+```
+
+## Teknik Detaylar
+
+Detayli dokumantasyon `docs/` dizininde:
+
+- **[VISION.md](docs/VISION.md)** — Neden variz, hedef kitle, rekabet analizi
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Paket mimarileri, event schema, intercept stratejisi
+- **[TECHNICAL_DEEP_DIVE.md](docs/TECHNICAL_DEEP_DIVE.md)** — HLC, CAS, replay teorisi, sampling
+- **[ROADMAP.md](docs/ROADMAP.md)** — Phase bazli gelistirme plani
+- **[BUSINESS_MODEL.md](docs/BUSINESS_MODEL.md)** — Fiyatlandirma, GTM, finansal projeksiyon
+
+## Cozulen Muhendislik Zorluklar
+
+### 1. Re-Entrancy Sonsuz Dongu
+`session.record()` → `ulid()` → `Date.now()` → `session.record()` → sonsuz dongu.
+**Cozum**: `_recording` boolean flag ile re-entrancy guard.
+
+### 2. Circular Import Dependency
+`globals.ts` ↔ `recording-context.ts` birbirini import ediyor.
+**Cozum**: `internal-clock.ts` modulu ile bagimlilik dongusunu kirdik.
+
+### 3. HLC Clock Isolation
+HLC `Date.now()` cagirinca patched versiyonu goruyordu.
+**Cozum**: `Date.now.bind(Date)` ile orijinal referansi module yukleme aninda yakaladik.
+
+## Mevcut Durum
+
+| Phase | Durum | Detay |
+|-------|-------|-------|
+| Phase 0: Foundation | ✅ Tamamlandi | HTTP record/replay, Date/Random intercept, demo |
+| Phase 1: Real I/O | 🔄 Sirada | PostgreSQL, Redis, MongoDB, error capture |
+| Phase 2: Distributed | ⏳ Planli | Multi-service replay, HLC ordering, Web UI |
+| Phase 3: Time Travel | ⏳ Planli | Gorsel debugger, checkpoint, state diff |
+| Phase 4: Production | ⏳ Planli | Smart sampling, compression, K8s |
+| Phase 5: Launch | ⏳ Planli | Open source release, managed cloud |
+
 ## Lisans
 
-Henuz belirlenmedi — commercial open-source (BSL/SSPL) dusunuluyor.
+Business Source License 1.1 (BSL-1.1)
