@@ -1,0 +1,24 @@
+{
+  "name": "@paradox/probe",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PARADOX recording probe for Node.js applications",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@paradox/core": "*"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
+  "license": "BUSL-1.1"
+}

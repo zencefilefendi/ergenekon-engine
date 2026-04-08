@@ -1,0 +1,26 @@
+{
+  "name": "paradox-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic Record & Replay for Distributed Systems",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "clean": "npm run clean --workspaces",
+    "demo": "npx tsx demo/app.ts",
+    "demo:replay": "npx tsx demo/replay.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "BUSL-1.1",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}

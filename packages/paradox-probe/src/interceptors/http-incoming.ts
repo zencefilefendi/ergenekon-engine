@@ -1,0 +1,176 @@
+// ============================================================================
+// PARADOX PROBE — HTTP Incoming Interceptor
+//
+// Express middleware that captures incoming requests and outgoing responses.
+// This is the "front door" — the first and last events in every recording.
+//
+// Creates a RecordingSession for each request and propagates it through
+// the entire async call chain via AsyncLocalStorage.
+// ============================================================================
+
+import type { Request, Response, NextFunction } from 'express';
+import type { ProbeConfig } from '@paradox/core';
+import { HybridLogicalClock, ulid } from '@paradox/core';
+import { RecordingSession, runWithSession } from '../recording-context.js';
+import { originalDateNow } from './globals.js';
+
+// W3C Trace Context header names
+const TRACEPARENT_HEADER = 'traceparent';
+const PARADOX_HLC_HEADER = 'x-paradox-hlc';
+
+/**
+ * Parse W3C traceparent header: "00-traceId-parentId-flags"
+ */
+function parseTraceparent(header: string | undefined): { traceId: string; parentSpanId: string } | null {
+  if (!header) return null;
+  const parts = header.split('-');
+  if (parts.length !== 4) return null;
+  return { traceId: parts[1], parentSpanId: parts[2] };
+}
+
+/**
+ * Generate a 16-character hex span ID.
+ */
+function generateSpanId(): string {
+  const bytes = new Uint8Array(8);
+  for (let i = 0; i < 8; i++) {
+    bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Generate a 32-character hex trace ID.
+ */
+function generateTraceId(): string {
+  const bytes = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) {
+    bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Sanitize headers by redacting sensitive values.
+ */
+function sanitizeHeaders(
+  headers: Record<string, string | string[] | undefined>,
+  redactList: string[]
+): Record<string, string | string[] | undefined> {
+  const result: Record<string, string | string[] | undefined> = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (redactList.includes(key.toLowerCase())) {
+      result[key] = '[REDACTED]';
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+export type SessionCallback = (session: import('@paradox/core').RecordingSession) => void;
+
+/**
+ * Creates the Express middleware that records incoming HTTP requests.
+ */
+export function createHttpIncomingMiddleware(
+  config: ProbeConfig,
+  hlc: HybridLogicalClock,
+  onSessionComplete: SessionCallback
+) {
+  return function paradoxMiddleware(req: Request, res: Response, next: NextFunction): void {
+    // Sampling decision
+    if (!config.enabled || Math.random() > config.samplingRate) {
+      next();
+      return;
+    }
+
+    // Extract or generate trace context
+    const traceContext = parseTraceparent(req.headers[TRACEPARENT_HEADER] as string | undefined);
+    const traceId = traceContext?.traceId ?? generateTraceId();
+    const parentSpanId = traceContext?.parentSpanId ?? null;
+    const spanId = generateSpanId();
+
+    // Receive remote HLC if present (distributed clock sync)
+    const remoteHlcHeader = req.headers[PARADOX_HLC_HEADER] as string | undefined;
+    if (remoteHlcHeader) {
+      try {
+        const remoteHlc = JSON.parse(remoteHlcHeader);
+        hlc.receive(remoteHlc);
+      } catch {
+        // Malformed HLC header — ignore
+      }
+    }
+
+    // Create recording session
+    const session = new RecordingSession({
+      traceId,
+      spanId,
+      parentSpanId,
+      serviceName: config.serviceName,
+      hlc,
+    });
+
+    // Record the incoming request
+    session.record('http_request_in', `${req.method} ${req.path}`, {
+      method: req.method,
+      url: req.originalUrl,
+      path: req.path,
+      query: req.query,
+      headers: sanitizeHeaders(req.headers as Record<string, string>, config.redactHeaders),
+      body: req.body,
+      ip: req.ip,
+    });
+
+    // Set trace context headers on response (for downstream propagation)
+    res.setHeader(TRACEPARENT_HEADER, `00-${traceId}-${spanId}-01`);
+
+    // Intercept response.end to capture outgoing response
+    const originalEnd = res.end;
+    const requestStart = originalDateNow();
+
+    // @ts-expect-error — Express overloads res.end, we match the most general signature
+    res.end = function (chunk?: unknown, encoding?: unknown, callback?: unknown): Response {
+      const durationMs = originalDateNow() - requestStart;
+
+      // Capture response body
+      let responseBody: unknown = undefined;
+      if (chunk) {
+        if (typeof chunk === 'string') {
+          try {
+            responseBody = JSON.parse(chunk);
+          } catch {
+            responseBody = chunk;
+          }
+        } else if (Buffer.isBuffer(chunk)) {
+          try {
+            responseBody = JSON.parse(chunk.toString('utf-8'));
+          } catch {
+            responseBody = chunk.toString('utf-8');
+          }
+        }
+      }
+
+      session.record(
+        'http_response_out',
+        `${res.statusCode} ${req.method} ${req.path}`,
+        {
+          statusCode: res.statusCode,
+          headers: res.getHeaders(),
+          body: responseBody,
+        },
+        { durationMs }
+      );
+
+      // Finalize and emit the recording
+      const recording = session.finalize();
+      onSessionComplete(recording);
+
+      // Call original end
+      return originalEnd.call(this, chunk, encoding, callback) as unknown as Response;
+    };
+
+    // Run the rest of the middleware chain within this session's context
+    runWithSession(session, () => next());
+  };
+}
