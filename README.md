@@ -159,6 +159,35 @@ Detayli dokumantasyon `docs/` dizininde:
 HLC `Date.now()` cagirinca patched versiyonu goruyordu.
 **Cozum**: `Date.now.bind(Date)` ile orijinal referansi module yukleme aninda yakaladik.
 
+## CLI Kullanimi
+
+```bash
+# Session'lari listele
+npx tsx packages/paradox-cli/src/index.ts sessions
+
+# Bir session'i incele
+npx tsx packages/paradox-cli/src/index.ts inspect <session-id>
+
+# Event timeline goruntule
+npx tsx packages/paradox-cli/src/index.ts timeline <session-id>
+
+# Trace takibi (distributed)
+npx tsx packages/paradox-cli/src/index.ts trace <trace-id>
+
+# Session export (JSON veya binary PRDX)
+npx tsx packages/paradox-cli/src/index.ts export <session-id> --format prdx
+
+# Session import
+npx tsx packages/paradox-cli/src/index.ts import ./session.prdx
+
+# Collector istatistikleri + saglik kontrolu
+npx tsx packages/paradox-cli/src/index.ts stats
+npx tsx packages/paradox-cli/src/index.ts health
+
+# Canli event izleme
+npx tsx packages/paradox-cli/src/index.ts watch
+```
+
 ## Mevcut Durum
 
 | Phase | Durum | Detay |

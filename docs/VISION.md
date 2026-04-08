@@ -115,22 +115,29 @@ Anahtar fikir: **Uygulamanin ICINI kaydetmeye gerek yok.** Disariya acilan tum k
 
 ## Yol Haritasi
 
-### v0.1 — Proof of Concept (Simdi)
-- [ ] Node.js probe (HTTP + temel I/O intercept)
-- [ ] In-memory collector
-- [ ] Basit CLI replay
-- [ ] Tek servis record/replay
+### v0.1 — Proof of Concept ✅
+- [x] Node.js probe (HTTP + temel I/O intercept)
+- [x] In-memory collector
+- [x] Basit CLI replay
+- [x] Tek servis record/replay
 
-### v0.2 — Multi-Service
-- [ ] Distributed tracing entegrasyonu (trace ID propagation)
-- [ ] HLC implementation
-- [ ] Multi-service replay
-- [ ] Basit web UI
+### v0.2 — Multi-Service ✅
+- [x] Distributed tracing entegrasyonu (trace ID propagation)
+- [x] HLC implementation
+- [x] Multi-service replay
+- [x] Basit web UI
 
-### v0.3 — Production-Ready
+### v0.3 — Production Essentials ✅
+- [x] Smart sampling (head+tail hybrid, 6 reason, adaptive)
+- [x] Deep field redaction (PII/secret auto-detect)
+- [x] Session export/import (JSON + binary PRDX format)
+- [x] CLI tool (10 komut, ANSI renkli cikti)
+- [x] Performance benchmark
+
+### v0.4 — Production-Ready (Sirada)
 - [ ] Rust collector (yuksek performans)
 - [ ] CAS storage engine
-- [ ] Smart sampling
+- [ ] Delta compression
 - [ ] Kubernetes operator
 
 ### v1.0 — Launch
