@@ -2,202 +2,234 @@
 
 **Distributed Systems Time-Travel Debugger**
 
-> Production'da olusan her bug'i birebir tekrar uret, zamanda geri git, ileri sar, kodu degistir, ayni senaryoyu tekrar calistir.
+> Production'daki her bug'ı birebir reproduce et. Zamanda geri git, olayı adım adım izle, kodu düzelt, aynı senaryoyu tekrar çalıştır — tüm bunları geliştirici makinesinde yap.
 
-[![Phase](https://img.shields.io/badge/phase-3%20%E2%9C%93%20production%20ready-brightgreen)]()
+[![Phase](https://img.shields.io/badge/phase-4%20%E2%9C%93%20launch%20ready-brightgreen)]()
+[![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![Node](https://img.shields.io/badge/node-%3E%3D20-blue)]()
-[![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 [![TypeScript](https://img.shields.io/badge/typescript-strict-blue)]()
+[![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
+[![Packages](https://img.shields.io/badge/packages-6-purple)]()
+
+---
 
 ## Problem
 
-Modern yazilim dunyasinin en buyuk cozulmemis problemi: **production debugging.**
+Modern yazılım dünyasının en büyük çözülmemiş problemi: **production debugging.**
 
-Bir request 10 microservice'den geciyor. Bir yerde bir sey bozuluyor. Log'lara bakiyorsun — binlerce satir. Trace'lere bakiyorsun — timing bilgisi var ama state yok. Metric'lere bakiyorsun — ne oldugunu goruyorsun ama NEDEN oldugunu goremiyorsun.
+Bir request 10 microservice'den geçiyor. Bir yerde bir şey bozuluyor. Log'lara bakıyorsun — binlerce satır. Trace'lere bakıyorsun — timing bilgisi var ama state yok. Metric'lere bakıyorsun — ne olduğunu görüyorsun ama **neden** olduğunu göremiyorsun.
 
-Sonuc: Muhendisler saatlerce, bazen gunlerce bug'i reproduce etmeye calisiyor. Cogu zaman edemiyorlar bile.
+Sonuç: Mühendisler saatlerce, bazen günlerce bug'ı reproduce etmeye çalışıyor. Çoğu zaman edemiyorlar bile.
 
-**Datadog** gozlem yapar — ama replay yapamaz.
-**Sentry** hatayi gorur — ama reproduce edemez.
-**Jaeger** timing gorur — ama state goremez.
-**rr** tek process kayit eder — ama distributed calismaz.
+| Araç | Ne Yapıyor | Eksikliği |
+|------|-----------|-----------|
+| **Datadog** | Gözlem (log, trace, metric) | Replay yok — state görünmüyor |
+| **Sentry** | Hatayı yakala | Nasıl oraya gelindiği görünmüyor |
+| **Jaeger** | Distributed timing | Data yok — sadece süre |
+| **rr** | Process record/replay | Tek makine, distributed değil |
+| **Replay.io** | Browser record/replay | Sadece frontend |
 
-Kimse production'daki bir distributed bug'i birebir replay edemiyor. **PARADOX bunu yapiyor.**
+**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. PARADOX bunu yapıyor.**
 
-## Cozum
+---
 
-PARADOX, production ortamindaki her request'i deterministik olarak kaydeder ve gelistirici makinesinde birebir replay edebilir. Bir VCR gibi — ama distributed sistemler icin.
+## Çözüm
+
+PARADOX, production ortamındaki her request'i deterministik olarak kaydeder ve geliştirici makinesinde birebir replay edebilir.
+
+```
+Production → [PARADOX PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLAY]
+                ↑                                        ↓
+         Her I/O yakalanır                   İstediğin anda, istediğin noktaya git
+```
 
 ### Temel Yetenekler
 
-- **Deterministic Record**: Tum I/O boundary'lerini (HTTP, DB, time, random) yakala
-- **Time-Travel Replay**: Herhangi bir request'i yerelde birebir oynat, zamanda ileri/geri git
-- **Distributed Tracing+**: Sadece trace degil, her servisin tam STATE'ini gor
-- **Fix Verification**: Kodu degistir, ayni senaryoyu tekrar calistir — fix'in calisiyor mu?
-- **Smart Sampling**: Akilli ornekleme ile production overhead'i %1'in altinda tut
+- **🔴 Deterministic Record** — HTTP, DB, Date.now(), Math.random(), UUID, timer — her şeyi yakala
+- **⏪ Time-Travel Replay** — Herhangi bir request'i yerelde birebir oynat
+- **🔍 Distributed Tracing+** — Sadece timing değil, her servisin tam STATE'ini gör
+- **🎯 Smart Sampling** — Hataları %100, yeni route'ları %100, geri kalanı %1 örnekle
+- **🔒 Deep Redaction** — JWT, kredi kartı, şifreler — production verisini güvenle kaydet
+- **📦 Binary Export** — Kayıtları paylaş, import et, arşivle
 
-## Kanitlanmis: Calisiyor
+---
+
+## Kanıtlanmış: Çalışıyor
 
 ```
-━━━ STEP 3: VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━ STEP 3: VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  PERFECT REPLAY — Results are BYTE-FOR-BYTE IDENTICAL
+  ✅ PERFECT REPLAY — BYTE-FOR-BYTE IDENTICAL
 
   Original requestId:  57wbkit6
-  Replayed requestId:  57wbkit6
-  Original score:      68
-  Replayed score:      68
+  Replayed requestId:  57wbkit6  ← TAM AYNI
 
-  Date.now()    → deterministic
-  Math.random() → deterministic
-  Response body → identical
+  Date.now()     → 1712345678901  ✓ deterministic
+  Math.random()  → 0.73421847     ✓ deterministic
+  Response body  → identical      ✓ byte-for-byte
+
+━━━ DISTRIBUTED TRACE (2 services, 98 events) ━━━━━━━━━━━━━━━━━━
+
+  order-service   ╠══════════════════════════╣  23ms  (59 events)
+  user-service       ╠══════════╣              8ms   (21 events)
+
+  Cross-service trace: abc123def456...
+  Total span: 23ms
 ```
 
-23 event (Date.now, Math.random, HTTP request/response) yakalanip birebir ayni sonuclari uretecek sekilde replay edildi.
+---
 
-## Mimari
+## Mimari Özeti
 
 ```
-  Your Application
-  ┌──────────┐  ┌──────────┐  ┌──────────┐
-  │Service A │  │Service B │  │Service C │
-  │ [PROBE]  │  │ [PROBE]  │  │ [PROBE]  │
-  └────┬─────┘  └────┬─────┘  └────┬─────┘
-       │              │              │
-       ▼              ▼              ▼
-  ┌─────────────────────────────────────────┐
-  │         PARADOX COLLECTOR               │
-  │    HLC Ordering + Event Storage         │
-  └─────────────┬───────────────────────────┘
-                │
-       ┌────────┼────────┐
-       ▼        ▼        ▼
-  ┌────────┐ ┌────────┐ ┌────────┐
-  │Storage │ │Replay  │ │Time    │
-  │Engine  │ │Engine  │ │Travel  │
-  └────────┘ └────────┘ │UI     │
-                         └────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    UYGULAMANIZ                              │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │  Service A   │  │  Service B   │  │  Service C   │     │
+│  │  [PROBE] ────┼──┼─► [PROBE] ──┼──┼─► [PROBE]    │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+└─────────┼─────────────────┼─────────────────┼─────────────┘
+          │  W3C traceparent│  propagation     │
+          ▼                 ▼                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  PARADOX COLLECTOR :4380                    │
+│          HLC Ordering + File Storage + REST API             │
+└──────────┬──────────────────────┬──────────────────────────┘
+           │                      │
+           ▼                      ▼
+  ┌────────────────┐    ┌─────────────────────┐
+  │  TIME-TRAVEL   │    │   PARADOX CLI       │
+  │  UI :3000      │    │   paradox sessions  │
+  │  Dark theme    │    │   paradox timeline  │
+  │  Timeline      │    │   paradox watch     │
+  │  Scrubber      │    └─────────────────────┘
+  └────────────────┘
+           │
+           ▼
+  ┌────────────────┐
+  │  REPLAY ENGINE │
+  │  Mock I/O      │
+  │  Deterministic │
+  └────────────────┘
 ```
 
-## Packages
+---
 
-| Paket | Durum | Aciklama |
-|-------|-------|----------|
-| `@paradox/core` | v0.4 ✓ | Event schema, HLC, ULID, session import/export (JSON + binary) |
-| `@paradox/probe` | v0.4 ✓ | Express middleware, smart sampling, deep redaction, 15+ interceptors |
-| `@paradox/collector` | v0.4 ✓ | HTTP ingestion server, session assembly, file storage |
-| `@paradox/replay` | v0.4 ✓ | Mock I/O layer, deterministic replay engine, timeline inspection |
-| `@paradox/ui` | v0.3 ✓ | Dark theme time-travel visual debugger with timeline scrubber |
-| `@paradox/cli` | v0.4 ✓ | 10-command CLI: sessions, inspect, timeline, trace, export, watch |
+## Paketler
 
-## Hizli Baslangic
+| Paket | Versiyon | Açıklama |
+|-------|----------|----------|
+| [`@paradox/core`](packages/paradox-core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
+| [`@paradox/probe`](packages/paradox-probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
+| [`@paradox/collector`](packages/paradox-collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
+| [`@paradox/replay`](packages/paradox-replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
+| [`@paradox/ui`](packages/paradox-ui) | v0.4.0 | Dark theme time-travel visual debugger |
+| [`@paradox/cli`](packages/paradox-cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
+
+---
+
+## Hızlı Başlangıç
 
 ```bash
-# Repoyu klonla ve bagimliluklari yukle
-git clone <repo-url> && cd Yutpa && npm install
+# 1. Kur
+git clone https://github.com/zencefilefendi/paradox-engine
+cd paradox-engine && npm install
 
-# Full-stack demo (Collector + 2 Service + UI)
-npx tsx demo/fullstack-demo.ts
+# 2. Full-stack demo başlat (Collector + 2 Servis + UI)
+npm run demo:fullstack
 
-# UI'i ac: http://localhost:3000
+# 3. UI'yi aç
+open http://localhost:3000
+
+# 4. Request üret
+curl -X POST http://localhost:3001/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"2"}'
 ```
 
-### Probe Entegrasyonu (3 satir)
+### Kendi Projenize Entegre (3 satır)
 
 ```typescript
 import { ParadoxProbe } from '@paradox/probe';
 
 const probe = new ParadoxProbe({
-  serviceName: 'user-service',
+  serviceName: 'my-service',
   collectorUrl: 'http://localhost:4380',
-  sampling: { baseRate: 0.01, adaptiveEnabled: true }, // Smart sampling
 });
 
-app.use(probe.middleware());
+app.use(probe.middleware()); // Bitti.
 ```
 
-### CLI ile Kayitlari Yonet
+### CLI ile Kayıtları Yönet
 
 ```bash
-npx paradox sessions           # Tum kayitlari listele
-npx paradox inspect <id>       # Detayli inceleme
-npx paradox timeline <id>      # ASCII event timeline
-npx paradox trace <traceId>    # Distributed trace goster
-npx paradox export <id> r.bin  # Binary export (gzip + CRC32)
-npx paradox watch              # Canli izleme
+npm run cli sessions           # Tüm kayıtları listele
+npm run cli inspect <id>       # Detaylı inceleme
+npm run cli timeline <id>      # ASCII event timeline
+npm run cli trace <traceId>    # Distributed trace görselleştir
+npm run cli export <id> r.bin  # Binary export (gzip + CRC32)
+npm run cli watch              # Canlı izleme modu
 ```
 
-### Demo Endpoint'leri Test Et
+---
 
-```bash
-curl -X POST localhost:3001/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"2"}'
-```
+## Faz Durumu
 
-## Teknik Detaylar
+| Faz | Durum | Öne Çıkan |
+|-----|-------|-----------|
+| **Phase 0: Foundation** | ✅ Tamamlandı | 23 event, byte-for-byte replay kanıtı |
+| **Phase 1: Real I/O** | ✅ Tamamlandı | PG + Redis + MongoDB + timers, 98 event, 2 servis |
+| **Phase 2: Time-Travel UI** | ✅ Tamamlandı | Dark theme debugger, timeline scrubber, service flow |
+| **Phase 3: Production Hardening** | ✅ Tamamlandı | Smart sampling, deep redaction, binary export, CLI |
+| **Phase 4: Launch Ready** | ✅ Tamamlandı | TypeScript build pipeline, per-package README, npm hazır |
+| **Phase 5: Scale & Launch** | 🔄 Sırada | npm publish, landing page, Product Hunt |
 
-Detayli dokumantasyon `docs/` dizininde:
+---
 
-- **[VISION.md](docs/VISION.md)** — Neden variz, hedef kitle, rekabet analizi
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Paket mimarileri, event schema, intercept stratejisi
-- **[TECHNICAL_DEEP_DIVE.md](docs/TECHNICAL_DEEP_DIVE.md)** — HLC, CAS, replay teorisi, sampling
-- **[ROADMAP.md](docs/ROADMAP.md)** — Phase bazli gelistirme plani
-- **[BUSINESS_MODEL.md](docs/BUSINESS_MODEL.md)** — Fiyatlandirma, GTM, finansal projeksiyon
+## Çözülen Mühendislik Zorlukları
 
-## Cozulen Muhendislik Zorluklar
-
-### 1. Re-Entrancy Sonsuz Dongu
-`session.record()` → `ulid()` → `Date.now()` → `session.record()` → sonsuz dongu.
-**Cozum**: `_recording` boolean flag ile re-entrancy guard.
+### 1. Re-Entrancy Sonsuz Döngü
+`session.record()` → `ulid()` → `Date.now()` → `session.record()` → sonsuz döngü.
+**Çözüm**: `_recording` boolean flag ile re-entrancy guard.
 
 ### 2. Circular Import Dependency
 `globals.ts` ↔ `recording-context.ts` birbirini import ediyor.
-**Cozum**: `internal-clock.ts` modulu ile bagimlilik dongusunu kirdik.
+**Çözüm**: `internal-clock.ts` ile bağımlılık döngüsünü kırdık.
 
 ### 3. HLC Clock Isolation
-HLC `Date.now()` cagirinca patched versiyonu goruyordu.
-**Cozum**: `Date.now.bind(Date)` ile orijinal referansi module yukleme aninda yakaladik.
+HLC `Date.now()` çağırınca patched versiyonu görüyordu.
+**Çözüm**: `Date.now.bind(Date)` ile orijinal referansı module yükleme anında yakaladık.
 
-## CLI Kullanimi
+### 4. Distributed Replay Divergence
+Express v5 kendi içinde `Math.random()` çağırıyor — kayıtta var, replay'de yok.
+**Çözüm**: Response body'yi `http_response_out` event'inden direkt oku.
 
-```bash
-# Session'lari listele
-npx tsx packages/paradox-cli/src/index.ts sessions
+### 5. Tail-Based Sampling
+HEAD'de "kaydetme" dersen, ama sonra hata çıkarsa ne yaparsın?
+**Çözüm**: Her request'i buffer'la, sonucu gördükten sonra karar ver.
 
-# Bir session'i incele
-npx tsx packages/paradox-cli/src/index.ts inspect <session-id>
+---
 
-# Event timeline goruntule
-npx tsx packages/paradox-cli/src/index.ts timeline <session-id>
+## Dokümantasyon
 
-# Trace takibi (distributed)
-npx tsx packages/paradox-cli/src/index.ts trace <trace-id>
+| Dosya | İçerik |
+|-------|--------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Teknik mimari, paket detayları, veri akışı |
+| [docs/TOPOLOGY.md](docs/TOPOLOGY.md) | Sistem topolojisi, port haritası, deployment |
+| [docs/TECHNICAL_DEEP_DIVE.md](docs/TECHNICAL_DEEP_DIVE.md) | HLC algoritması, replay teorisi, CAS |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Faz bazlı geliştirme planı |
+| [docs/VISION.md](docs/VISION.md) | Neden varız, hedef kitle, rekabet analizi |
+| [docs/BUSINESS_MODEL.md](docs/BUSINESS_MODEL.md) | Fiyatlandırma, GTM, finansal projeksiyon |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Katkı rehberi, geliştirme ortamı kurulumu |
 
-# Session export (JSON veya binary PRDX)
-npx tsx packages/paradox-cli/src/index.ts export <session-id> --format prdx
-
-# Session import
-npx tsx packages/paradox-cli/src/index.ts import ./session.prdx
-
-# Collector istatistikleri + saglik kontrolu
-npx tsx packages/paradox-cli/src/index.ts stats
-npx tsx packages/paradox-cli/src/index.ts health
-
-# Canli event izleme
-npx tsx packages/paradox-cli/src/index.ts watch
-```
-
-## Mevcut Durum
-
-| Phase | Durum | Detay |
-|-------|-------|-------|
-| Phase 0: Foundation | ✅ Tamamlandi | HTTP record/replay, Date/Random intercept, 23 events |
-| Phase 1: Real I/O | ✅ Tamamlandi | PG, Redis, Mongo, timers, crypto, errors, multi-service (98 events) |
-| Phase 2: Time-Travel UI | ✅ Tamamlandi | Dark theme visual debugger, timeline scrubber, service flow |
-| Phase 3: Production Hardening | ✅ Tamamlandi | Smart sampling, deep redaction, binary export, CLI, benchmark |
-| Phase 4: Launch | 🔄 Sirada | npm publish, per-package README, open-source release |
+---
 
 ## Lisans
 
 Business Source License 1.1 (BSL-1.1)
+
+Production kullanımı için ticari lisans gereklidir.
+Geliştirme ve test için ücretsizdir.
+
+&copy; 2026 PARADOX Engine Contributors

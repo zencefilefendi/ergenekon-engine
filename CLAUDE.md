@@ -5,7 +5,7 @@ PARADOX is a deterministic record & replay engine for distributed systems.
 It enables time-travel debugging of production incidents by recording all I/O boundaries
 and replaying them deterministically on a developer's machine.
 
-**Status**: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅. Phase 4 (Production-Ready) next.
+**Status**: Phase 0 ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅ — npm publish ready. Phase 5 (Scale & Launch) next.
 
 ## Repository Structure
 ```
@@ -15,11 +15,13 @@ Yutpa/
 ├── package.json               # Monorepo root (npm workspaces)
 ├── tsconfig.base.json         # Shared TypeScript config
 ├── docs/
-│   ├── VISION.md              # Why we exist, target audience, market
-│   ├── ARCHITECTURE.md        # Technical architecture deep dive
-│   ├── TECHNICAL_DEEP_DIVE.md # Algorithms, data structures, theory
-│   ├── ROADMAP.md             # Phase-based development plan
-│   └── BUSINESS_MODEL.md      # Pricing, GTM, financials
+│   ├── VISION.md              # Why we exist, target audience, market, milestones
+│   ├── ARCHITECTURE.md        # Package details, data flow, design decisions (ADRs)
+│   ├── TOPOLOGY.md            # System topology, port map, deployment scenarios
+│   ├── TECHNICAL_DEEP_DIVE.md # HLC, replay theory, sampling, redaction, PRDX format
+│   ├── ROADMAP.md             # Phase-based development plan (Phase 0-5)
+│   ├── BUSINESS_MODEL.md      # Pricing, GTM, financials, risk analysis
+│   └── CONTRIBUTING.md        # Dev environment setup, coding standards, PR process
 ├── packages/
 │   ├── paradox-core/          # Shared types, HLC, ULID (NO dependencies)
 │   │   └── src/

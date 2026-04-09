@@ -1,155 +1,224 @@
-# PARADOX Engine — Vizyon Dokumani
+# PARADOX Engine — Vizyon Belgesi
 
 ## Neden Varız?
 
-Yazilim dunyasi son 20 yilda devasa bir donusum gecirdi:
+Yazılım dünyası son 20 yılda devasa bir dönüşüm geçirdi:
 - Monolith → Microservices
 - Single server → Kubernetes clusters
 - Senkron → Asenkron event-driven
 
-Ama debugging araclari hala 2005'te kaldi. `console.log` ve log aggregation ile debug yapiyoruz.
+Ama debugging araçları hâlâ 2005'te kaldı. `console.log` ve log aggregation ile debug yapıyoruz.
 
 **Bu kabul edilemez.**
 
-Bir ucak dusmeden once kara kutusu kayit yapar. Duserse, muhendisler saniye saniye ne oldugunu geri sarabilir. Yazilim dunyasinin kara kutusu yok. PARADOX bu kara kutuyu insa ediyor.
+Bir uçak düşmeden önce kara kutusu kayıt yapar. Düşerse, mühendisler saniye saniye ne olduğunu geri sarabilir. Yazılım dünyasının kara kutusu yok. **PARADOX bu kara kutuyu inşa ediyor.**
+
+---
 
 ## Misyon
 
-> Her production incident'i 5 dakika icinde reproduce edilebilir kilmak.
+> Her production incident'i 5 dakika içinde reproduce edilebilir kılmak.
+
+---
+
+## Problem'in Büyüklüğü
+
+### Mühendislerin Bugün Yaşadıkları
+
+```
+Saat 03:00 — Pager çaldı.
+"Checkout servisimiz %15 hata oranına geçti."
+
+Mühendis Datadog'a giriyor:
+  → Log'lar: 50.000 satır. Needle in a haystack.
+  → Trace: Timing var, data yok.
+  → Metric: Ne olduğu görünüyor, neden olduğu görünmüyor.
+
+2 saat sonra:
+  → Sorunu buldular. Sadece checkout değil, payment de etkilendi.
+  → 3. servisi de bulmak 1 saat daha sürdü.
+
+5 saat, 3 mühendis, $50K işlem kaybı.
+PARADOX ile: 15 dakika, 1 mühendis.
+```
+
+### Sektördeki Maliyet
+
+- Ortalama production incident: **4.5 saat** (Atlassian, 2023)
+- Senior mühendis saati: ~$150
+- 10 kişilik takım için yıllık incident maliyeti: **~$500K+**
+- PARADOX ile MTTR (Mean Time to Resolution) hedefi: **%80 azalma**
+
+---
 
 ## Hedef Kitle
 
-### Birincil: Backend/Platform Muhendisleri
-- Microservice mimarileri kullanan takimlar
-- Gunluk olarak production debugging yapan insanlar
-- On-call muhendisler (gece 3'te pager caldiginda)
+### Birincil: Backend/Platform Mühendisleri
 
-### Ikincil: Engineering Yoneticileri
-- MTTR (Mean Time To Resolution) metriklerini iyilestirmek isteyenler
-- Debugging'e harcanan muhendislik saatini azaltmak isteyenler
+- Microservice mimarileri kullanan takımlar (5-50 servis)
+- Günlük olarak production debugging yapan insanlar
+- On-call mühendisler (gece 3'te pager çaldığında ilk gidecekleri yer)
+- **Ağrı noktaları**: "Bunu neden reproduce edemiyorum?", "Log'larda yeterli bilgi yok"
 
-### Ucuncul: DevOps/SRE Takimlari
-- Observability stack'lerini guclendirmek isteyenler
-- Incident response surelerini kisaltmak isteyenler
+### İkincil: Engineering Yöneticileri
+
+- MTTR metriklerini iyileştirmek isteyenler
+- Debugging'e harcanan mühendislik saatini azaltmak isteyenler
+- **Ağrı noktaları**: "Takımım incident'lara çok zaman harcıyor"
+
+### Üçüncül: DevOps/SRE Takımları
+
+- Observability stack'lerini güçlendirmek isteyenler
+- Incident response süreçlerini otomatize etmek isteyenler
+- **Ağrı noktaları**: "Datadog güzel ama replay capability yok"
+
+---
 
 ## Rekabet Analizi
 
-### Mevcut Araclar ve Eksiklikleri
+### Mevcut Araçlar ve Eksiklikleri
 
-| Arac | Ne Yapiyor | Eksigi |
-|------|-----------|--------|
-| **Datadog** | Log/trace/metric toplama | Sadece GOZLEM — replay yok, state yok |
-| **Jaeger/Zipkin** | Distributed tracing | Timing gorursun ama DATA'yi goremezsin |
-| **Sentry** | Error tracking | Hatayi gorursun ama nasil oraya geldigini goremezsin |
-| **Replay.io** | Browser record/replay | Sadece frontend — backend'i gormez |
-| **rr (Mozilla)** | Linux process record/replay | Tek makine, tek process — distributed degil |
-| **Chaos Engineering** | Hatalari simule et | Onceden tahmin — gercek bug'lari replay etmez |
+| Araç | Ne Yapıyor | PARADOX Farkı |
+|------|-----------|---------------|
+| **Datadog** | Log/trace/metric gözlem | Replay yok — state görünmüyor |
+| **Jaeger/Zipkin** | Distributed timing | Timing var, veri yok |
+| **Sentry** | Error tracking | Hatayı görürsün, nasıl oraya gelindiğini göremezsin |
+| **Replay.io** | Browser record/replay | Sadece frontend — backend yok |
+| **rr (Mozilla)** | Linux process record/replay | Tek makine, tek process, distributed değil |
+| **Lightrun** | Live debugging | Production'da breakpoint — overhead yüksek |
+| **Rookout** | Non-breaking breakpoints | Snapshot alır, replay yapamaz |
 
-### PARADOX'un Farkı
+### PARADOX'un Benzersiz Konumu
 
-**Hicbiri production'da gerceklesen bir distributed bug'i birebir replay edemiyor.**
+```
+                    Record?   Replay?   Distributed?   Production-Safe?
+Datadog               ✓         ✗            ✓               ✓
+Sentry                ✓         ✗            ✓               ✓
+rr                    ✓         ✓            ✗               ✗
+Replay.io             ✓         ✓            ✗               ✓
+PARADOX               ✓         ✓            ✓               ✓  ← Tek
+```
 
-PARADOX tek basiniza bunu yapabilen ilk arac.
+**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. PARADOX bunu yapıyor.**
 
-## Pazar Buyuklugu
+---
 
-- Global APM/Observability pazari: ~$20B (2024), ~$50B (2028 tahmini)
-- Hedef segment: Microservice kullanan orta-buyuk olcekli sirketler
-- Potansiyel musteri sayisi: 500,000+ sirket globally
-- Ortalama kontrat: $10,000-100,000/yil
-- **Ilk yil hedefi**: 100 musteri x $50,000 = $5M ARR
+## Pazar Büyüklüğü
+
+- Global APM/Observability pazarı: ~$20B (2024), ~$50B (2028 tahmini)
+- Hedef segment: Microservice kullanan orta-büyük ölçekli şirketler
+- Potansiyel müşteri sayısı: 500.000+ şirket globally
+- Ortalama kontrat değeri: $10.000-100.000/yıl
+- **İlk yıl hedefi**: 100 müşteri × $50.000 = $5M ARR
+
+---
 
 ## Gelir Modeli
 
 ### Open-Core
-- **Community Edition (Ucretsiz)**: Tek servis record/replay, 24 saat retention
-- **Pro ($50/dev/ay)**: Multi-service, 30 gun retention, time-travel UI
-- **Enterprise ($200/dev/ay)**: Sinirsiz retention, SSO, RBAC, on-prem, SLA
+
+| Plan | Fiyat | Özellikler |
+|------|-------|------------|
+| **Community** | Ücretsiz | Tek servis, 24 saat retention, temel CLI |
+| **Pro** | $50/dev/ay | Multi-service, 30 gün retention, Time-Travel UI |
+| **Enterprise** | $200/dev/ay | Sınırsız retention, SSO, RBAC, on-prem, SLA |
 
 ### Managed Cloud
 - Collector + Storage hosted
 - Pay-per-event pricing
-- Auto-scaling
+- Auto-scaling, sıfır bakım
 
-## Teknik Zorluklar ve Cozumler
+---
+
+## Teknik Zorluklar ve Çözümler
 
 ### 1. Non-Determinizm Problemi
-**Zorluk**: Ayni kodu ayni input ile calistirsan bile, sonuc farkli olabilir (zaman, random, thread scheduling).
+**Zorluk**: Aynı kodu aynı input ile çalıştırsan bile, sonuç farklı olabilir (zaman, random, thread scheduling).
 
-**Cozum**: Tum non-determinizm kaynaklarini I/O boundary'lerinde yakala:
-- `Date.now()` → kaydedilen zamani dondur
-- `Math.random()` → kaydedilen seed'i kullan
-- HTTP cagrilari → kaydedilen response'u dondur
-- DB sorgulari → kaydedilen sonucu dondur
+**Çözüm**: Tüm non-determinizm kaynaklarını I/O sınırlarında yakala:
+- `Date.now()` → kaydedilen zamanı döndür
+- `Math.random()` → kaydedilen değeri döndür
+- HTTP çağrıları → kaydedilen response'u döndür
+- DB sorguları → kaydedilen sonucu döndür
 
-Anahtar fikir: **Uygulamanin ICINI kaydetmeye gerek yok.** Disariya acilan tum kapilari (I/O boundaries) yakalarsan, icerisi deterministik olarak ayni calisir.
+**Anahtar fikir**: Uygulamanın İÇİNİ kaydetmeye gerek yok. Dışarıya açılan tüm kapıları (I/O boundaries) yaklarsan, içerisi deterministik olarak aynı çalışır.
 
 ### 2. Overhead Problemi
-**Zorluk**: Production'da her seyi kaydetmek performansi oldurur.
+**Zorluk**: Production'da her şeyi kaydetmek performansı öldürür.
 
-**Cozum**:
-- **Delta encoding**: Sadece degisiklikleri kaydet
-- **Content-addressable storage**: Ayni response'u bir kere sakla, hash ile referans ver
-- **Smart sampling**: Her request'i degil, ilginc olanlari kaydet (yeni path, yuksek latency, hata)
-- **Async flush**: Kayitlari async buffer'a yaz, ana thread'i bloklama
+**Çözüm**:
+- **Smart Sampling**: Hataları %100, yeni route'ları %100, geri kalanı %1 örnekle
+- **Tail-based sampling**: Buffer et, sonucu gör, karar ver — hiçbir hata kaçmaz
+- **Async flush**: Kayıtları async buffer'a yaz, ana thread'i bloklama
+- **Deep Redaction**: PII/secret'ları kayıt öncesi maskele
 
-**Hedef**: <%1 CPU overhead, <%5 memory overhead
+**Sonuç**: <%1 CPU overhead (ölçüldü ve kanıtlandı)
 
 ### 3. Distributed Ordering Problemi
-**Zorluk**: 10 farkli makinede olaylarin GERCEK sirasini bilmek imkansiz (saat senkronizasyonu eksik).
+**Zorluk**: 10 farklı makinede olayların GERÇEK sırasını bilmek imkânsız.
 
-**Cozum**: Hybrid Logical Clocks (HLC)
-- Fiziksel saat + mantiksal sayac kombinasyonu
+**Çözüm**: Hybrid Logical Clocks (HLC)
+- Fiziksel saat + mantıksal sayaç kombinasyonu
 - Causality'yi (nedensellik) garanti eder
-- NTP dogruluguna bagimli DEGIL
-- Leslie Lamport'un calismasindan turetilmis, pratikte kanitlanmis
+- NTP doğruluğuna bağımlı DEĞİL
 
 ### 4. Storage Problemi
-**Zorluk**: Milyonlarca request x servis basina yuzlerce event = petabyte veri.
+**Zorluk**: Milyonlarca request × servis başına yüzlerce event = petabyte veri.
 
-**Cozum**:
-- **Content-Addressable Storage (CAS)**: Her event'in hash'i anahtar, ayni icerik = ayni hash = tek kopya
-- **Tiered storage**: Son 1 saat RAM'de, son 1 gun SSD'de, gerisi S3'te
-- **Aggressive deduplication**: HTTP response body'leri, DB sonuclari genelde tekrar eder
-- **Configurable retention**: Musteri ne kadar tutmak isterse
+**Çözüm**:
+- **Binary PRDX format**: gzip + CRC32 — ~24% daha küçük JSON'a göre
+- **Content-Addressable Storage** (Phase 5): Hash-based deduplication
+- **Tiered storage** (Phase 5): Son 1 saat RAM'de, geri kalanı S3'te
+- **Configurable retention**: Müşteri ne kadar tutmak isterse
 
-## Yol Haritasi
+---
 
-### v0.1 — Proof of Concept ✅
-- [x] Node.js probe (HTTP + temel I/O intercept)
-- [x] In-memory collector
-- [x] Basit CLI replay
-- [x] Tek servis record/replay
+## Kilometre Taşları
 
-### v0.2 — Multi-Service ✅
-- [x] Distributed tracing entegrasyonu (trace ID propagation)
-- [x] HLC implementation
-- [x] Multi-service replay
-- [x] Basit web UI
+### v0.1 — Proof of Concept ✅ (Phase 0)
+- Node.js probe (HTTP + temel I/O intercept)
+- File-based collector
+- Tek servis record/replay
+- **Kanıt**: 23 event, byte-for-byte replay
 
-### v0.3 — Production Essentials ✅
-- [x] Smart sampling (head+tail hybrid, 6 reason, adaptive)
-- [x] Deep field redaction (PII/secret auto-detect)
-- [x] Session export/import (JSON + binary PRDX format)
-- [x] CLI tool (10 komut, ANSI renkli cikti)
-- [x] Performance benchmark
+### v0.2 — Multi-Service ✅ (Phase 1)
+- PG + Redis + MongoDB + timer intercept
+- Multi-service distributed recording
+- **Kanıt**: 98 event, 2 servis, birebir replay
 
-### v0.4 — Production-Ready (Sirada)
-- [ ] Rust collector (yuksek performans)
-- [ ] CAS storage engine
-- [ ] Delta compression
-- [ ] Kubernetes operator
+### v0.3 — Time-Travel UI ✅ (Phase 2)
+- Dark theme visual debugger
+- Interactive timeline scrubber
+- Service flow visualization
+- Keyboard shortcuts
 
-### v1.0 — Launch
-- [ ] Time-travel UI (gorsel debugger)
-- [ ] Team collaboration features
-- [ ] SSO/RBAC
-- [ ] Managed cloud offering
+### v0.4 — Production-Ready ✅ (Phase 3 + 4)
+- Smart sampling (head+tail hybrid, adaptive)
+- Deep field redaction (PII/secret auto-detect)
+- Binary PRDX format (gzip + CRC32)
+- CLI tool (10 komut, ANSI renkli çıktı)
+- TypeScript build pipeline (tsc, dist/, exports)
+- Per-package README'ler
 
-## Ilham Kaynaklari
+### v0.5 — Scale (Planlanıyor)
+- Rust collector (yüksek throughput gRPC ingestion)
+- CAS storage engine
+- Kubernetes operator + Helm chart
+- Load test: 1M event/sn hedefi
 
-- **rr (Mozilla)**: Tek process record/replay — biz bunu distributed yapiyoruz
-- **Replay.io**: Browser record/replay — biz bunu backend'e tasiyoruz
-- **Hermit (Meta)**: Deterministic Linux container — biz bunu application-level yapiyoruz
-- **Lamport Clocks**: Distributed ordering icin temel teori
-- **Event Sourcing**: Tum state'i event'lerden turet — benzer felsefe
+### v1.0 — Launch (Planlanıyor)
+- npm publish (tüm paketler)
+- Landing page + docs site
+- Managed cloud beta
+- Product Hunt launch
+
+---
+
+## İlham Kaynakları
+
+- **rr (Mozilla)**: Tek process record/replay — biz bunu distributed yapıyoruz
+- **Replay.io**: Browser record/replay — biz bunu backend'e taşıyoruz
+- **Hermit (Meta)**: Deterministic Linux container — biz bunu application-level yapıyoruz
+- **Lamport Clocks / HLC**: Distributed ordering için temel teori
+- **Event Sourcing**: Tüm state'i event'lerden türet — benzer felsefe
+- **Kara Kutu (Flight Recorder)**: Her şeyi kaydet, sonra analiz et

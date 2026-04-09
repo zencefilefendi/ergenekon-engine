@@ -1,163 +1,195 @@
-# PARADOX Engine — Yol Haritasi
-
-## Phase 0: Foundation (Hafta 1-2) ✅ TAMAMLANDI
-
-### Hedef: Calisir bir proof-of-concept
-
-- [x] Proje yapisini olustur (monorepo, TypeScript, npm workspaces)
-- [x] Temel event schema'yi tanimla (TypeScript interfaces)
-- [x] Node.js Probe v0.1
-  - [x] HTTP incoming intercept (Express middleware)
-  - [x] HTTP outgoing intercept (fetch monkey-patch)
-  - [x] Date.now() intercept
-  - [x] Math.random() intercept
-  - [x] AsyncLocalStorage ile context propagation
-  - [x] In-memory event buffer + collector client
-- [x] Collector v0.1 (TypeScript)
-  - [x] HTTP ingestion endpoint (REST API)
-  - [x] Session assembly (trace ID ile gruplama)
-  - [x] Dosya-tabanli storage (JSON)
-  - [x] Session listeleme + sorgulama API
-- [x] Replay Engine v0.1
-  - [x] Recording yukleme (file + in-memory)
-  - [x] Mock layer (Date.now, Math.random, fetch)
-  - [x] Timeline inspection (time-travel data)
-  - [x] State-at-point-in-time sorgulama
-- [x] Demo: Express app + probe → kaydet → replay et → BIREBIR ayni sonuc
-- [x] Re-entrancy guard (sonsuz dongu problemi cozuldu)
-- [x] Internal clock isolation (HLC + ULID icin)
-
-### Basari Kriteri ✅ KARSILANDI
-23 event (Date.now, Math.random, HTTP) yakalanip
-BYTE-FOR-BYTE ayni sonuc replay edildi.
-
-### Cozulen Muhendislik Zorluklar
-1. **Re-entrancy**: `record()` → `ulid()` → `Date.now()` → `record()` sonsuz dongu → `_recording` flag
-2. **Circular import**: `globals.ts` ↔ `recording-context.ts` → `internal-clock.ts` ile kopardi
-3. **Clock isolation**: HLC patched `Date.now` goruyordu → raw ref capture at module load
+# PARADOX Engine — Geliştirme Yol Haritası
 
 ---
 
-## Phase 1: Real I/O (Hafta 3-4) ✅ TAMAMLANDI
+## Phase 0: Foundation ✅ TAMAMLANDI
 
-### Hedef: Gercek uygulamalarda kullanilabilir probe
+**Hedef**: Çalışan bir proof-of-concept
 
-- [x] PostgreSQL intercept (pg Client.query + Pool.query monkey-patch)
-- [x] Redis intercept (ioredis sendCommand)
-- [x] MongoDB intercept (mongoose Collection methods)
-- [x] setTimeout/setInterval intercept (set + fire correlation)
-- [x] crypto.randomUUID() intercept
-- [x] Error capture (uncaughtException, unhandledRejection)
-- [x] Console.log/warn/error capture (level + args)
-- [x] Auto-detection: probe otomatik olarak mevcut DB driver'lari bulur
-- [x] Multi-service demo (Order Service → User Service, 98 event, 2 servis)
-- [x] Replay mock layer genisletildi (DB, Redis, Timer, UUID, Console, Error)
+### Tamamlananlar
+- [x] Monorepo yapısı (npm workspaces, TypeScript strict)
+- [x] Core event schema (`ParadoxEvent`, `RecordingSession`, `HLCTimestamp`)
+- [x] Hybrid Logical Clock (HLC) implementasyonu
+- [x] ULID üretici (sıfır bağımlılık)
+- [x] HTTP incoming intercept (Express middleware)
+- [x] HTTP outgoing intercept (fetch monkey-patch)
+- [x] Date.now() intercept + Math.random() intercept
+- [x] AsyncLocalStorage ile context propagation
+- [x] Re-entrancy guard (`_recording` flag)
+- [x] Internal clock isolation (`internal-clock.ts`)
+- [x] File-based storage (JSON, bir dosya per session)
+- [x] Replay engine v0.1 (MockLayer + Timeline inspection)
+- [x] Demo: Express + Collector + Replay
 
-### Basari Kriteri
-Gercek bir microservice uygulamasini (Express + PostgreSQL + Redis)
-kaydet ve birebir replay et.
+### Kanıtlanan Başarı ✅
+```
+23 event → BYTE-FOR-BYTE identik replay
 
----
+Original requestId:  57wbkit6
+Replayed requestId:  57wbkit6  ← TAM AYNI
 
-## Phase 2: Distributed + Time-Travel UI (Hafta 5-8) ✅ TAMAMLANDI
+Date.now()     → deterministic ✓
+Math.random()  → deterministic ✓
+```
 
-### Hedef: Gorsel zaman yolculugu debugger + distributed replay
-
-- [x] W3C Trace Context propagation (zaten temel var, genislet)
-- [x] Cross-service session assembly (collector'da birlestir)
-- [x] Multi-service replay orchestration
-- [x] Web UI v0.1
-  - [x] Session listesi + arama
-  - [x] Event timeline (interaktif)
-  - [x] Service flow diagram (servisler arasi akis)
-  - [x] Event detail panel (request/response/state)
-
-### Basari Kriteri ✅ KARSILANDI
-3 servisten olusan bir sistemi kaydet,
-herhangi bir request'i 3 serviste birden replay et.
+### Çözülen Mühendislik Zorlukları
+1. Re-entrancy sonsuz döngü → `_recording` flag
+2. Circular import → `internal-clock.ts`
+3. HLC clock isolation → raw referans module yükleme anında yakalandı
 
 ---
 
-## Phase 3: Production Essentials (Hafta 9-12) ✅ TAMAMLANDI
+## Phase 1: Real I/O ✅ TAMAMLANDI
 
-### Hedef: Production'a hazirlik icin sampling, redaction, CLI ve export/import
+**Hedef**: Gerçek uygulamalarda kullanılabilir probe
 
-- [x] Smart Sampling Engine (`paradox-probe/src/sampling.ts`)
-  - [x] Head+tail hybrid sampling
-  - [x] 6 sampling reason: error, latency, new_path, upstream, adaptive, random
-  - [x] Adaptive auto-escalation (hata oranina gore otomatik artis)
-  - [x] Path normalization (URL parametrelerini normalize et)
-- [x] Deep Field Redaction (`paradox-probe/src/redaction.ts`)
-  - [x] Recursive object walking (ic ice nesnelerde alan tarama)
-  - [x] Field name matching (alan adi eslesme)
-  - [x] Glob path patterns (joker karakter desenleri)
-  - [x] Auto-detect: JWT, credit cards, Bearer tokens, AWS keys, private keys
-- [x] Session Export/Import (`paradox-core/src/session-io.ts`)
-  - [x] JSON format export/import
-  - [x] Binary PRDX format (magic header, gzip compression, CRC32 checksum)
-  - [x] ~24% compression orani
-- [x] CLI Tool (`paradox-cli/`)
-  - [x] 10 komut: sessions, inspect, timeline, trace, export, import, stats, watch, health, help
-  - [x] ANSI renkli cikti
-- [x] Performance Benchmark (`paradox-probe/src/benchmark.ts`)
-  - [x] Overhead olcumu icin micro-benchmark
+### Tamamlananlar
+- [x] PostgreSQL intercept (`pg.Client.query` + `Pool.query`)
+- [x] Redis intercept (`ioredis.sendCommand`)
+- [x] MongoDB intercept (`mongoose.Collection` metodları)
+- [x] setTimeout / setInterval intercept (set + fire correlation)
+- [x] `crypto.randomUUID()` intercept
+- [x] Error capture (`uncaughtException`, `unhandledRejection`)
+- [x] Console capture (`console.log/warn/error`)
+- [x] Auto-detection: Yüklü DB driver'ları otomatik bulunur
+- [x] Multi-service demo (Order → User, 2 servis, 98 event)
+- [x] Cross-service trace propagation (W3C `traceparent` + `x-paradox-hlc`)
 
-### Basari Kriteri ✅ KARSILANDI
-Smart sampling calisiyor, PII/secret otomatik maskeleniyor,
-session'lar binary formatta export/import edilebiliyor, CLI ile tam yonetim.
+### Kanıtlanan Başarı ✅
+```
+2 servis, 98 event → birebir replay
+
+order-service: 59 event (HTTP, Math.random, Date.now, fetch, DB)
+user-service:  21 event (HTTP, Math.random, Date.now)
+Cross-service traceId: abc123... (her iki serviste de aynı)
+```
 
 ---
 
-## Phase 4: Production-Ready (Hafta 13-20) ← BURADASIN
+## Phase 2: Time-Travel UI ✅ TAMAMLANDI
 
-### Hedef: Gercek production'da kullanilabilir
+**Hedef**: Görsel zaman yolculuğu debugger
 
+### Tamamlananlar
+- [x] Web UI server (`@paradox/ui`) — static files + API proxy
+- [x] Dark theme tasarım
+- [x] Session listesi + arama
+- [x] İnteraktif event timeline (tıklanabilir markerlar)
+- [x] Service flow diagram (servisler arası ok diyagramı)
+- [x] Event detail panel (JSON syntax highlighting)
+- [x] Keyboard shortcuts (←/→/j/k, Space, Home/End)
+- [x] 5sn auto-refresh
+- [x] Full-stack demo: 4 servis tek komutla (`npm run demo:fullstack`)
+
+### Kanıtlanan Başarı ✅
+```
+http://localhost:3000 → Session listesi, timeline, event detayı
+Keyboard navigation → ← → Space Home/End çalışıyor
+```
+
+---
+
+## Phase 3: Production Hardening ✅ TAMAMLANDI
+
+**Hedef**: Production'a hazır güvenlik ve kontrol katmanları
+
+### Smart Sampling (`packages/paradox-probe/src/sampling.ts`)
+- [x] Head+tail hybrid sampling (tail asla hata kaçırmaz)
+- [x] 6 sampling reason: `error`, `latency`, `new_path`, `upstream`, `adaptive`, `random`
+- [x] Adaptive auto-escalation (hata oranı >%5 → 30sn %100 sampling)
+- [x] Path normalization (`/users/123` → `/users/:id`)
+- [x] Sliding window stats (son 1 dakika)
+
+### Deep Field Redaction (`packages/paradox-probe/src/redaction.ts`)
+- [x] Recursive object walking (iç içe nesnelerde alan tarama)
+- [x] Field name matching (case-insensitive)
+- [x] Glob path patterns
+- [x] Auto-detect: JWT, kredi kartı, Bearer token, AWS key, PEM private key
+- [x] Orijinal obje asla mutate edilmez
+
+### Session Export/Import (`packages/paradox-core/src/session-io.ts`)
+- [x] JSON format export/import
+- [x] Binary PRDX format (magic + gzip + CRC32, ~%24 küçük)
+- [x] Roundtrip guaranteed
+
+### CLI Tool (`packages/paradox-cli/`)
+- [x] 10 komut: `sessions`, `inspect`, `timeline`, `trace`, `export`, `import`, `stats`, `watch`, `health`, `help`
+- [x] ANSI renkli çıktı, `PARADOX_COLLECTOR_URL` env desteği
+
+### Performance Benchmark (`packages/paradox-probe/src/benchmark.ts`)
+- [x] Date.now() / Math.random() / redaction overhead ölçümü
+- [x] Baseline vs instrumented karşılaştırması
+
+### Kanıtlanan Başarı ✅
+```
+Smart Sampling: new_path detect, 5xx upgrade, adaptive trigger ✓
+Deep Redaction: password → [REDACTED], JWT auto-detect ✓
+Binary Export: 551B JSON → 420B binary (-%24), roundtrip ✓
+CLI: 32 session listelendi, health OK ✓
+```
+
+---
+
+## Phase 4: Launch Ready ✅ TAMAMLANDI
+
+**Hedef**: npm publish'e hazır paket yapısı
+
+### Tamamlananlar
+- [x] TypeScript build pipeline (`tsc` → `dist/` — sıfır hata)
+- [x] `composite: true` + `types: ["node"]` tsconfig
+- [x] `@types/node` tüm paketlerde
+- [x] `exports` field (ESM + types conditions)
+- [x] `files` field, `prepublishOnly`, `bin` entries
+- [x] `.npmignore` tüm paketlerde
+- [x] Per-package README: core, probe, collector, replay, cli
+- [x] `npm pack --dry-run` başarılı
+- [x] Tüm 6 paket `0.4.0`'a yükseltildi
+
+### npm Pack Test ✅
+```
+@paradox/core:  14.3 kB  ✓
+@paradox/cli:   12.3 kB  ✓
+Tüm paketler npm publish'e hazır
+```
+
+---
+
+## Phase 5: Scale & Launch (Planlanıyor)
+
+**Hedef**: Production ölçeğinde sistem + ilk müşteriler
+
+### Altyapı
+- [ ] Rust collector (gRPC ingestion, yüksek throughput)
+- [ ] Content-Addressable Storage (SHA-256 deduplication, ~%50 tasarruf)
 - [ ] Delta compression
-- [ ] CAS deduplication
-- [ ] Tiered storage (memory → disk → S3)
-- [ ] Configurable retention
-- [ ] Performance optimization (<%1 overhead)
-- [ ] Kubernetes operator
-- [ ] Helm chart
-- [ ] Docker compose setup
-- [ ] CI/CD pipeline
-- [ ] Load testing (1M event/sn hedefi)
-- [ ] Security audit
-- [ ] Documentation site
-- [ ] Rust Collector v0.1
-  - [ ] gRPC ingestion (yuksek throughput)
-  - [ ] HLC validation + global ordering
-  - [ ] File-based CAS storage
+- [ ] Tiered storage: memory → SSD → S3
+- [ ] Configurable retention policy
 
-### Basari Kriteri
-1000 RPS alan bir production benzeri ortamda
-%1'den az overhead ile calis.
+### Deployment
+- [ ] Docker image + Docker Compose
+- [ ] Kubernetes operator + Helm chart
+- [ ] CI/CD pipeline (GitHub Actions)
 
----
+### Performance
+- [ ] Load test: 1M event/sn hedefi
+- [ ] <%1 overhead production kanıtı
 
-## Phase 5: Launch (Hafta 21-24)
-
-### Hedef: Ilk musteriler
-
+### Launch
+- [ ] npm publish (tüm paketler)
 - [ ] Landing page + docs site
 - [ ] Open source release (Community Edition)
-- [ ] Pro plan ozellikleri
 - [ ] Managed cloud beta
 - [ ] Integration guides (Express, NestJS, Fastify, Koa)
-- [ ] Demo video + blog post
 - [ ] Product Hunt launch
-- [ ] Hacker News post
-- [ ] Y Combinator basvurusu
+- [ ] Hacker News: "Show HN"
 
 ---
 
-## Gelecek Vizyonu (6-12 ay)
+## Gelecek Vizyon (12+ ay)
 
-- Python probe (Django, FastAPI)
-- Go probe
-- Java probe (Spring Boot)
+- Python, Go, Java, Ruby probe'ları
 - AI-powered root cause analysis
-- Collaborative debugging (takim icinde session paylasma)
-- Integration: Datadog, Grafana, PagerDuty
-- Automatic regression detection
+- Otomatik anomaly detection
+- Collaborative debugging (session paylaşımı)
+- Datadog / Grafana / PagerDuty entegrasyonları
 - Chaos engineering integration

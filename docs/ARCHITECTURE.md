@@ -1,387 +1,560 @@
 # PARADOX Engine — Teknik Mimari
 
-## Genel Bakis
+Bu belge PARADOX Engine'in tüm paketlerini, iç tasarım kararlarını, kritik algoritmaları ve bileşenler arası bağımlılıkları açıklar.
 
-PARADOX dort ana paketten olusur. Her biri bagimsiz calisabilir, birlikte guclu bir sistem olusturur.
-
-**Mevcut Durum (Phase 3 tamamlandi)**:
-- paradox-core: ✅ Calisiyor (types, HLC, ULID, session export/import)
-- paradox-probe: ✅ Calisiyor (HTTP, Date.now, Math.random, fetch, DB, sampling, redaction)
-- paradox-collector: ✅ Calisiyor (HTTP REST, dosya storage)
-- paradox-replay: ✅ Calisiyor (mock layer, timeline inspection)
-- paradox-cli: ✅ Calisiyor (10 komut, ANSI cikti)
-- paradox-ui: ⏳ Planli
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        KULLANICI UYGULAMASI                     │
-│                                                                 │
-│   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐         │
-│   │  Service A   │   │  Service B   │   │  Service C   │        │
-│   │             │   │             │   │             │         │
-│   │ ┌─────────┐ │   │ ┌─────────┐ │   │ ┌─────────┐ │        │
-│   │ │  PROBE  │ │   │ │  PROBE  │ │   │ │  PROBE  │ │        │
-│   │ └────┬────┘ │   │ └────┬────┘ │   │ └────┬────┘ │        │
-│   └──────┼──────┘   └──────┼──────┘   └──────┼──────┘        │
-│          │                 │                 │                 │
-└──────────┼─────────────────┼─────────────────┼─────────────────┘
-           │                 │                 │
-           │    HTTP/gRPC    │    HTTP/gRPC    │
-           ▼                 ▼                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      PARADOX COLLECTOR                           │
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
-│  │ Event        │  │ HLC          │  │ Storage      │         │
-│  │ Ingestion    │──│ Ordering     │──│ Engine       │         │
-│  │ (REST API)   │  │ Engine       │  │ (File JSON)  │         │
-│  └──────────────┘  └──────────────┘  └──────┬───────┘         │
-│                                              │                 │
-└──────────────────────────────────────────────┼─────────────────┘
-                                               │
-                    ┌──────────────────────────┼──────┐
-                    │                          │      │
-                    ▼                          ▼      ▼
-          ┌──────────────┐          ┌────────────┐ ┌─────────┐
-          │   STORAGE    │          │  REPLAY    │ │  TIME   │
-          │   ENGINE     │          │  ENGINE    │ │  TRAVEL │
-          │              │          │            │ │  UI     │
-          │ Sessions as  │          │ MockLayer  │ │         │
-          │ JSON files   │◄────────│ +Timeline  │ │ (Plan)  │
-          │              │          │ Inspection │ │         │
-          └──────────────┘          └────────────┘ └─────────┘
-
-```
-
-## Paket Detaylari
+**Durum**: Phase 0 ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅
 
 ---
 
-## 1. PARADOX CORE (`@paradox/core`)
+## Paket Bağımlılık Grafiği
 
-**Dil**: TypeScript | **Bagimlilik**: Sifir | **Durum**: ✅ v0.1
+```
+@paradox/core          (0 bağımlılık — temel katman)
+      ▲
+      │ import
+      ├──────────────────────────────────┐
+      │                                  │
+@paradox/probe          @paradox/collector    @paradox/replay
+(interceptors,          (storage, REST API)   (mock layer,
+ sampling, redaction)                          timeline)
+      │                      │                    │
+      │                      │                    │
+      └──────────────────────┴────────────────────┘
+                             │
+                    @paradox/ui  @paradox/cli
+                    (web UI)     (terminal CLI)
+```
 
-Tum paketlerin paylastigi temel tipler ve yardimci araclar.
+---
 
-### Icerik
-- **types.ts**: `ParadoxEvent`, `RecordingSession`, `ProbeConfig`, `HLCTimestamp` — sistemin DNA'si
-- **hlc.ts**: Hybrid Logical Clock — distributed event ordering
-- **ulid.ts**: Zaman-sirali benzersiz ID uretici (sifir bagimlilik)
+## 1. @paradox/core
 
-### Event Schema (Cekirdek)
+**Rol**: Sıfır bağımlılıklı temel tip kütüphanesi  
+**Dosyalar**: `src/types.ts`, `src/hlc.ts`, `src/ulid.ts`, `src/session-io.ts`, `src/index.ts`
+
+### 1.1 Event Schema
+
+Sistemin atom birimi `ParadoxEvent`'tir. Her I/O sınır geçişi bir event üretir.
 
 ```typescript
 interface ParadoxEvent {
-  id: string;                    // ULID
-  traceId: string;               // W3C Trace ID
-  spanId: string;                // Operation span
-  parentSpanId: string | null;   // Causal parent
-  hlc: HLCTimestamp;             // Hybrid Logical Clock
-  wallClock: number;             // Human-readable time
-  type: EventType;               // 'http_request_in' | 'timestamp' | 'random' | ...
-  serviceName: string;           // Source service
-  operationName: string;         // Human-readable op name
-  sequence: number;              // Order within session
-  data: Record<string, unknown>; // Captured payload
-  durationMs: number;            // Operation duration
-  error: ErrorInfo | null;       // Error if any
-  tags: Record<string, string>;  // Custom tags
+  id: string;                    // ULID — zaman sıralı, URL-safe
+  traceId: string;               // W3C Trace ID — servisleri bağlar
+  spanId: string;                // Bu operation'ın ID'si
+  parentSpanId: string | null;   // Causal parent (cross-service)
+  hlc: HLCTimestamp;             // Hybrid Logical Clock — global sıralama
+  wallClock: number;             // ms — insan okunabilir zaman
+  type: EventType;               // 15 tip (aşağıda)
+  serviceName: string;           // Üreten servis
+  operationName: string;         // "POST /api/orders", "Date.now()", ...
+  sequence: number;              // Session içi sıra numarası
+  data: Record<string, unknown>; // Yakalanan payload
+  durationMs: number;            // İşlem süresi (anlık event'ler için 0)
+  error: ErrorInfo | null;       // Hata bilgisi
+  tags: Record<string, string>;  // Özel etiketler
 }
 ```
 
-### HLC Garantisi
-```
-Eger A → B (A, B'den once olustuysa):
-  HLC(A) < HLC(B) HER ZAMAN GARANTILI
+### 1.2 Hybrid Logical Clock (HLC)
 
-Constructor'da raw Date.now referansi capture edilir:
-  const _rawDateNow = Date.now.bind(Date);
-Bu sayede monkey-patched Date.now ile interferans OLMAZ.
+Distributed sistemlerde NTP gerektirmeden causal ordering sağlar.
+
 ```
+Algoritma (Kulkarni et al., 2014):
+  send(msg):
+    l = max(l, physical_time)
+    c = c + 1  // counter artır
+    return {wallTime: l, logical: c, nodeId: n}
+
+  receive(msg, remote):
+    l = max(l_local, l_remote, physical_time)
+    c = (l == l_local == l_remote) ? max(c_local, c_remote) + 1
+      : (l == l_local) ? c_local + 1
+      : (l == l_remote) ? c_remote + 1
+      : 0
+
+Garanti:
+  Eğer A → B (A, B'den önce olduysa):
+  HLC(A) < HLC(B) HER ZAMAN
+```
+
+**Kritik Tasarım**: HLC constructor'ında `_rawDateNow = Date.now.bind(Date)` ile orijinal referans yakalanır. Bu sayede probe monkey-patch'leri HLC'yi etkilemez.
+
+### 1.3 ULID
+
+Zaman-sıralı benzersiz ID. `01HWXYZ...` formatında — timestamp prefix + random suffix.
+
+```
+01HW  XYZ  ABC  DEF  GHI  JKL  MNO
+─────────  ──────────────────────────
+48-bit     80-bit
+timestamp  random
+(ms)       (Crockford Base32)
+```
+
+Avantaj: Lexicographic sıralama = zaman sıralaması. DB indexleme için idealdir.
+
+### 1.4 Session Import/Export (session-io.ts)
+
+İki format desteklenir:
+
+**JSON Format** — insan okunabilir, debug için:
+```json
+{
+  "_format": "paradox-session-v1",
+  "_exportedAt": 1712345678901,
+  "session": { "id": "...", "events": [...] }
+}
+```
+
+**Binary PRDX Format** — kompakt, production için:
+```
+Byte  0-3:   "PRDX" magic bytes
+Byte  4-5:   Version (uint16BE) = 1
+Byte  6-9:   Metadata gzip length (uint32BE)
+Byte 10-N:   Metadata JSON (gzip compressed)
+Byte N+1-4:  Event count (uint32BE)
+Byte N+5-8:  Events gzip length (uint32BE)
+Byte N+9-M:  Events JSON (gzip compressed)
+Byte M+1-4:  CRC32 checksum (uint32BE)
+```
+
+- ~24% compression (gzip)
+- CRC32 ile integrity check
+- Magic bytes ile format tespiti
+- Roundtrip guaranteed: export → import → byte-for-byte identical
 
 ---
 
-## 2. PARADOX PROBE (`@paradox/probe`)
+## 2. @paradox/probe
 
-**Dil**: TypeScript | **Durum**: ✅ v0.1
+**Rol**: Uygulamaya yerleştirilen "kamera" — sıfır config ile her I/O'yu yakalar  
+**Ana Dosya**: `src/index.ts` → `ParadoxProbe` sınıfı
 
-### Mimari
+### 2.1 Başlatma Sırası
 
 ```
-  Express Request
-       │
-       ▼
-┌──────────────────────┐
-│ http-incoming.ts     │ → RecordingSession olustur
-│ (Express middleware)  │ → AsyncLocalStorage'a koy
-└──────┬───────────────┘
-       │
-       ▼ (AsyncLocalStorage propagation)
-┌──────────────────────┐
-│ Application Code     │
-│                      │
-│ Date.now() ─────────────→ globals.ts → session.record('timestamp')
-│ Math.random() ──────────→ globals.ts → session.record('random')
-│ fetch() ────────────────→ http-outgoing.ts → session.record('http_*')
-│                      │
-└──────┬───────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│ http-incoming.ts     │ → res.end() intercept
-│ (response capture)   │ → session.finalize()
-└──────┬───────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│ collector-client.ts  │ → Buffer + batch send
-└──────────────────────┘
+ParadoxProbe constructor
+    │
+    ├── HybridLogicalClock oluştur
+    ├── CollectorClient oluştur
+    └── SamplingEngine oluştur
+
+probe.middleware() çağrılınca:
+    │
+    ├── installGlobalInterceptors()     → Date.now, Math.random
+    ├── installFetchInterceptor()       → globalThis.fetch
+    ├── installTimerInterceptors()      → setTimeout, setInterval, randomUUID
+    ├── installErrorInterceptors()      → uncaughtException, console
+    ├── installPgInterceptor()          → pg.Client/Pool (varsa)
+    ├── installRedisInterceptor()       → ioredis (varsa)
+    ├── installMongoInterceptor()       → mongoose (varsa)
+    └── collector.start()              → flush timer başlat
 ```
 
-### Kritik Tasarim Kararlari
+### 2.2 internal-clock.ts — Kritik Tasarım
 
-**1. Re-Entrancy Guard**
+```typescript
+// Bu dosya HER ŞEYDEN ÖNCE yüklenir.
+// Date.now ve Math.random henüz patched DEĞİL.
+export const originalDateNow = Date.now.bind(Date);
+export const originalMathRandom = Math.random.bind(Math);
 ```
-Problem: session.record() → ulid() → Date.now() → session.record() → SONSUZ DONGU
 
-Cozum: _recording flag
-  Date.now = () => {
-    const value = _originalDateNow();
-    if (_recording) return value;  // Guard: ic cagrilarda kayit yapma
-    _recording = true;
-    try { session.record(...) }
-    finally { _recording = false; }
-    return value;
+**Neden gerekli?**
+- `recording-context.ts` event timestamp için `originalDateNow` kullanır
+- HLC `originalDateNow` kullanır
+- `globals.ts` patch yaparken bu referansları kullanır
+- Circular import (`globals.ts` ↔ `recording-context.ts`) bu dosya ile çözülür
+
+### 2.3 Re-Entrancy Guard
+
+```typescript
+// globals.ts
+let _recording = false;
+
+Date.now = function paradoxDateNow(): number {
+  const value = _originalDateNow();   // Her zaman çalışır
+  if (_recording) return value;       // ← GUARD: iç çağrıda kayıt yapma
+
+  const session = getActiveSession();
+  if (!session) return value;         // Aktif session yoksa geç
+
+  _recording = true;                  // ← Kilidi al
+  try {
+    session.record('timestamp', 'Date.now()', { value });
+  } finally {
+    _recording = false;               // ← Her zaman kilidi bırak
   }
+  return value;
+};
 ```
 
-**2. Internal Clock Isolation**
+**Problem çözüldü**: `record()` → `ulid()` → `Date.now()` → `record()` sonsuz döngü.
+
+### 2.4 AsyncLocalStorage ile Context Propagation
+
+```typescript
+// recording-context.ts
+const storage = new AsyncLocalStorage<RecordingSession>();
+
+// http-incoming.ts (middleware)
+runWithSession(session, () => next());
+// ↑ Bu çağrıdan sonra tüm async operasyonlar (await, callback, Promise)
+//   aynı session'ı görür — herhangi bir global state kirlenmez.
+
+// globals.ts (Date.now patch)
+const session = getActiveSession();
+// ↑ Bu request'e ait session — thread-safe, request-isolated
 ```
-Problem: Circular import: globals.ts ↔ recording-context.ts
 
-Cozum: internal-clock.ts (bagimsiz modul)
-  // Module yukleme aninda, TUM patching'den ONCE capture edilir
-  export const originalDateNow = Date.now.bind(Date);
-  export const originalMathRandom = Math.random.bind(Math);
-```
+### 2.5 Smart Sampling Engine (sampling.ts)
 
-**3. AsyncLocalStorage Context Propagation**
-```
-Her request icin bir RecordingSession olusturulur.
-AsyncLocalStorage sayesinde tum async operasyonlar
-(db query, fetch, setTimeout) ayni session'a baglanir.
-Hicbir global state kirlenmez — her request izole.
-```
-
-### Mevcut Interceptor'lar
-| Interceptor | Dosya | Yakalanan |
-|-------------|-------|-----------|
-| HTTP Incoming | http-incoming.ts | Request method/url/headers/body, Response status/headers/body |
-| HTTP Outgoing | http-outgoing.ts | fetch() calls — request + response |
-| Date.now() | globals.ts | Her cagrinin dondurulan degeri |
-| Math.random() | globals.ts | Her cagrinin dondurulan degeri |
-
-### Phase 1'de Eklenen Interceptor'lar (✅ Tamamlandi)
-| Interceptor | Dosya | Yakalanan |
-|-------------|-------|-----------|
-| PostgreSQL | db-drivers.ts | pg.Client.query + Pool.query monkey-patch |
-| Redis | db-drivers.ts | ioredis sendCommand |
-| MongoDB | db-drivers.ts | mongoose Collection methods |
-| setTimeout | timers.ts | set + fire correlation |
-| crypto.randomUUID | globals.ts | Function replacement |
-| Error | errors.ts | uncaughtException/unhandledRejection |
-| Console | console.ts | log/warn/error (level + args) |
-
-### Smart Sampling Engine (Phase 3 ✅)
-
-**Dosya**: `paradox-probe/src/sampling.ts`
-
-Smart sampling, production overhead'i minimumda tutarken ilginc request'leri yakalamak icin head+tail hybrid yaklasim kullanir.
+**Tasarım prensibi**: Tail-based sampling — buffer et, sonuç görünce karar ver.
 
 ```
 Request geldi
     │
     ▼
-┌──────────────────────┐
-│  Head Sampling        │ → Request baslamadan ONCE karar ver
-│  (hizli, ucuz)        │   Ornek: %10 random sampling
-└──────┬───────────────┘
-       │ Hayir (sample edilmedi)
-       ▼
-┌──────────────────────┐
-│  Tail Sampling        │ → Request BITTIKTEN SONRA karar ver
-│  (akilli, pahali)     │   Hata? Yuksek latency? Yeni path?
-└──────────────────────┘
+HEAD DECISION (hızlı, request başında)
+├── upstream sampled? → EVET kaydet (reason: upstream)
+├── adaptive active?  → EVET kaydet (reason: adaptive)
+├── new path?         → EVET kaydet (reason: new_path)
+├── random < rate?    → EVET kaydet (reason: random)
+└── default           → HAYIR (ama buffer'la)
+
+Request bitti
+    │
+    ▼
+TAIL DECISION (HEAD "hayır" dediyse bile)
+├── statusCode >= 500? → UPGRADE: kaydet (reason: error)
+├── durationMs > P99?  → UPGRADE: kaydet (reason: latency)
+└── HEAD "evet" ise    → değiştirme
+
+Adaptive Trigger:
+  Son 1 dakikada error rate > %5?
+  → adaptiveOverride = true (30 saniye boyunca %100 sample)
 ```
 
-**6 Sampling Reason**:
-| Reason | Aciklama |
-|--------|----------|
-| `error` | Request hata ile sonuclandi |
-| `latency` | Latency esik degerin uzerinde |
-| `new_path` | Daha once gorulmemis endpoint path |
-| `upstream` | Upstream servis sample etmis (trace propagation) |
-| `adaptive` | Hata oranina gore otomatik escalation |
-| `random` | Konfigurasyondaki orana gore rastgele secim |
+**Path Normalization**:
+```
+/api/users/123        → /api/users/:id
+/api/users/abc-def    → /api/users/:id  (hex ID)
+/api/orders/ORD-X7Y2  → /api/orders/:id (business ID)
+/api/data?page=2      → /api/data       (query strip)
+```
 
-**Adaptive Auto-Escalation**: Hata orani arttiginda sampling orani otomatik artar. Path normalization URL parametrelerini (`/users/123` → `/users/:id`) normalize eder.
+Bu sayede `/api/users/:id` bir kez görüldü sayılır, her user ID için ayrı `new_path` tetiklenmez.
 
-### Deep Field Redaction (Phase 3 ✅)
+### 2.6 Deep Field Redaction (redaction.ts)
 
-**Dosya**: `paradox-probe/src/redaction.ts`
+```typescript
+// Hiçbir zaman orijinal objeyi MUTATE etmez — deep copy döner
+export function redactDeep(obj: unknown, config?: Partial<RedactionConfig>): unknown
 
-PII ve secret'lari otomatik tespit edip maskeler. Kayit sirasinda hassas veriler ASLA storage'a ulasmaz.
+// 3 katmanlı kontrol:
+// 1. Alan adı eşleşmesi (case-insensitive):
+//    "password", "secret", "token", "creditCard", "ssn", ...
+//
+// 2. Glob path pattern:
+//    "user.*.password" → "user.profile.password" eşleşir
+//    "headers.**"      → tüm alt alanlar
+//
+// 3. Değer içeriği auto-detect:
+//    /^eyJ[a-zA-Z0-9_-]+\.eyJ...$/    → JWT
+//    /^\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}$/  → Credit card
+//    /^Bearer\s+.{20,}$/               → Bearer token
+//    /^AKIA[0-9A-Z]{16}$/              → AWS access key
+//    /-----BEGIN.*PRIVATE KEY-----/    → PEM private key
+```
 
-**Yaklasim**:
-- Recursive object walking: ic ice nesnelerde derinlemesine tarama
-- Field name matching: `password`, `secret`, `token`, `ssn` gibi alan adlarini yakala
-- Glob path patterns: `headers.authorization`, `body.*.creditCard` gibi joker desenler
-- Auto-detect: Deger icerigi analizi ile otomatik tespit
+### 2.7 HTTP Incoming Middleware (http-incoming.ts)
 
-**Auto-Detect Desteklenen Turler**:
-| Tur | Ornek |
-|-----|-------|
-| JWT | `eyJhbGciOiJIUzI1NiIs...` |
-| Credit Cards | `4111-1111-1111-1111` |
-| Bearer Tokens | `Bearer eyJ...` |
-| AWS Keys | `AKIA...` |
-| Private Keys | `-----BEGIN RSA PRIVATE KEY-----` |
+```
+Request → paradoxMiddleware
+    │
+    ├── enabled? sampling? → karar ver
+    │
+    ├── traceparent header parse → traceId al / yeni üret
+    │
+    ├── x-paradox-hlc header → HLC.receive() → distributed clock sync
+    │
+    ├── RecordingSession oluştur
+    │
+    ├── http_request_in event kaydet (redacted)
+    │
+    ├── res.end() override et (response capture için)
+    │
+    └── runWithSession(session, () => next())
+              │
+              ▼ (uygulama kodu çalışır)
+              │
+    res.end() tetiklenir
+              │
+              ├── response body capture
+              ├── http_response_out event kaydet (redacted)
+              ├── TAIL sampling kararı
+              ├── session.finalize()
+              └── collector.enqueue(session)
+```
+
+### 2.8 HTTP Outgoing Interceptor (http-outgoing.ts)
+
+```typescript
+globalThis.fetch = async function paradoxFetch(input, init): Promise<Response> {
+  const session = getActiveSession();
+  if (!session) return _originalFetch(input, init); // zero overhead
+
+  // 1. http_request_out kaydet
+  // 2. traceparent header enjekte et
+  // 3. x-paradox-hlc header enjekte et
+  // 4. _originalFetch çağır
+  // 5. Response klonla (body stream bir kez okunabilir)
+  // 6. http_response_in kaydet
+  // 7. Klonu döndür (uygulama okuyabilir)
+};
+```
 
 ---
 
-## 3. PARADOX COLLECTOR (`@paradox/collector`)
+## 3. @paradox/collector
 
-**Dil**: TypeScript (Phase 0), Rust (Phase 2+) | **Durum**: ✅ v0.1
+**Rol**: Merkezi kayıt deposu  
+**Dosyalar**: `src/server.ts`, `src/storage.ts`, `src/index.ts`
 
-### REST API
+### 3.1 REST API
 
-| Method | Path | Aciklama |
-|--------|------|----------|
-| POST | /api/v1/sessions | Probe'lardan recording al |
-| GET | /api/v1/sessions | Tum session'lari listele |
-| GET | /api/v1/sessions/:id | Tek session detayi |
-| GET | /api/v1/traces/:traceId | Trace'e ait tum session'lar |
-| GET | /api/v1/stats | Collector istatistikleri |
-| GET | /health | Saglik kontrolu |
+```
+POST /api/v1/sessions     → Probe'dan session al, dosyaya yaz
+GET  /api/v1/sessions     → Tüm sessionların özeti (events yok)
+GET  /api/v1/sessions/:id → Tek session tüm detayıyla
+GET  /api/v1/traces/:id   → traceId ile ilişkili tüm sessionlar
+GET  /api/v1/stats        → İstatistikler
+GET  /health              → Sağlık kontrolü
+```
 
-### Storage (Phase 0)
+### 3.2 File Storage Yapısı
+
 ```
 .paradox-recordings/
 ├── sessions/
-│   ├── 01ABC123DEF456.json    # Her session ayri dosya
-│   ├── 01ABC789GHI012.json
+│   ├── 01HWXYZ123ABC.json    ← Her session ayrı JSON dosyası
+│   ├── 01HWXYZ456DEF.json
 │   └── ...
-└── index/                      # (Gelecek: CAS index)
+└── index/                    ← Gelecek: CAS index
 ```
+
+**In-memory index** (startup'ta disk'ten yeniden inşa edilir):
+```typescript
+sessionIndex: Map<sessionId, filename>   // O(1) lookup
+traceIndex:   Map<traceId, sessionId[]>  // trace assembly
+```
+
+### 3.3 Tasarım Kararları
+
+- Framework yok (pure Node.js HTTP) — bağımlılık sıfır
+- CORS headers built-in (UI erişimi için)
+- Graceful shutdown: `server.close()` + `Promise`
+- Gelecek: gRPC ingestion, Rust rewrite, CAS deduplication
 
 ---
 
-## 4. PARADOX REPLAY (`@paradox/replay`)
+## 4. @paradox/replay
 
-**Dil**: TypeScript | **Durum**: ✅ v0.1
+**Rol**: Deterministik replay motoru  
+**Dosyalar**: `src/mock-layer.ts`, `src/replay-engine.ts`, `src/index.ts`
 
-### MockLayer — I/O Replacement
-
-```
-Recording sirasinda:              Replay sirasinda:
-  Date.now() → 1712345678        Date.now() → MockLayer → 1712345678 (recorded)
-  Math.random() → 0.7342          Math.random() → MockLayer → 0.7342 (recorded)
-  fetch(url) → {data: ...}       fetch(url) → MockLayer → {data: ...} (recorded)
-```
-
-### Timeline Inspection (Time-Travel Foundation)
+### 4.1 MockLayer — I/O Replacement
 
 ```typescript
-// Herhangi bir noktadaki durumu sor
-engine.getStateAt(sequence: 5)
-// → { events: [E0..E5], currentEvent: E5, progress: 0.25 }
+class MockLayer {
+  private cursor = 0;           // Sıralı event okuyucu
+  private typeQueues: Map<EventType, ParadoxEvent[]>; // Tip bazlı kuyruklar
 
-// Iki nokta arasindaki farki gor
-engine.getDiff(fromSequence: 2, toSequence: 8)
-// → { added: [E3, E4, E5, E6, E7, E8], range: [2, 8] }
+  mockDateNow(): number        → cursor'dan sonraki timestamp event'i al
+  mockMathRandom(): number     → cursor'dan sonraki random event'i al
+  mockFetch(url): Response     → cursor'dan sonraki http_response_in'i al
+  mockDbQuery(sql): unknown    → cursor'dan sonraki db_result'u al
+  mockRedisCommand(): unknown  → cursor'dan sonraki cache event'i al
+  mockRandomUUID(): string     → cursor'dan sonraki uuid event'i al
 
-// Tam timeline
-engine.getTimeline()
-// → [{ sequence, type, operation, wallClock, data, durationMs }, ...]
+  seekTo(sequence): void       → cursor'u belirli bir noktaya at (time-travel)
+}
+```
+
+**Divergence Detection**:
+```typescript
+if (actual_url !== recorded_url) {
+  throw new ReplayDivergenceError(
+    'http_request_out',     // event type
+    actual_url,             // replay'de ne çağrıldı
+    recorded_url,           // kayıtta ne vardı
+    'URL mismatch'          // açıklama
+  );
+}
+```
+
+### 4.2 ReplayEngine — Time-Travel API
+
+```typescript
+class ReplayEngine {
+  getTimeline(): TimelineEntry[]
+  // → Tüm event'lerin özeti: sequence, type, operation, timing
+
+  getStateAt(sequence: number): ReplayState
+  // → O anki sistem durumu: events[0..sequence], progress %
+
+  getDiff(from: number, to: number): ReplayDiff
+  // → İki nokta arasındaki değişiklikler
+
+  replay(handler): Promise<unknown>
+  // → MockLayer kurar, handler'ı çalıştırır, mock'ları temizler
+}
+```
+
+### 4.3 Deterministik Replay Teorisi
+
+Node.js single-threaded'dır — thread scheduling non-determinizmi yoktur.
+
+```
+Non-determinizm kaynakları + PARADOX çözümleri:
+
+┌──────────────────────┬──────────────────────────────────────┐
+│  Kaynak              │  Çözüm                               │
+├──────────────────────┼──────────────────────────────────────┤
+│  Date.now()          │  Kaydedilen değeri döndür            │
+│  Math.random()       │  Kaydedilen değeri döndür            │
+│  crypto.randomUUID() │  Kaydedilen değeri döndür            │
+│  DB queries          │  Kaydedilen result'ı döndür          │
+│  HTTP responses      │  Kaydedilen response'u döndür        │
+│  Timer fire order    │  Kaydedilen sırayı takip et          │
+│  External API state  │  Kaydedilen response'u döndür        │
+└──────────────────────┴──────────────────────────────────────┘
+
+Bunlar yakalanırsa: Node.js tek thread → deterministik ✓
 ```
 
 ---
 
-## 5. Session Export/Import (`@paradox/core` — session-io.ts) (Phase 3 ✅)
+## 5. @paradox/ui
 
-**Dil**: TypeScript | **Durum**: ✅ v0.1
+**Rol**: Dark theme time-travel web arayüzü  
+**Dosyalar**: `src/server.ts`, `src/public/index.html`, `src/public/styles.css`, `src/public/app.js`
 
-Session'lari tasinabilir formatta export ve import etme.
+### 5.1 Bileşenler
 
-### Desteklenen Formatlar
-
-**JSON Format**: Insan tarafindan okunabilir, debug icin ideal.
-
-**Binary PRDX Format**: Kompakt, production icin optimize.
 ```
-┌──────────────────────────────────────────┐
-│ PRDX Magic Bytes (4 byte)                │
-│ Version (2 byte)                         │
-│ Flags (2 byte)                           │
-│ CRC32 Checksum (4 byte)                  │
-│ Gzip Compressed Session Data             │
-└──────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  Header: logo + bağlantı durumu                     │
+├──────────────┬──────────────────────────────────────┤
+│              │  Session Header (ID, servis, süre)   │
+│ Session      ├──────────────────────────────────────┤
+│ Listesi      │  Timeline (event marker'lar)          │
+│              │  ← → Space Home/End ile navigate      │
+│ Arama        ├──────────────────────────────────────┤
+│              │  Service Flow Diagram                 │
+│ [session1]   │  (ok diyagramı, servisler arası)      │
+│ [session2]   ├──────────────────────────────────────┤
+│ [session3]   │  Event Listesi (filtrelenebilir)      │
+│ ...          ├────────────────────┬─────────────────┤
+│              │  Event Listesi     │  Event Detayı   │
+│              │  HTTP events       │  JSON syntax    │
+│              │  DB events         │  highlighting   │
+│              │  Random events     │                 │
+└──────────────┴────────────────────┴─────────────────┘
 ```
 
-- ~24% compression orani (gzip)
-- CRC32 checksum ile veri butunlugu dogrulamasi
-- Magic bytes (`PRDX`) ile format tespiti
+### 5.2 Renk Kodlaması
+
+| Event Grubu | Renk | Tipler |
+|-------------|------|--------|
+| HTTP In | Mavi | `http_request_in`, `http_response_out` |
+| HTTP Out | Cyan | `http_request_out`, `http_response_in` |
+| Database | Yeşil | `db_query`, `db_result`, `cache_get`, `cache_set` |
+| Random/Time | Sarı | `timestamp`, `random`, `uuid` |
+| Timer | Mor | `timer_set`, `timer_fire` |
+| Error | Kırmızı | `error` |
+
+### 5.3 Keyboard Shortcuts
+
+| Kısayol | Eylem |
+|---------|-------|
+| `←` / `→` veya `j` / `k` | Önceki/sonraki event |
+| `Space` | Oynat/durdur |
+| `Home` | İlk event'e git |
+| `End` | Son event'e git |
 
 ---
 
-## 6. PARADOX CLI (`@paradox/cli`) (Phase 3 ✅)
+## 6. @paradox/cli
 
-**Dil**: TypeScript | **Durum**: ✅ v0.1
+**Rol**: 10-komutluk ANSI renkli terminal aracı  
+**Dosya**: `src/index.ts`
 
-Komut satirindan PARADOX sistemini yonetmek icin 10 komutluk CLI araci. ANSI renkli cikti destegi.
+### 6.1 Mimari
 
-### Komutlar
-
-| Komut | Aciklama |
-|-------|----------|
-| `sessions` | Kayitli session'lari listele |
-| `inspect <id>` | Tek session detayini gor |
-| `timeline <id>` | Event timeline goruntule |
-| `trace <traceId>` | Trace'e ait tum session'lari gor |
-| `export <id>` | Session'i JSON veya PRDX formatinda export et |
-| `import <file>` | Session dosyasini import et |
-| `stats` | Collector istatistikleri |
-| `watch` | Canli event akisini izle |
-| `health` | Collector saglik kontrolu |
-| `help` | Yardim ve kullanim bilgisi |
-
-### Mimari
 ```
-CLI Input
+CLI Entry (#!/usr/bin/env node)
     │
     ▼
-┌──────────────────────┐
-│  Command Router      │ → Komut parse + dispatch
-└──────┬───────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│  Collector REST API  │ → HTTP uzerinden veri al
-└──────┬───────────────┘
-       │
-       ▼
-┌──────────────────────┐
-│  ANSI Formatter      │ → Renkli, okunabilir cikti
-└──────────────────────┘
+main() → args parse
+    │
+    ▼
+Command Router (switch)
+    │
+    ├── sessions  → GET /api/v1/sessions → tablo formatla → yazdır
+    ├── inspect   → GET /api/v1/sessions/:id → detay formatla
+    ├── timeline  → GET /api/v1/sessions/:id → ASCII timeline
+    ├── trace     → GET /api/v1/traces/:id → ASCII Gantt
+    ├── export    → GET session → JSON/binary dosyaya yaz
+    ├── import    → dosyadan oku → POST /api/v1/sessions
+    ├── stats     → GET /api/v1/stats → tablo
+    ├── watch     → poll loop (2sn) → yeni session'ları yaz
+    ├── health    → GET /health → OK/FAIL
+    └── help      → yardım metni
+```
+
+### 6.2 Environment Variables
+
+```bash
+PARADOX_COLLECTOR_URL=http://localhost:4380  # varsayılan
 ```
 
 ---
 
-## Guvenlik Notlari
+## Kritik Tasarım Kararları (ADR'lar)
 
-- Probe varsayilan olarak `authorization`, `cookie`, `x-api-key` header'larini maskeler
-- Body field maskeleme konfigurasyonla ayarlanabilir
-- Collector ile probe arasinda TLS zorunlu (production'da)
-- Storage encryption at rest (Phase 4)
-- RBAC: Kim hangi recording'i gorebilir (Phase 4)
-- KVKK/GDPR uyumlu data retention (Phase 4)
+### ADR-001: Monkey-Patching vs. Instrumentation Library
+**Karar**: Monkey-patching  
+**Gerekçe**: Sıfır-config entegrasyon. Kullanıcı kodu değişmez.  
+**Trade-off**: Node.js globals'i kirletir. `uninstall*` fonksiyonları ile temizlenir.
+
+### ADR-002: AsyncLocalStorage vs. Global State
+**Karar**: AsyncLocalStorage  
+**Gerekçe**: Request isolation. Birden fazla concurrent request güvenle handle edilir.  
+**Trade-off**: Node.js v12+ gerektirir (zaten v20+ zorunlu).
+
+### ADR-003: ESM vs. CommonJS
+**Karar**: ESM (type: module)  
+**Gerekçe**: Geleceğin Node.js ekosistemi. Tree-shaking desteği.  
+**Trade-off**: `require()` kullanan eski paketlerle compat sorunu → `createRequire` ile çözüldü.
+
+### ADR-004: File Storage vs. Database (Phase 0)
+**Karar**: File-based JSON  
+**Gerekçe**: Sıfır bağımlılık, hızlı başlangıç, kolay debug.  
+**Trade-off**: Scale etmez. Phase 4'te CAS + tiered storage gelecek.
+
+### ADR-005: Tail-Based Sampling vs. Head-Based
+**Karar**: Hybrid (Head + Tail)  
+**Gerekçe**: Head hız için, Tail doğruluk için. Hataları ASLA kaçırma.  
+**Trade-off**: Her request için buffer gerekir. Ring buffer ile yönetilir.
+
+### ADR-006: TypeScript Strict Mode
+**Karar**: Strict: true  
+**Gerekçe**: Runtime hataları compile time'a çek. Tip güvenliği.  
+**Trade-off**: Monkey-patching kodlarında bazı yerlerde `any` cast gerekir.
+
+### ADR-007: Sıfır Bağımlılık (core)
+**Karar**: @paradox/core sıfır npm bağımlılığı  
+**Gerekçe**: Her pakete eklenir, supply chain riski minimum olmalı.  
+**Trade-off**: gzip, CRC32 gibi şeyler sıfırdan yazıldı.
