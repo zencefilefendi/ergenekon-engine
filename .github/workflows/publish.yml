@@ -1,0 +1,88 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    name: Publish packages to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # For npm provenance
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Run integration test
+        run: npx tsx demo/replay-demo.ts
+        timeout-minutes: 2
+
+      - name: Publish @paradox/core
+        run: npm publish --access public --workspace=packages/paradox-core --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @paradox/probe
+        run: npm publish --access public --workspace=packages/paradox-probe --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @paradox/collector
+        run: npm publish --access public --workspace=packages/paradox-collector --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @paradox/replay
+        run: npm publish --access public --workspace=packages/paradox-replay --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @paradox/cli
+        run: npm publish --access public --workspace=packages/paradox-cli --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @paradox/ui
+        run: npm publish --access public --workspace=packages/paradox-ui --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## PARADOX Engine ${{ github.ref_name }}
+
+            Deterministic record & replay debugger for distributed systems.
+
+            ### Install
+            ```bash
+            npm install @paradox/probe @paradox/collector @paradox/replay
+            npm install -g @paradox/cli
+            ```
+
+            ### Packages Published
+            - [@paradox/core](https://npmjs.com/package/@paradox/core) — Types, HLC, ULID, session I/O
+            - [@paradox/probe](https://npmjs.com/package/@paradox/probe) — Node.js recording middleware
+            - [@paradox/collector](https://npmjs.com/package/@paradox/collector) — Event collection server
+            - [@paradox/replay](https://npmjs.com/package/@paradox/replay) — Deterministic replay engine
+            - [@paradox/cli](https://npmjs.com/package/@paradox/cli) — Time-travel CLI tool
+            - [@paradox/ui](https://npmjs.com/package/@paradox/ui) — Visual debugger web UI

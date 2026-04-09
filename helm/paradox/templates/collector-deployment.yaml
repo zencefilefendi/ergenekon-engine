@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "paradox.fullname" . }}-collector
+  labels:
+    {{- include "paradox.labels" . | nindent 4 }}
+    app.kubernetes.io/component: collector
+spec:
+  replicas: {{ .Values.collector.replicas }}
+  selector:
+    matchLabels:
+      {{- include "paradox.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: collector
+  template:
+    metadata:
+      labels:
+        {{- include "paradox.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: collector
+    spec:
+      serviceAccountName: {{ include "paradox.serviceAccountName" . }}
+      containers:
+        - name: collector
+          image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
+          imagePullPolicy: {{ .Values.collector.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 4380
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "4380"
+            - name: STORAGE_DIR
+              value: /data/sessions
+            - name: LOG_LEVEL
+              value: {{ .Values.collector.env.LOG_LEVEL }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.collector.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/sessions
+      volumes:
+        - name: data
+          {{- if .Values.collector.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "paradox.fullname" . }}-collector-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}

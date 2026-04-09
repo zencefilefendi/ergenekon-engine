@@ -13,7 +13,9 @@
     "demo": "npx tsx demo/app.ts",
     "demo:replay": "npx tsx demo/replay-demo.ts",
     "demo:fullstack": "npx tsx demo/fullstack-demo.ts",
-    "cli": "npx tsx packages/paradox-cli/src/index.ts"
+    "cli": "npx tsx packages/paradox-cli/src/index.ts",
+    "publish:all": "npm publish --access public --workspace=packages/paradox-core && npm publish --access public --workspace=packages/paradox-probe && npm publish --access public --workspace=packages/paradox-collector && npm publish --access public --workspace=packages/paradox-replay && npm publish --access public --workspace=packages/paradox-cli && npm publish --access public --workspace=packages/paradox-ui",
+    "version:bump": "npm version --workspaces"
   },
   "engines": {
     "node": ">=20.0.0"

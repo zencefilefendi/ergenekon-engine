@@ -1,0 +1,72 @@
+# PARADOX Engine — Helm Values
+# Override any value with: helm install paradox ./helm/paradox --set collector.replicas=2
+
+# ─────────────────────────────────────────────
+# Collector
+# ─────────────────────────────────────────────
+collector:
+  replicas: 1
+  image:
+    repository: ghcr.io/zencefilefendi/paradox-collector
+    tag: "0.4.1"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 4380
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""  # Uses cluster default
+
+  env:
+    LOG_LEVEL: info
+    # STORAGE_DIR is set automatically from persistence mount
+
+# ─────────────────────────────────────────────
+# UI (Time-Travel Visual Debugger)
+# ─────────────────────────────────────────────
+ui:
+  enabled: true
+  replicas: 1
+  image:
+    repository: ghcr.io/zencefilefendi/paradox-ui
+    tag: "0.4.1"
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  ingress:
+    enabled: false
+    className: nginx
+    host: paradox.example.com
+    tls: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# ─────────────────────────────────────────────
+# Global
+# ─────────────────────────────────────────────
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""

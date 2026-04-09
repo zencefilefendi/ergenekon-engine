@@ -1,0 +1,72 @@
+version: '3.9'
+
+# PARADOX Engine — Docker Compose
+# Usage:
+#   docker-compose up              # Start collector + UI
+#   docker-compose up -d           # Background mode
+#   docker-compose logs -f         # Stream logs
+#   docker-compose down            # Stop all
+
+services:
+  # ─────────────────────────────────────────────
+  # PARADOX Collector — receives and stores events
+  # ─────────────────────────────────────────────
+  collector:
+    build:
+      context: .
+      dockerfile: docker/collector.Dockerfile
+    ports:
+      - "4380:4380"
+    environment:
+      PORT: 4380
+      STORAGE_DIR: /data/sessions
+      LOG_LEVEL: info
+    volumes:
+      - paradox-data:/data/sessions
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4380/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # ─────────────────────────────────────────────
+  # PARADOX UI — Time-Travel visual debugger
+  # ─────────────────────────────────────────────
+  ui:
+    build:
+      context: .
+      dockerfile: docker/ui.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      PARADOX_COLLECTOR_URL: http://collector:4380
+    depends_on:
+      collector:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Example App — your service with PARADOX probe
+  # Comment out if you're attaching your own app
+  # ─────────────────────────────────────────────
+  demo-app:
+    build:
+      context: .
+      dockerfile: docker/demo.Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      PARADOX_COLLECTOR_URL: http://collector:4380
+      PARADOX_SERVICE_NAME: demo-app
+      PARADOX_SAMPLE_RATE: "0.1"
+      PORT: 3001
+    depends_on:
+      collector:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  paradox-data:
+    driver: local

@@ -154,7 +154,7 @@ Tüm paketler npm publish'e hazır
 
 ---
 
-## Phase 5: Scale & Launch (Planlanıyor)
+## Phase 5: Scale & Launch (🔄 Devam Ediyor)
 
 **Hedef**: Production ölçeğinde sistem + ilk müşteriler
 
@@ -165,17 +165,24 @@ Tüm paketler npm publish'e hazır
 - [ ] Tiered storage: memory → SSD → S3
 - [ ] Configurable retention policy
 
-### Deployment
-- [ ] Docker image + Docker Compose
-- [ ] Kubernetes operator + Helm chart
-- [ ] CI/CD pipeline (GitHub Actions)
+### Deployment ✅ TAMAMLANDI
+- [x] Docker image + Docker Compose (`docker-compose.yml` + `docker/` Dockerfiles)
+- [x] Kubernetes Helm chart (`helm/paradox/` — collector + UI + ingress + PVC)
+- [x] CI/CD pipeline (`/.github/workflows/ci.yml` + `publish.yml`)
+
+### GitHub Altyapısı ✅ TAMAMLANDI
+- [x] CI workflow (Node 20.x + 22.x matrix, build + integration test)
+- [x] Publish workflow (tag push → npm publish tüm paketler + GitHub Release)
+- [x] Issue templates (bug report + feature request)
+- [x] Pull request template
+- [x] `docs/PUBLISHING.md` (npm token, versiyonlama, sıralama rehberi)
 
 ### Performance
 - [ ] Load test: 1M event/sn hedefi
 - [ ] <%1 overhead production kanıtı
 
 ### Launch
-- [ ] npm publish (tüm paketler)
+- [ ] npm login + `npm run publish:all` (NPM_TOKEN hazır olunca)
 - [ ] Landing page + docs site
 - [ ] Open source release (Community Edition)
 - [ ] Managed cloud beta

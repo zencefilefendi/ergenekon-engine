@@ -1,0 +1,17 @@
+{{- if .Values.collector.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "paradox.fullname" . }}-collector-pvc
+  labels:
+    {{- include "paradox.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.collector.persistence.size }}
+  {{- if .Values.collector.persistence.storageClass }}
+  storageClassName: {{ .Values.collector.persistence.storageClass }}
+  {{- end }}
+{{- end }}
