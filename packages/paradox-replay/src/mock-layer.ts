@@ -227,7 +227,7 @@ export class MockLayer {
   }
 
   /** Get the replay log (what was consumed and in what order) */
-  getReplayLog(): readonly typeof this.replayLog {
+  getReplayLog(): ReadonlyArray<{ sequence: number; type: EventType; operation: string }> {
     return [...this.replayLog];
   }
 

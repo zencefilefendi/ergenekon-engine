@@ -1,4 +1,4 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env node
 // ============================================================================
 // PARADOX CLI — Command-line interface for the PARADOX Engine
 //

@@ -1,17 +1,49 @@
 {
   "name": "@paradox/collector",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "type": "module",
-  "description": "PARADOX event collector — ingestion, ordering, storage",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "description": "PARADOX collector server — receives, orders, and stores recordings",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "bin": {
+    "paradox-collector": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "start": "npx tsx src/index.ts"
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@paradox/core": "*"
+    "@paradox/core": "0.4.0"
   },
-  "license": "BUSL-1.1"
+  "license": "BUSL-1.1",
+  "keywords": [
+    "paradox",
+    "collector",
+    "debugging",
+    "distributed-systems"
+  ],
+  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "directory": "packages/paradox-collector"
+  },
+  "bugs": {
+    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
+  }
 }

@@ -1,14 +1,50 @@
 {
   "name": "@paradox/cli",
   "version": "0.4.0",
-  "description": "PARADOX Engine CLI — record, replay, inspect, export distributed system recordings",
   "type": "module",
-  "main": "./src/index.ts",
+  "description": "PARADOX CLI — inspect, export, and manage distributed system recordings",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "bin": {
-    "paradox": "./src/index.ts"
+    "paradox": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@paradox/core": "*",
-    "@paradox/replay": "*"
+    "@paradox/core": "0.4.0",
+    "@paradox/replay": "0.4.0"
+  },
+  "license": "BUSL-1.1",
+  "keywords": [
+    "paradox",
+    "cli",
+    "debugging",
+    "time-travel",
+    "distributed-systems"
+  ],
+  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "directory": "packages/paradox-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
   }
 }

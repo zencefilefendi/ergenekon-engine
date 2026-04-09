@@ -137,8 +137,8 @@ export function createHttpIncomingMiddleware(
     const originalEnd = res.end;
     const requestStart = originalDateNow();
 
-    // @ts-expect-error — Express overloads res.end, we match the most general signature
-    res.end = function (chunk?: unknown, encoding?: unknown, callback?: unknown): Response {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    res.end = function (chunk?: any, encoding?: any, callback?: any): Response {
       const durationMs = originalDateNow() - requestStart;
 
       // Capture response body

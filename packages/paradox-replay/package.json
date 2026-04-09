@@ -1,16 +1,46 @@
 {
   "name": "@paradox/replay",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "type": "module",
-  "description": "PARADOX deterministic replay engine",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "description": "PARADOX deterministic replay engine — replay production bugs on your laptop",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@paradox/core": "*"
+    "@paradox/core": "0.4.0"
   },
-  "license": "BUSL-1.1"
+  "license": "BUSL-1.1",
+  "keywords": [
+    "paradox",
+    "replay",
+    "debugging",
+    "deterministic",
+    "distributed-systems"
+  ],
+  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "directory": "packages/paradox-replay"
+  },
+  "bugs": {
+    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
+  }
 }

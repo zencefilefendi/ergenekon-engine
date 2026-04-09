@@ -24,7 +24,7 @@ export function installFetchInterceptor(): void {
   _originalFetch = globalThis.fetch;
 
   globalThis.fetch = async function paradoxFetch(
-    input: RequestInfo | URL,
+    input: Parameters<typeof globalThis.fetch>[0],
     init?: RequestInit
   ): Promise<Response> {
     const session = getActiveSession();

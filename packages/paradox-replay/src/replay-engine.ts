@@ -278,7 +278,7 @@ export class ReplayEngine {
       Date.now = () => mock.mockDateNow();
       Math.random = () => mock.mockMathRandom();
 
-      globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      globalThis.fetch = (async (input: Parameters<typeof globalThis.fetch>[0], init?: RequestInit) => {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
         const mockResponse = mock.mockFetch(url);
 

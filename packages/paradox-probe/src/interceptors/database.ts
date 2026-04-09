@@ -190,7 +190,8 @@ export function installRedisInterceptor(): boolean {
   const originalSendCommand = Redis.prototype.sendCommand;
   originals.set('ioredis.sendCommand', originalSendCommand);
 
-  Redis.prototype.sendCommand = function patchedSendCommand(this: IoRedisInstance, command: { name: string; args: unknown[]; resolve?: (v: unknown) => void; reject?: (e: Error) => void; promise?: Promise<unknown> }, ...rest: unknown[]): unknown {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (Redis.prototype as any).sendCommand = function patchedSendCommand(this: IoRedisInstance, command: { name: string; args: unknown[]; resolve?: (v: unknown) => void; reject?: (e: Error) => void; promise?: Promise<unknown> }, ...rest: unknown[]): unknown {
     const session = getActiveSession();
     if (!session) return originalSendCommand.call(this, command, ...rest);
 
@@ -265,7 +266,8 @@ export function installMongoInterceptor(): boolean {
 
     originals.set(`mongoose.${method}`, original);
 
-    (mongoose.Collection.prototype as Record<string, unknown>)[method] = function patchedMongoMethod(this: MongoCollection, ...args: unknown[]): unknown {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (mongoose.Collection.prototype as any)[method] = function patchedMongoMethod(this: MongoCollection, ...args: unknown[]): unknown {
       const session = getActiveSession();
       if (!session) return (original as Function).apply(this, args);
 
