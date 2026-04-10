@@ -4,8 +4,16 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
-    { "path": "../paradox-core" }
+    {
+      "path": "../paradox-core"
+    }
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.property.test.ts"
   ]
 }

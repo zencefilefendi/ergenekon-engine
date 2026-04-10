@@ -14,6 +14,12 @@
     "demo:replay": "npx tsx demo/replay-demo.ts",
     "demo:fullstack": "npx tsx demo/fullstack-demo.ts",
     "cli": "npx tsx packages/paradox-cli/src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:property": "vitest run -t property",
+    "test:chaos": "vitest run tests/chaos",
+    "test:determinism": "vitest run tests/determinism",
     "publish:all": "npm publish --access public --workspace=packages/paradox-core && npm publish --access public --workspace=packages/paradox-probe && npm publish --access public --workspace=packages/paradox-collector && npm publish --access public --workspace=packages/paradox-replay && npm publish --access public --workspace=packages/paradox-cli && npm publish --access public --workspace=packages/paradox-ui",
     "version:bump": "npm version --workspaces"
   },
@@ -23,8 +29,11 @@
   "license": "BUSL-1.1",
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@vitest/coverage-v8": "^4.1.4",
     "express": "^5.2.1",
+    "fast-check": "^4.6.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }

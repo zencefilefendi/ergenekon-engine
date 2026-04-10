@@ -114,22 +114,46 @@ export class MockLayer {
 
   // ── Typed mock functions ────────────────────────────────────────
 
-  /** Mock Date.now() — returns the recorded timestamp */
+  /**
+   * Mock Date.now() — returns the recorded timestamp.
+   *
+   * INVARIANT: NEVER falls back to real Date.now().
+   * A missing timestamp event means the code under replay is calling
+   * Date.now() more times than during recording — a DETERMINISM VIOLATION.
+   */
   mockDateNow(): number {
     const event = this.nextOfType('timestamp');
     if (!event) {
-      // Fallback: if no more timestamp events, return wall clock from last event
-      return Date.now();
+      const recorded = this.countRecordedOfType('timestamp');
+      throw new ReplayDivergenceError(
+        'timestamp',
+        'MISSING',
+        this.cursor,
+        `Replay called Date.now() but no more 'timestamp' events remain ` +
+        `(${recorded} were recorded). The code under replay is non-deterministic — ` +
+        `it calls Date.now() more times than during recording. ` +
+        `Likely cause: conditional path divergence.`
+      );
     }
     return event.data['value'] as number;
   }
 
-  /** Mock Math.random() — returns the recorded random value */
+  /**
+   * Mock Math.random() — returns the recorded random value.
+   *
+   * INVARIANT: NEVER falls back to real Math.random().
+   */
   mockMathRandom(): number {
     const event = this.nextOfType('random');
     if (!event) {
-      // Fallback: should not happen in a correct replay
-      return Math.random();
+      const recorded = this.countRecordedOfType('random');
+      throw new ReplayDivergenceError(
+        'random',
+        'MISSING',
+        this.cursor,
+        `Replay called Math.random() but no more 'random' events remain ` +
+        `(${recorded} were recorded). The code under replay is non-deterministic.`
+      );
     }
     return event.data['value'] as number;
   }
@@ -174,10 +198,22 @@ export class MockLayer {
     return event.data['result'];
   }
 
-  /** Mock crypto.randomUUID() — returns the recorded UUID */
+  /**
+   * Mock crypto.randomUUID() — returns the recorded UUID.
+   *
+   * INVARIANT: NEVER falls back to real crypto.randomUUID().
+   */
   mockRandomUUID(): string {
     const event = this.nextOfType('uuid');
-    if (!event) return crypto.randomUUID();
+    if (!event) {
+      throw new ReplayDivergenceError(
+        'uuid' as EventType,
+        'MISSING',
+        this.cursor,
+        `Replay called crypto.randomUUID() but no more 'uuid' events remain. ` +
+        `The code under replay is non-deterministic.`
+      );
+    }
     return event.data['value'] as string;
   }
 
@@ -212,6 +248,13 @@ export class MockLayer {
         message: e.data['message'] as string,
         stack: e.data['stack'] as string | null,
       }));
+  }
+
+  // ── Internal helpers ─────────────────────────────────────────────
+
+  /** Count how many events of a given type were recorded in the original session */
+  private countRecordedOfType(type: EventType): number {
+    return this.events.filter(e => e.type === type).length;
   }
 
   // ── State inspection ────────────────────────────────────────────

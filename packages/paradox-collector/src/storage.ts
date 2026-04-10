@@ -1,47 +1,71 @@
 // ============================================================================
-// PARADOX COLLECTOR — Storage Engine
+// PARADOX COLLECTOR — Storage Engine (Phase 6 Hardened)
 //
-// Phase 0: File-based storage with JSON serialization.
-// Each recording session is stored as a separate JSON file.
-// Sessions are indexed by trace ID for fast lookup.
+// File-based storage with crash-safe guarantees:
+//   - durableWrite: write → fsync → rename → dir-fsync
+//   - SHA-256 checksum on every file, verified on load
+//   - Corrupt files quarantined to sessions/corrupt/
+//   - Backwards-compatible with pre-checksum files
 //
-// Future: Content-Addressable Storage (CAS) with deduplication,
-// tiered storage (RAM → SSD → S3), delta compression.
+// INVARIANTS:
+//   1. A stored file is either fully written + verified, or doesn't exist
+//   2. Corrupt files are NEVER silently skipped — they are quarantined
+//   3. getCorruptCount() > 0 means an alert should fire
+//
+// Future: StorageBackend interface for S3/Postgres (Phase 8)
 // ============================================================================
 
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename as fsRename } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { RecordingSession } from '@paradox/core';
+import { durableWrite } from './durable-writer.js';
+import { wrapWithChecksum, verifyAndUnwrap, ChecksumError } from './checksum.js';
 
 export class FileStorage {
   private readonly baseDir: string;
   private readonly sessionsDir: string;
   private readonly indexDir: string;
+  private readonly corruptDir: string;
 
   // In-memory index for fast lookups
   private traceIndex = new Map<string, string[]>(); // traceId → sessionIds
   private sessionIndex = new Map<string, string>();  // sessionId → filename
 
+  // Corruption tracking
+  private _corruptCount = 0;
+
   constructor(baseDir: string) {
     this.baseDir = baseDir;
     this.sessionsDir = join(baseDir, 'sessions');
     this.indexDir = join(baseDir, 'index');
+    this.corruptDir = join(baseDir, 'sessions', 'corrupt');
   }
 
   /** Initialize storage directories */
   async init(): Promise<void> {
     await mkdir(this.sessionsDir, { recursive: true });
     await mkdir(this.indexDir, { recursive: true });
+    await mkdir(this.corruptDir, { recursive: true });
     await this.rebuildIndex();
   }
 
-  /** Store a recording session */
+  /**
+   * Store a recording session durably.
+   *
+   * Uses the write-rename-fsync dance:
+   *   1. Serialize session + compute SHA-256 checksum
+   *   2. Write to temp file, fsync
+   *   3. Atomic rename to final path
+   *   4. fsync directory
+   */
   async store(session: RecordingSession): Promise<string> {
     const filename = `${session.id}.json`;
     const filepath = join(this.sessionsDir, filename);
 
-    await writeFile(filepath, JSON.stringify(session, null, 2), 'utf-8');
+    // Wrap with checksum for integrity verification on load
+    const content = wrapWithChecksum(session);
+    await durableWrite(filepath, content);
 
     // Update in-memory index
     this.sessionIndex.set(session.id, filename);
@@ -52,17 +76,27 @@ export class FileStorage {
     return session.id;
   }
 
-  /** Load a recording session by ID */
+  /**
+   * Load a recording session by ID.
+   * Verifies checksum on load. Quarantines corrupt files.
+   */
   async load(sessionId: string): Promise<RecordingSession | null> {
     const filename = this.sessionIndex.get(sessionId);
     if (!filename) return null;
 
+    const filepath = join(this.sessionsDir, filename);
+
     try {
-      const filepath = join(this.sessionsDir, filename);
       const data = await readFile(filepath, 'utf-8');
-      return JSON.parse(data) as RecordingSession;
-    } catch {
-      return null;
+      return verifyAndUnwrap<RecordingSession>(data);
+    } catch (err) {
+      if (err instanceof ChecksumError) {
+        // Quarantine the corrupt file
+        await this.quarantine(filename, err.message);
+        this.sessionIndex.delete(sessionId);
+        return null;
+      }
+      return null; // file doesn't exist or unreadable
     }
   }
 
@@ -125,10 +159,33 @@ export class FileStorage {
       .slice(0, 16);
   }
 
-  /** Rebuild in-memory index from disk */
+  /** How many corrupt files have been quarantined */
+  getCorruptCount(): number {
+    return this._corruptCount;
+  }
+
+  /** Move a corrupt file to the quarantine directory */
+  private async quarantine(filename: string, reason: string): Promise<void> {
+    try {
+      const src = join(this.sessionsDir, filename);
+      const dst = join(this.corruptDir, `${Date.now()}-${filename}`);
+      await fsRename(src, dst);
+      this._corruptCount++;
+      console.error(`[PARADOX STORAGE] Quarantined corrupt file: ${filename} — ${reason}`);
+    } catch {
+      // Best effort — if we can't move it, at least we didn't serve it
+      this._corruptCount++;
+    }
+  }
+
+  /**
+   * Rebuild in-memory index from disk.
+   * Verifies checksum on each file. Quarantines corrupt ones.
+   */
   private async rebuildIndex(): Promise<void> {
     this.sessionIndex.clear();
     this.traceIndex.clear();
+    this._corruptCount = 0;
 
     try {
       const files = await readdir(this.sessionsDir);
@@ -136,13 +193,16 @@ export class FileStorage {
         if (!file.endsWith('.json')) continue;
         try {
           const data = await readFile(join(this.sessionsDir, file), 'utf-8');
-          const session = JSON.parse(data) as RecordingSession;
+          const session = verifyAndUnwrap<RecordingSession>(data);
           this.sessionIndex.set(session.id, file);
           const traceIds = this.traceIndex.get(session.traceId) ?? [];
           traceIds.push(session.id);
           this.traceIndex.set(session.traceId, traceIds);
-        } catch {
-          // Corrupted file — skip
+        } catch (err) {
+          if (err instanceof ChecksumError) {
+            await this.quarantine(file, err.message);
+          }
+          // Other errors (file read failure) — skip silently
         }
       }
     } catch {

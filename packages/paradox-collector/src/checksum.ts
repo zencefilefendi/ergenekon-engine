@@ -1,0 +1,76 @@
+// ============================================================================
+// PARADOX COLLECTOR — Checksum Utilities
+//
+// SHA-256 checksums for session integrity verification.
+// Every stored session file has a checksum header that is validated on load.
+//
+// INVARIANT: If checksum doesn't match, the file is corrupt.
+//            Corrupt files are quarantined, never silently skipped.
+// ============================================================================
+
+import { createHash } from 'node:crypto';
+
+export interface ChecksummedFile {
+  _cksum: string;     // "sha256:<hex>"
+  _v: number;         // format version (currently 1)
+  data: unknown;      // the actual session data
+}
+
+/** Compute SHA-256 hex digest of JSON-stringified data */
+export function computeChecksum(data: unknown): string {
+  const hash = createHash('sha256')
+    .update(JSON.stringify(data))
+    .digest('hex');
+  return `sha256:${hash}`;
+}
+
+/** Wrap data with a checksum header for durable storage */
+export function wrapWithChecksum(data: unknown): string {
+  const checksum = computeChecksum(data);
+  const wrapped: ChecksummedFile = {
+    _cksum: checksum,
+    _v: 1,
+    data,
+  };
+  return JSON.stringify(wrapped, null, 2);
+}
+
+/**
+ * Verify and unwrap a checksummed file.
+ * Returns the data if valid, throws if corrupt.
+ */
+export function verifyAndUnwrap<T>(content: string): T {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new ChecksumError('Failed to parse JSON');
+  }
+
+  // Handle legacy files (pre-checksum, plain JSON sessions)
+  if (parsed && typeof parsed === 'object' && !('_cksum' in parsed)) {
+    // Legacy file — no checksum, return as-is (backwards compatible)
+    return parsed as T;
+  }
+
+  const wrapped = parsed as ChecksummedFile;
+  if (!wrapped._cksum || !wrapped.data) {
+    throw new ChecksumError('Missing checksum or data fields');
+  }
+
+  const expected = computeChecksum(wrapped.data);
+  if (wrapped._cksum !== expected) {
+    throw new ChecksumError(
+      `Checksum mismatch: expected ${expected}, got ${wrapped._cksum}. File is corrupt.`
+    );
+  }
+
+  return wrapped.data as T;
+}
+
+export class ChecksumError extends Error {
+  constructor(message: string) {
+    super(`[PARADOX] Checksum verification failed: ${message}`);
+    this.name = 'ChecksumError';
+  }
+}
