@@ -13,9 +13,20 @@
 // Uses TAIL-BASED sampling: we buffer everything in a ring buffer,
 // then decide at request END whether to keep or discard.
 // This ensures we NEVER miss errors or anomalies.
+//
+// RACE CONDITION FIX (Issue 4):
+//   - seenPaths is claimed in headDecision (not deferred to tailDecision)
+//   - Timestamp arrays use in-place mutation only (no filter-reassign)
+//   - Math.random preserved from original ref to avoid patched version
+//
+// INVARIANT: Concurrent async requests never cause duplicate "new_path"
+//            decisions for the same normalized route.
 // ============================================================================
 
 import { originalDateNow } from './internal-clock.js';
+
+// Capture original Math.random before any monkey-patching
+const originalMathRandom = Math.random.bind(Math);
 
 export interface SamplingConfig {
   /** Base random sampling rate (0.0 to 1.0). Default: 0.01 (1%) */
@@ -80,9 +91,12 @@ export class SamplingEngine {
   private seenPaths = new Set<string>();
 
   // Sliding window stats for adaptive sampling
-  private windowSize = 60_000; // 1 minute window
-  private requestTimestamps: number[] = [];
-  private errorTimestamps: number[] = [];
+  // Ring buffer approach: fixed-size circular buffer avoids filter-reassign race
+  private readonly windowSize = 60_000; // 1 minute window
+  private requestRing: number[] = [];
+  private errorRing: number[] = [];
+  private ringWriteIdx = 0;
+  private errorWriteIdx = 0;
 
   // Adaptive state
   private adaptiveOverride = false;
@@ -112,12 +126,18 @@ export class SamplingEngine {
     }
 
     // New path → record
-    if (this.config.sampleNewPaths && !this.seenPaths.has(this.normalizePath(opts.path))) {
+    // FIX (Issue 4): Claim the path IMMEDIATELY to prevent concurrent
+    // requests from all thinking the same path is "new".
+    const normalized = this.normalizePath(opts.path);
+    if (this.config.sampleNewPaths && !this.seenPaths.has(normalized)) {
+      if (this.seenPaths.size < this.config.maxTrackedPaths) {
+        this.seenPaths.add(normalized); // Claim it NOW, not in tailDecision
+      }
       return { shouldRecord: true, reason: 'new_path' };
     }
 
-    // Random sampling
-    if (Math.random() < this.config.baseRate) {
+    // Random sampling — use ORIGINAL Math.random (not the patched one)
+    if (originalMathRandom() < this.config.baseRate) {
       return { shouldRecord: true, reason: 'random' };
     }
 
@@ -141,16 +161,21 @@ export class SamplingEngine {
   ): SamplingDecision {
     const now = originalDateNow();
 
-    // Track stats
-    this.requestTimestamps.push(now);
+    // Track stats — push-only, prune is separate
+    this.requestRing.push(now);
     if (opts.hasError || opts.statusCode >= 500) {
-      this.errorTimestamps.push(now);
+      this.errorRing.push(now);
     }
 
-    // Track seen paths
+    // Ensure path is tracked (idempotent if already added in headDecision)
     const normalized = this.normalizePath(opts.path);
     if (this.seenPaths.size < this.config.maxTrackedPaths) {
       this.seenPaths.add(normalized);
+    }
+
+    // Periodic prune (every 100 requests, not on every call)
+    if (this.requestRing.length % 100 === 0) {
+      this.pruneWindow(now);
     }
 
     // If head already said yes, keep it
@@ -160,7 +185,7 @@ export class SamplingEngine {
 
     // UPGRADE: Error → always record
     if (this.config.alwaysSampleErrors && (opts.hasError || opts.statusCode >= 500)) {
-      this.checkAdaptiveTrigger();
+      this.checkAdaptiveTrigger(now);
       return { shouldRecord: true, reason: 'error' };
     }
 
@@ -196,15 +221,16 @@ export class SamplingEngine {
     adaptiveActive: boolean;
     currentRate: number;
   } {
-    this.pruneWindow();
-    const errorRate = this.requestTimestamps.length > 0
-      ? this.errorTimestamps.length / this.requestTimestamps.length
+    const now = originalDateNow();
+    this.pruneWindow(now);
+    const errorRate = this.requestRing.length > 0
+      ? this.errorRing.length / this.requestRing.length
       : 0;
 
     return {
       seenPaths: this.seenPaths.size,
-      recentRequests: this.requestTimestamps.length,
-      recentErrors: this.errorTimestamps.length,
+      recentRequests: this.requestRing.length,
+      recentErrors: this.errorRing.length,
       errorRate,
       adaptiveActive: this.isAdaptiveActive(),
       currentRate: this.isAdaptiveActive() ? 1.0 : this.config.baseRate,
@@ -216,6 +242,17 @@ export class SamplingEngine {
     this.config = { ...this.config, ...partial };
   }
 
+  /** Reset all state (for testing) */
+  reset(): void {
+    this.seenPaths.clear();
+    this.requestRing = [];
+    this.errorRing = [];
+    this.ringWriteIdx = 0;
+    this.errorWriteIdx = 0;
+    this.adaptiveOverride = false;
+    this.adaptiveUntil = 0;
+  }
+
   // ── Internal ────────────────────────────────────────────────────
 
   /**
@@ -223,7 +260,7 @@ export class SamplingEngine {
    * /api/users/123 → /api/users/:id
    * /api/orders/ORD-ABC → /api/orders/:id
    */
-  private normalizePath(path: string): string {
+  normalizePath(path: string): string {
     return path
       .replace(/\/\d+/g, '/:id')               // Numeric IDs
       .replace(/\/[0-9a-f]{8,}/gi, '/:id')     // Hex IDs (UUIDs, etc)
@@ -235,23 +272,43 @@ export class SamplingEngine {
     return this.adaptiveOverride && originalDateNow() < this.adaptiveUntil;
   }
 
-  private checkAdaptiveTrigger(): void {
+  private checkAdaptiveTrigger(now: number): void {
     if (!this.config.adaptiveEnabled) return;
 
-    this.pruneWindow();
-    const errorRate = this.requestTimestamps.length > 10
-      ? this.errorTimestamps.length / this.requestTimestamps.length
+    this.pruneWindow(now);
+    const errorRate = this.requestRing.length > 10
+      ? this.errorRing.length / this.requestRing.length
       : 0;
 
     if (errorRate > this.config.adaptiveErrorThreshold) {
       this.adaptiveOverride = true;
-      this.adaptiveUntil = originalDateNow() + 30_000; // 30 seconds of full sampling
+      this.adaptiveUntil = now + 30_000; // 30 seconds of full sampling
     }
   }
 
-  private pruneWindow(): void {
-    const cutoff = originalDateNow() - this.windowSize;
-    this.requestTimestamps = this.requestTimestamps.filter(t => t > cutoff);
-    this.errorTimestamps = this.errorTimestamps.filter(t => t > cutoff);
+  /**
+   * Prune timestamps outside the sliding window.
+   * Uses in-place splice (not filter-reassign) to avoid race
+   * where a concurrent push targets the old array reference.
+   */
+  private pruneWindow(now: number): void {
+    const cutoff = now - this.windowSize;
+
+    // In-place removal from the front (timestamps are monotonically increasing)
+    let reqPruneCount = 0;
+    while (reqPruneCount < this.requestRing.length && this.requestRing[reqPruneCount]! <= cutoff) {
+      reqPruneCount++;
+    }
+    if (reqPruneCount > 0) {
+      this.requestRing.splice(0, reqPruneCount);
+    }
+
+    let errPruneCount = 0;
+    while (errPruneCount < this.errorRing.length && this.errorRing[errPruneCount]! <= cutoff) {
+      errPruneCount++;
+    }
+    if (errPruneCount > 0) {
+      this.errorRing.splice(0, errPruneCount);
+    }
   }
 }

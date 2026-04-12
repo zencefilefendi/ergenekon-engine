@@ -19,6 +19,13 @@ export type EventType =
   | 'timer_set'             // setTimeout/setInterval created
   | 'timer_fire'            // Timer callback fired
   | 'error'                 // Uncaught error
+  | 'fs_call'               // Filesystem operation initiated
+  | 'fs_result'             // Filesystem operation result
+  | 'fs_error'              // Filesystem operation error
+  | 'dns_lookup'            // DNS lookup initiated
+  | 'dns_resolve'           // DNS resolve initiated
+  | 'dns_result'            // DNS resolution result
+  | 'dns_error'             // DNS resolution error
   | 'custom';               // User-defined event
 
 /**

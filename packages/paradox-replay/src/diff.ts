@@ -127,10 +127,14 @@ export function deepDiff(
     seen.add(objA);
     seen.add(objB);
 
-    // Key-order independent: union of all OWN keys (including non-enumerable like __proto__)
+    // Key-order independent: union of all enumerable own keys.
+    // We use Object.keys() rather than getOwnPropertyNames() because:
+    //   1. JSON.parse output only has enumerable properties
+    //   2. __proto__ as a getOwnPropertyNames result is a JS engine quirk
+    //      that creates false diffs on structurally identical JSON
     const allKeys = new Set([
-      ...Object.getOwnPropertyNames(objA),
-      ...Object.getOwnPropertyNames(objB),
+      ...Object.keys(objA),
+      ...Object.keys(objB),
     ]);
     for (const key of allKeys) {
       const childPath = path ? `${path}.${key}` : key;

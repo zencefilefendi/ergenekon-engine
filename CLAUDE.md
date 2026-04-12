@@ -5,7 +5,7 @@ PARADOX is a deterministic record & replay engine for distributed systems.
 It enables time-travel debugging of production incidents by recording all I/O boundaries
 and replaying them deterministically on a developer's machine.
 
-**Status**: Phase 0 ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅ — npm publish ready. Phase 5 (Scale & Launch) next.
+**Status**: Phase 0 ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅ Phase 5 (infra) ✅ — npm publish ready + landing page. Launch next.
 
 ## Repository Structure
 ```
@@ -41,7 +41,9 @@ Yutpa/
 │   │       ├── interceptors/
 │   │       │   ├── globals.ts        # Date.now, Math.random monkey-patch
 │   │       │   ├── http-incoming.ts  # Express middleware (req/res capture)
-│   │       │   └── http-outgoing.ts  # fetch() monkey-patch
+│   │       │   ├── http-outgoing.ts  # fetch() monkey-patch
+│   │       │   ├── fs.ts             # fs.promises interceptor
+│   │       │   └── dns.ts            # dns.lookup/resolve interceptor
 │   │       └── transport/
 │   │           └── collector-client.ts # Buffered send to collector
 │   ├── paradox-collector/     # Event collection & storage server
@@ -139,9 +141,9 @@ npx tsx packages/paradox-cli/src/index.ts health       # Collector health check
 - CLI Tool: 10 commands (sessions, inspect, timeline, trace, export, import, stats, watch, health, help) ✓
 - Performance Benchmark: micro-benchmark for overhead measurement ✓
 
-## Current Focus: Phase 4
-- Production-Ready hardening
-- Delta compression + CAS deduplication
-- Tiered storage (memory → disk → S3)
-- Kubernetes operator + Helm chart
-- CI/CD pipeline + load testing
+## Current Focus: Phase 5 — Launch
+- Landing page (landing/index.html)
+- npm publish pipeline ready
+- fs + dns interceptors wired into probe lifecycle
+- 173 tests, 13 test files — all green
+- 6 packages @ v0.4.0 — npm pack verified

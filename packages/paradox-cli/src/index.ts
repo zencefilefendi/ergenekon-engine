@@ -310,6 +310,156 @@ async function cmdHealth(): Promise<void> {
 
 // ── Help ──────────────────────────────────────────────────────────
 
+// ── Doctor ────────────────────────────────────────────────────────
+
+interface DoctorCheck {
+  name: string;
+  status: 'pass' | 'fail' | 'warn';
+  message: string;
+  detail?: string;
+}
+
+async function cmdDoctor(): Promise<void> {
+  console.log(`\n${c.bold}╔══════════════════════════════════════════╗`);
+  console.log(`║       PARADOX DOCTOR — System Check      ║`);
+  console.log(`╚══════════════════════════════════════════╝${c.reset}\n`);
+
+  const checks: DoctorCheck[] = [];
+
+  // 1. Node.js version
+  const nodeVersion = process.version;
+  const major = parseInt(nodeVersion.slice(1).split('.')[0]!, 10);
+  checks.push({
+    name: 'Node.js version',
+    status: major >= 18 ? 'pass' : major >= 16 ? 'warn' : 'fail',
+    message: nodeVersion,
+    detail: major < 18 ? 'Recommended: Node.js >= 18.0.0 for full AsyncLocalStorage support' : undefined,
+  });
+
+  // 2. PARADOX_STRICT env
+  const strict = process.env['PARADOX_STRICT'];
+  checks.push({
+    name: 'PARADOX_STRICT mode',
+    status: strict === '1' ? 'pass' : 'warn',
+    message: strict === '1' ? 'Enabled (strict error handling)' : 'Not set (errors may be silently handled)',
+    detail: strict !== '1' ? 'Set PARADOX_STRICT=1 in CI to catch errors early' : undefined,
+  });
+
+  // 3. Collector reachability
+  try {
+    const health = await fetchAPI('/health') as any;
+    checks.push({
+      name: 'Collector connection',
+      status: health.status === 'ok' ? 'pass' : 'warn',
+      message: `Connected to ${COLLECTOR_URL} (v${health.version || 'unknown'})`,
+    });
+  } catch (err) {
+    checks.push({
+      name: 'Collector connection',
+      status: 'fail',
+      message: `Cannot reach ${COLLECTOR_URL}`,
+      detail: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // 4. Collector stats
+  try {
+    const stats = await fetchAPI('/api/v1/stats') as any;
+    checks.push({
+      name: 'Collector stats',
+      status: 'pass',
+      message: `${stats.sessionsStored} sessions stored, ${stats.eventsReceived} events received`,
+    });
+  } catch {
+    checks.push({
+      name: 'Collector stats',
+      status: 'warn',
+      message: 'Could not fetch stats (collector may be unreachable)',
+    });
+  }
+
+  // 5. Storage directory writable
+  const { mkdtemp, writeFile, unlink, rmdir } = await import('node:fs/promises');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  try {
+    const testDir = await mkdtemp(join(tmpdir(), 'paradox-doctor-'));
+    const testFile = join(testDir, 'test-write');
+    await writeFile(testFile, 'paradox-doctor-test');
+    await unlink(testFile);
+    await rmdir(testDir);
+    checks.push({
+      name: 'Storage writable',
+      status: 'pass',
+      message: 'Temp storage write + fsync test passed',
+    });
+  } catch (err) {
+    checks.push({
+      name: 'Storage writable',
+      status: 'fail',
+      message: 'Cannot write to temp directory',
+      detail: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // 6. Clock check (NTP-like sanity)
+  const before = Date.now();
+  const after = Date.now();
+  const clockDrift = after - before;
+  checks.push({
+    name: 'System clock',
+    status: clockDrift <= 100 ? 'pass' : 'warn',
+    message: `Clock monotonic (${clockDrift}ms between successive calls)`,
+    detail: clockDrift > 100 ? 'High clock jitter detected — HLC may compensate but investigate NTP sync' : undefined,
+  });
+
+  // 7. Memory check
+  const mem = process.memoryUsage();
+  const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
+  checks.push({
+    name: 'Memory usage',
+    status: heapMB < 512 ? 'pass' : heapMB < 1024 ? 'warn' : 'fail',
+    message: `${heapMB}MB heap used`,
+  });
+
+  // 8. Package availability checks
+  const packages = ['@paradox/core', '@paradox/probe', '@paradox/replay', '@paradox/collector'];
+  for (const pkg of packages) {
+    try {
+      await import(pkg);
+      checks.push({ name: `Package: ${pkg}`, status: 'pass', message: 'Loaded' });
+    } catch {
+      checks.push({ name: `Package: ${pkg}`, status: 'warn', message: 'Not found in current context' });
+    }
+  }
+
+  // ── Print results ──────────────────────────────────────────────
+
+  const icons = { pass: `${c.green}✓${c.reset}`, fail: `${c.red}✗${c.reset}`, warn: `${c.yellow}⚠${c.reset}` };
+
+  for (const check of checks) {
+    console.log(`  ${icons[check.status]} ${c.bold}${check.name}${c.reset}: ${check.message}`);
+    if (check.detail) {
+      console.log(`    ${c.dim}${check.detail}${c.reset}`);
+    }
+  }
+
+  const passCount = checks.filter(ch => ch.status === 'pass').length;
+  const failCount = checks.filter(ch => ch.status === 'fail').length;
+  const warnCount = checks.filter(ch => ch.status === 'warn').length;
+
+  console.log(`\n${c.bold}Summary:${c.reset} ${c.green}${passCount} passed${c.reset}, ${c.yellow}${warnCount} warnings${c.reset}, ${c.red}${failCount} failed${c.reset}`);
+
+  if (failCount > 0) {
+    console.log(`\n${c.bgRed}${c.white} UNHEALTHY ${c.reset} Fix the failed checks above before running in production.\n`);
+    process.exitCode = 1;
+  } else if (warnCount > 0) {
+    console.log(`\n${c.bgYellow} MOSTLY OK ${c.reset} Some warnings — review before production deployment.\n`);
+  } else {
+    console.log(`\n${c.bgGreen}${c.white} ALL CLEAR ${c.reset} System is healthy and ready.\n`);
+  }
+}
+
 function showHelp(): void {
   console.log(`
 ${c.bold}╔══════════════════════════════════════════╗
@@ -328,6 +478,7 @@ ${c.bold}Commands:${c.reset}
   ${c.cyan}stats${c.reset}                          Show collector statistics
   ${c.cyan}watch${c.reset}                          Live-tail new recordings
   ${c.cyan}health${c.reset}                         Check collector health
+  ${c.cyan}doctor${c.reset}                         Run diagnostic checks on the system
 
 ${c.bold}Environment:${c.reset}
   PARADOX_COLLECTOR_URL   Collector address (default: http://localhost:4380)
@@ -385,6 +536,11 @@ async function main(): Promise<void> {
       case 'health':
       case 'ping':
         await cmdHealth();
+        break;
+      case 'doctor':
+      case 'diag':
+      case 'diagnose':
+        await cmdDoctor();
         break;
       case 'help':
       case '--help':

@@ -18,6 +18,8 @@ import { installFetchInterceptor, uninstallFetchInterceptor } from './intercepto
 import { installTimerInterceptors, uninstallTimerInterceptors } from './interceptors/timers.js';
 import { installErrorInterceptors, uninstallErrorInterceptors } from './interceptors/errors.js';
 import { installPgInterceptor, installRedisInterceptor, installMongoInterceptor, uninstallDatabaseInterceptors } from './interceptors/database.js';
+import { installFsInterceptor, uninstallFsInterceptor } from './interceptors/fs.js';
+import { installDnsInterceptor, uninstallDnsInterceptor } from './interceptors/dns.js';
 import { createHttpIncomingMiddleware } from './interceptors/http-incoming.js';
 import { CollectorClient } from './transport/collector-client.js';
 import { SamplingEngine, type SamplingConfig, DEFAULT_SAMPLING_CONFIG } from './sampling.js';
@@ -72,6 +74,8 @@ export class ParadoxProbe {
     installFetchInterceptor();
     installTimerInterceptors();
     installErrorInterceptors();
+    installFsInterceptor();
+    installDnsInterceptor();
 
     // Auto-detect and install database interceptors
     const dbDrivers: string[] = [];
@@ -102,6 +106,8 @@ export class ParadoxProbe {
     uninstallTimerInterceptors();
     uninstallErrorInterceptors();
     uninstallDatabaseInterceptors();
+    uninstallFsInterceptor();
+    uninstallDnsInterceptor();
     await this.collector.stop();
 
     console.log(`[PARADOX] Probe stopped for "${this.config.serviceName}"`);

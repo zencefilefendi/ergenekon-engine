@@ -1,15 +1,39 @@
 {
   "name": "@paradox/ui",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "type": "module",
-  "description": "PARADOX Time-Travel Debugger — visual UI",
+  "description": "PARADOX Time-Travel Debugger — visual web UI for inspecting distributed recordings",
   "main": "./src/server.ts",
+  "exports": {
+    ".": {
+      "import": "./src/server.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "start": "npx tsx src/server.ts",
     "dev": "npx tsx watch src/server.ts"
   },
   "dependencies": {
-    "@paradox/core": "*"
+    "@paradox/core": "0.4.0"
   },
-  "license": "BUSL-1.1"
+  "license": "BUSL-1.1",
+  "keywords": [
+    "paradox",
+    "debugger",
+    "time-travel",
+    "visual-debugger",
+    "distributed-systems"
+  ],
+  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "directory": "packages/paradox-ui"
+  },
+  "bugs": {
+    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+  }
 }

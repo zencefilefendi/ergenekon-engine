@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PARADOX Engine — The Black Box for Software</title>
+  <meta name="description" content="Deterministic record & replay debugger for distributed systems. Replay any production bug on your laptop — byte-for-byte identical.">
+  <meta property="og:title" content="PARADOX Engine — Time-Travel Debugging for Distributed Systems">
+  <meta property="og:description" content="Record production requests. Replay them on your laptop. Byte-for-byte identical. The debugging tool that fintech and SaaS teams have been waiting for.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://paradoxengine.dev">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏪</text></svg>">
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       PARADOX ENGINE — LANDING PAGE DESIGN SYSTEM
+       Dark, premium, engineering-focused aesthetic
+       ═══════════════════════════════════════════════════════════ */
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a26;
+      --bg-card: #15151f;
+      --bg-card-hover: #1c1c2a;
+      --surface-glass: rgba(255, 255, 255, 0.03);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --border-focus: rgba(139, 92, 246, 0.4);
+
+      --text-primary: #f0f0f5;
+      --text-secondary: #9898ac;
+      --text-tertiary: #65657a;
+      --text-muted: #4a4a5c;
+
+      --accent-violet: #8b5cf6;
+      --accent-violet-glow: rgba(139, 92, 246, 0.15);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+
+      --gradient-hero: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%);
+      --gradient-hero-subtle: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.08) 50%, rgba(6,182,212,0.08) 100%);
+      --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 30%), rgba(139,92,246,0.08), transparent 60%);
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 40px rgba(139,92,246,0.15);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── UTILITY ───────────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .text-gradient {
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 100px;
+      background: var(--accent-violet-glow);
+      border: 1px solid rgba(139,92,246,0.2);
+      color: var(--accent-violet);
+      font-size: 13px; font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── ANIMATED BACKGROUND ──────────────────────────────── */
+    .bg-grid {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: 0;
+    }
+    .bg-glow {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--gradient-glow);
+      pointer-events: none; z-index: 0;
+      transition: background 0.3s ease;
+    }
+
+    /* ── NAVBAR ────────────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 0;
+      background: rgba(10, 10, 15, 0.8);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    nav .container {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 20px; letter-spacing: -0.02em;
+      text-decoration: none; color: var(--text-primary);
+    }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient-hero);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .btn-nav {
+      padding: 8px 20px; border-radius: 8px;
+      background: var(--accent-violet); color: white;
+      text-decoration: none; font-size: 14px; font-weight: 600;
+      transition: all 0.2s;
+      border: none; cursor: pointer;
+    }
+    .btn-nav:hover { background: #7c3aed; transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+
+    /* ── HERO ──────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      padding: 160px 0 100px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 24px;
+    }
+    .hero .subtitle {
+      font-size: clamp(18px, 2.5vw, 22px);
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+    .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: var(--radius-md);
+      background: var(--accent-violet); color: white;
+      font-size: 16px; font-weight: 600; text-decoration: none;
+      transition: all 0.25s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary:hover { background: #7c3aed; transform: translateY(-2px); box-shadow: 0 8px 30px rgba(139,92,246,0.3); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: var(--radius-md);
+      background: var(--bg-tertiary); color: var(--text-primary);
+      font-size: 16px; font-weight: 600; text-decoration: none;
+      border: 1px solid var(--border-subtle);
+      transition: all 0.25s; cursor: pointer;
+    }
+    .btn-secondary:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+
+    /* ── PROOF BANNER ─────────────────────────────────────── */
+    .proof-banner {
+      margin: 60px auto 0;
+      max-width: 720px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.8;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+    .proof-banner::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--gradient-hero);
+    }
+    .proof-banner .label { color: var(--accent-emerald); font-weight: 600; }
+    .proof-banner .value { color: var(--accent-cyan); }
+    .proof-banner .check { color: var(--accent-emerald); }
+    .proof-banner .dim { color: var(--text-tertiary); }
+
+    /* ── SECTION ───────────────────────────────────────────── */
+    section { position: relative; padding: 120px 0; }
+    .section-label {
+      text-transform: uppercase; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; color: var(--accent-violet); margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800; letter-spacing: -0.02em;
+      line-height: 1.15; margin-bottom: 20px;
+    }
+    .section-subtitle {
+      font-size: 18px; color: var(--text-secondary);
+      max-width: 600px; line-height: 1.6;
+    }
+
+    /* ── PROBLEM CARDS ─────────────────────────────────────── */
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 60px;
+    }
+    .problem-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: all 0.3s;
+    }
+    .problem-card:hover {
+      border-color: var(--border-focus);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-glow);
+    }
+    .problem-card .icon {
+      width: 48px; height: 48px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 20px;
+    }
+    .problem-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .problem-card p { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ── HOW IT WORKS ──────────────────────────────────────── */
+    .steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 32px; margin-top: 60px;
+    }
+    .step {
+      text-align: center; padding: 40px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      position: relative;
+      transition: all 0.3s;
+    }
+    .step:hover { border-color: var(--border-focus); transform: translateY(-4px); }
+    .step-number {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--gradient-hero);
+      color: white; font-weight: 800; font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .step p { font-size: 15px; color: var(--text-secondary); }
+    .step-arrow {
+      position: absolute; right: -20px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted); font-size: 24px;
+    }
+
+    /* ── CODE BLOCK ────────────────────────────────────────── */
+    .code-section { margin-top: 60px; }
+    .code-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .code-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 20px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .code-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .code-dot.red { background: #ff5f57; }
+    .code-dot.yellow { background: #febc2e; }
+    .code-dot.green { background: #28c840; }
+    .code-header span { margin-left: auto; font-size: 13px; color: var(--text-tertiary); font-family: var(--font-mono); }
+    .code-body {
+      padding: 24px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      overflow-x: auto;
+    }
+    .code-body .kw { color: #c792ea; }
+    .code-body .fn { color: #82aaff; }
+    .code-body .str { color: #c3e88d; }
+    .code-body .cmt { color: var(--text-muted); font-style: italic; }
+    .code-body .var { color: #f78c6c; }
+    .code-body .obj { color: #89ddff; }
+
+    /* ── COMPARISON TABLE ──────────────────────────────────── */
+    .comparison-table {
+      width: 100%; border-collapse: collapse; margin-top: 60px;
+      font-size: 15px;
+    }
+    .comparison-table th {
+      text-align: left; padding: 14px 20px;
+      background: var(--bg-tertiary);
+      border-bottom: 2px solid var(--border-subtle);
+      font-weight: 700; font-size: 14px;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .comparison-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+    .comparison-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+    .comparison-table td {
+      padding: 14px 20px; text-align: center;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .comparison-table td:first-child { text-align: left; font-weight: 600; }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table .yes { color: var(--accent-emerald); font-weight: 700; }
+    .comparison-table .no { color: var(--text-muted); }
+    .comparison-table .highlight-row {
+      background: var(--accent-violet-glow);
+    }
+    .comparison-table .highlight-row td:first-child {
+      color: var(--accent-violet); font-weight: 800;
+    }
+
+    /* ── PRICING ───────────────────────────────────────────── */
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 60px;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 40px 32px;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+    .pricing-card.featured {
+      border-color: var(--accent-violet);
+      box-shadow: var(--shadow-glow);
+    }
+    .pricing-card.featured::before {
+      content: 'MOST POPULAR';
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      padding: 4px 16px; border-radius: 100px;
+      background: var(--gradient-hero); color: white;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+    }
+    .pricing-card .plan-name {
+      font-size: 16px; font-weight: 600; color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .pricing-card .price {
+      font-size: 48px; font-weight: 900; letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .pricing-card .price-detail {
+      font-size: 14px; color: var(--text-tertiary); margin-bottom: 32px;
+    }
+    .pricing-card ul {
+      list-style: none; margin-bottom: 32px;
+    }
+    .pricing-card ul li {
+      padding: 8px 0; font-size: 14px; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pricing-card ul li::before {
+      content: '✓'; color: var(--accent-emerald); font-weight: 700;
+    }
+    .pricing-card .btn-plan {
+      display: block; text-align: center;
+      padding: 12px 24px; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .pricing-card .btn-plan.primary {
+      background: var(--accent-violet); color: white;
+    }
+    .pricing-card .btn-plan.primary:hover { background: #7c3aed; }
+    .pricing-card .btn-plan.outline {
+      background: transparent; color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+    .pricing-card .btn-plan.outline:hover { border-color: rgba(255,255,255,0.15); background: var(--bg-tertiary); }
+
+    /* ── STATS BAR ─────────────────────────────────────────── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 24px; margin-top: 60px;
+    }
+    .stat-item {
+      text-align: center; padding: 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+    .stat-item .stat-value {
+      font-size: 40px; font-weight: 900; letter-spacing: -0.02em;
+    }
+    .stat-item .stat-label {
+      font-size: 14px; color: var(--text-secondary); margin-top: 4px;
+    }
+
+    /* ── CTA ───────────────────────────────────────────────── */
+    .cta-section {
+      text-align: center;
+      padding: 120px 0;
+    }
+    .cta-box {
+      padding: 80px 40px;
+      background: var(--gradient-hero-subtle);
+      border: 1px solid rgba(139,92,246,0.15);
+      border-radius: var(--radius-xl);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--gradient-hero);
+    }
+    .cta-box h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 900; margin-bottom: 16px;
+    }
+    .cta-box p {
+      font-size: 18px; color: var(--text-secondary);
+      margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto;
+    }
+    .install-cmd {
+      display: inline-flex; align-items: center; gap: 12px;
+      padding: 14px 24px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .install-cmd:hover { border-color: var(--accent-violet); }
+    .install-cmd .prefix { color: var(--accent-emerald); }
+    .install-cmd .copy-icon { color: var(--text-tertiary); font-size: 14px; }
+
+    /* ── FOOTER ────────────────────────────────────────────── */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    footer a { color: var(--text-tertiary); text-decoration: none; }
+    footer a:hover { color: var(--text-primary); }
+
+    /* ── RESPONSIVE ────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .problem-grid, .steps, .pricing-grid, .stats-bar { grid-template-columns: 1fr; }
+      .step-arrow { display: none; }
+      .nav-links { display: none; }
+      .hero { padding: 120px 0 60px; }
+      .comparison-table { font-size: 13px; }
+      .comparison-table td, .comparison-table th { padding: 10px 8px; }
+    }
+
+    /* ── ANIMATIONS ────────────────────────────────────────── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- ═══ NAVBAR ═══════════════════════════════════════════ -->
+<nav>
+  <div class="container">
+    <a href="#" class="logo">
+      <div class="logo-icon">⏪</div>
+      PARADOX
+    </a>
+    <ul class="nav-links">
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#comparison">Compare</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="https://github.com/zencefilefendi/paradox-engine" target="_blank">GitHub</a></li>
+      <li><a href="#cta" class="btn-nav">Get Started</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="badge animate-in">⚡ v0.4 — 173 tests passing, 6 packages</div>
+    <h1 class="animate-in delay-1">
+      The <span class="text-gradient">Black Box</span><br>
+      for Software
+    </h1>
+    <p class="subtitle animate-in delay-2">
+      Record any production request across 10+ microservices.<br>
+      Replay it on your laptop — <strong>byte-for-byte identical.</strong><br>
+      Debug in 5 minutes what used to take 5 hours.
+    </p>
+    <div class="hero-cta animate-in delay-3">
+      <a href="#cta" class="btn-primary">
+        <span>🚀</span> Start for Free
+      </a>
+      <a href="https://github.com/zencefilefendi/paradox-engine" target="_blank" class="btn-secondary">
+        <span>⭐</span> Star on GitHub
+      </a>
+    </div>
+
+    <div class="proof-banner animate-in delay-4">
+      <div><span class="dim">━━━</span> <span class="label">VERIFICATION</span> <span class="dim">━━━━━━━━━━━━━━━━━━━━━━━━</span></div>
+      <br>
+      <div>&nbsp;&nbsp;<span class="check">✅ PERFECT REPLAY — BYTE-FOR-BYTE IDENTICAL</span></div>
+      <br>
+      <div>&nbsp;&nbsp;Original requestId:&nbsp;&nbsp;<span class="value">57wbkit6</span></div>
+      <div>&nbsp;&nbsp;Replayed requestId:&nbsp;&nbsp;<span class="value">57wbkit6</span>&nbsp;&nbsp;<span class="dim">← EXACT MATCH</span></div>
+      <br>
+      <div>&nbsp;&nbsp;Date.now()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ <span class="value">1712345678901</span>&nbsp;&nbsp;<span class="check">✓</span> <span class="dim">deterministic</span></div>
+      <div>&nbsp;&nbsp;Math.random()&nbsp;&nbsp;→ <span class="value">0.73421847</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="check">✓</span> <span class="dim">deterministic</span></div>
+      <div>&nbsp;&nbsp;Response body&nbsp;&nbsp;→ <span class="value">identical</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="check">✓</span> <span class="dim">byte-for-byte</span></div>
+      <br>
+      <div><span class="dim">━━━</span> <span class="label">2 services, 98 events</span> <span class="dim">━━━━━━━━━━━━━━━━━━━━</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PROBLEM ══════════════════════════════════════════ -->
+<section id="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">Your debugging tools<br>are stuck in 2005</h2>
+    <p class="section-subtitle">
+      Logs tell you WHAT happened. Traces tell you WHEN.
+      But nobody tells you WHY — until now.
+    </p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon" style="background: rgba(248,113,113,0.1);">🔥</div>
+        <h3>Can't Reproduce</h3>
+        <p>"Works on my machine." The bug only happens in production with that exact request, that exact DB state, that exact timing. Your local env is useless.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon" style="background: rgba(251,191,36,0.1);">📊</div>
+        <h3>Logs Are Noise</h3>
+        <p>50,000 log lines. 10 services. 3 engineers staring at Datadog for 4 hours. You see WHAT failed, but the actual state that caused it? Gone forever.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon" style="background: rgba(59,130,246,0.1);">⏱️</div>
+        <h3>Traces Show Timing, Not Data</h3>
+        <p>Jaeger shows you Service A called Service B in 23ms. Cool. But what was the request body? What did the DB return? Traces don't capture state.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ════════════════════════════════════ -->
+<section id="how-it-works" style="background: var(--bg-secondary);">
+  <div class="container">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title">Three lines of code.<br>Complete time-travel.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Record</h3>
+        <p>Add the probe to your Express app. Every HTTP request, DB query, random value, and timer is captured at I/O boundaries — with &lt;1% CPU overhead.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Replay</h3>
+        <p>Download the recording. Run it locally. All I/O is mocked with recorded values. The app executes exactly as it did in production — deterministically.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Fix</h3>
+        <p>Step through the timeline. See every DB query result, every API response, every timestamp. Find the bug in 5 minutes — not 5 hours.</p>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-dot red"></span>
+          <span class="code-dot yellow"></span>
+          <span class="code-dot green"></span>
+          <span>app.ts</span>
+        </div>
+        <div class="code-body">
+          <div><span class="kw">import</span> <span class="obj">{</span> ParadoxProbe <span class="obj">}</span> <span class="kw">from</span> <span class="str">'@paradox/probe'</span><span class="obj">;</span></div>
+          <br>
+          <div><span class="kw">const</span> <span class="var">probe</span> <span class="obj">=</span> <span class="kw">new</span> <span class="fn">ParadoxProbe</span><span class="obj">({</span></div>
+          <div>&nbsp;&nbsp;serviceName: <span class="str">'checkout-service'</span><span class="obj">,</span></div>
+          <div><span class="obj">});</span></div>
+          <br>
+          <div>app.<span class="fn">use</span>(probe.<span class="fn">middleware</span>()); <span class="cmt">// That's it. You're recording.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COMPARISON TABLE ════════════════════════════════ -->
+<section id="comparison">
+  <div class="container">
+    <div class="section-label">Competitive Landscape</div>
+    <h2 class="section-title">The only tool that does<br><span class="text-gradient">all four</span></h2>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Record</th>
+          <th>Replay</th>
+          <th>Distributed</th>
+          <th>Production-Safe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Datadog</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>Sentry</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr>
+          <td>rr (Mozilla)</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="no">✗</td>
+        </tr>
+        <tr>
+          <td>Replay.io</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="no">✗</td>
+          <td class="yes">✓</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>PARADOX ⚡</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+          <td class="yes">✓</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══ STATS BAR ═══════════════════════════════════════ -->
+<section style="background: var(--bg-secondary); padding: 80px 0;">
+  <div class="container">
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value text-gradient">13x</div>
+        <div class="stat-label">ROI — every $1 returns $13</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value text-gradient">&lt;1%</div>
+        <div class="stat-label">CPU overhead in production</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value text-gradient">5 min</div>
+        <div class="stat-label">MTTR — down from 5 hours</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value text-gradient">173</div>
+        <div class="stat-label">Tests passing, zero tolerance</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRICING ═════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title">Start free. Scale when ready.</h2>
+    <p class="section-subtitle">
+      Open-source core. No credit card. No vendor lock-in.
+    </p>
+
+    <div class="pricing-grid">
+      <!-- Community -->
+      <div class="pricing-card">
+        <div class="plan-name">Community</div>
+        <div class="price">$0</div>
+        <div class="price-detail">Forever free, open-source</div>
+        <ul>
+          <li>Single service record & replay</li>
+          <li>24-hour retention</li>
+          <li>CLI tool (11 commands)</li>
+          <li>Time-Travel UI</li>
+          <li>Community support</li>
+        </ul>
+        <a href="#cta" class="btn-plan outline">Get Started</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="pricing-card featured">
+        <div class="plan-name">Pro</div>
+        <div class="price">$49</div>
+        <div class="price-detail">per developer / month</div>
+        <ul>
+          <li>Unlimited services</li>
+          <li>30-day retention</li>
+          <li>Distributed replay</li>
+          <li>Smart sampling engine</li>
+          <li>Deep PII redaction</li>
+          <li>Binary PRDX export</li>
+          <li>Priority email support</li>
+        </ul>
+        <a href="#cta" class="btn-plan primary">Start Free Trial</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="pricing-card">
+        <div class="plan-name">Enterprise</div>
+        <div class="price">$199</div>
+        <div class="price-detail">per developer / month</div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>Unlimited retention</li>
+          <li>SSO / SAML</li>
+          <li>RBAC access control</li>
+          <li>On-premise deployment</li>
+          <li>SLA 99.9%</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="mailto:hello@paradoxengine.dev" class="btn-plan outline">Contact Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ══════════════════════════════════════════════ -->
+<section id="cta" class="cta-section">
+  <div class="container">
+    <div class="cta-box">
+      <h2>Stop guessing.<br>Start <span class="text-gradient">replaying.</span></h2>
+      <p>Install the probe. Record your first request. Replay it locally. See the difference in 2 minutes.</p>
+
+      <div class="install-cmd" onclick="navigator.clipboard.writeText('npm install @paradox/probe @paradox/collector')" title="Click to copy">
+        <span class="prefix">$</span>
+        npm install @paradox/probe @paradox/collector
+        <span class="copy-icon">📋</span>
+      </div>
+
+      <br><br>
+      <div class="hero-cta">
+        <a href="https://github.com/zencefilefendi/paradox-engine" target="_blank" class="btn-primary">
+          <span>📦</span> View on GitHub
+        </a>
+        <a href="https://github.com/zencefilefendi/paradox-engine#quick-start" target="_blank" class="btn-secondary">
+          <span>📖</span> Read the Docs
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <p>
+      Built by <a href="https://github.com/zencefilefendi" target="_blank">İlhan Göktaş</a> · 
+      <a href="https://github.com/zencefilefendi/paradox-engine" target="_blank">GitHub</a> · 
+      BSL-1.1 License · 
+      © 2026 PARADOX Engine
+    </p>
+  </div>
+</footer>
+
+<!-- ═══ SCRIPTS ═════════════════════════════════════════ -->
+<script>
+  // Mouse-follow glow effect
+  document.addEventListener('mousemove', (e) => {
+    document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+    document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+  });
+
+  // Intersection Observer for scroll animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('animate-in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'all 0.6s ease';
+    observer.observe(el);
+  });
+
+  // When animated-in, reset inline styles
+  const mutationObserver = new MutationObserver((mutations) => {
+    mutations.forEach(mutation => {
+      if (mutation.target.classList.contains('animate-in')) {
+        mutation.target.style.opacity = '1';
+        mutation.target.style.transform = 'translateY(0)';
+      }
+    });
+  });
+  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item').forEach(el => {
+    mutationObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+  });
+</script>
+
+</body>
+</html>

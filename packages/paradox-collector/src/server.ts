@@ -4,13 +4,24 @@
 // Receives recording sessions from probes and stores them.
 // Provides a REST API for querying and retrieving recordings.
 //
-// Phase 0: Simple Node.js HTTP server (no framework dependency).
-// Future: gRPC for high-throughput ingestion.
+// Defense layers:
+//   1. readBody() — hard 16MB byte limit, streaming abort → 413
+//   2. JSON parse error → 400 Bad Request (not 500)
+//   3. Schema validation — events array + length cap
+//   4. Future: rate limiting (token bucket), Zod schema
+//
+// INVARIANT: No request can OOM the collector.
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { RecordingSession } from '@paradox/core';
 import { FileStorage } from './storage.js';
+import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
+
+/** Maximum number of events per session batch (prevents index explosion) */
+const MAX_EVENTS_PER_SESSION = 1_000_000;
+/** Maximum number of sessions per batch POST */
+const MAX_SESSIONS_PER_BATCH = 100;
 
 export interface CollectorServerConfig {
   port: number;
@@ -80,13 +91,59 @@ export class CollectorServer {
 
     // ── POST /api/v1/sessions — Receive recordings from probes ────
     if (req.method === 'POST' && path === '/api/v1/sessions') {
-      const body = await readBody(req);
-      const payload = JSON.parse(body) as { sessions: RecordingSession[] };
+      // Layer 1: Safe body read (16MB hard limit, streaming abort)
+      let body: string;
+      try {
+        body = await readBody(req, DEFAULT_MAX_BODY_BYTES);
+      } catch (err) {
+        if (err instanceof PayloadTooLargeError) {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }), () => {
+            // Destroy request only after response is fully flushed
+            req.destroy();
+          });
+          return;
+        }
+        throw err;
+      }
+
+      // Layer 2: JSON parse (400, not 500)
+      let payload: { sessions: RecordingSession[] };
+      try {
+        payload = JSON.parse(body) as { sessions: RecordingSession[] };
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid JSON body' }));
+        return;
+      }
+
+      // Layer 3: Schema validation
+      if (!payload.sessions || !Array.isArray(payload.sessions)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Missing or invalid "sessions" array' }));
+        return;
+      }
+
+      if (payload.sessions.length > MAX_SESSIONS_PER_BATCH) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: `Too many sessions in batch: ${payload.sessions.length} exceeds limit of ${MAX_SESSIONS_PER_BATCH}`,
+        }));
+        return;
+      }
 
       for (const session of payload.sessions) {
+        if (session.events && session.events.length > MAX_EVENTS_PER_SESSION) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: `Session ${session.id} has ${session.events.length} events, exceeds limit of ${MAX_EVENTS_PER_SESSION}`,
+          }));
+          return;
+        }
+
         await this.storage.store(session);
         this.sessionsReceived++;
-        this.eventsReceived += session.events.length;
+        this.eventsReceived += (session.events?.length ?? 0);
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -162,12 +219,3 @@ export class CollectorServer {
   }
 }
 
-/** Read request body as string */
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
-    req.on('error', reject);
-  });
-}
