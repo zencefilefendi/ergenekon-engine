@@ -4,25 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PARADOX — Time-Travel Debugger</title>
+  <meta name="description" content="PARADOX Engine Time-Travel Debugger — visualize, inspect, and replay recorded sessions from your distributed system.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏪</text></svg>">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <div id="app">
     <!-- Header -->
-    <header class="header">
+    <header class="header" id="main-header">
       <div class="header-left">
-        <h1 class="logo">
-          <span class="logo-icon">&#9776;</span>
-          PARADOX
-        </h1>
-        <span class="badge">Time-Travel Debugger</span>
+        <div class="logo">
+          <div class="logo-glow"></div>
+          <span class="logo-icon">⏪</span>
+          <span class="logo-text">PARADOX</span>
+        </div>
+        <span class="header-badge">Time-Travel Debugger</span>
+        <span id="tier-badge" class="tier-badge tier-community">Community</span>
       </div>
       <div class="header-right">
-        <button id="btn-refresh" class="btn btn-secondary" onclick="loadSessions()">Refresh</button>
+        <div class="live-pulse" id="live-pulse">
+          <span class="pulse-dot"></span>
+          <span class="pulse-label" id="live-label">LIVE</span>
+        </div>
+        <button class="btn btn-ghost" onclick="toggleKeyboardHelp()" title="Keyboard shortcuts (?)">⌨</button>
+        <button class="btn btn-ghost" onclick="loadSessions()" title="Refresh">↻</button>
         <span id="status-indicator" class="status-dot status-disconnected"></span>
         <span id="status-text" class="status-text">Disconnected</span>
       </div>
     </header>
+
+    <!-- Upgrade Banner (shown for Community tier) -->
+    <div id="upgrade-banner" class="upgrade-banner" style="display:none">
+      <span class="upgrade-icon">⚡</span>
+      <span class="upgrade-text">
+        <strong>PARADOX Community</strong> — upgrade to <strong>Pro</strong> for distributed replay, smart sampling, deep redaction, and more.
+      </span>
+      <a href="https://paradoxengine.dev/pricing" target="_blank" class="upgrade-btn">Upgrade to Pro →</a>
+      <button class="upgrade-close" onclick="dismissUpgrade()">×</button>
+    </div>
 
     <!-- Main Layout -->
     <div class="layout">
@@ -33,10 +55,18 @@
           <span id="session-count" class="count-badge">0</span>
         </div>
         <div class="search-box">
+          <div class="search-icon">🔍</div>
           <input type="text" id="search-input" placeholder="Search sessions..." oninput="filterSessions()">
         </div>
         <div id="session-list" class="session-list">
-          <div class="empty-state">Loading...</div>
+          <div class="empty-state">
+            <div class="loading-skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -44,10 +74,19 @@
       <main class="panel panel-main" id="panel-main">
         <!-- No session selected state -->
         <div id="empty-main" class="empty-main">
-          <div class="empty-icon">&#8634;</div>
-          <h2>Select a Recording</h2>
-          <p>Choose a recording from the left panel to inspect its timeline.</p>
-          <p class="hint">Or run: <code>npx tsx demo/app.ts</code> and make requests.</p>
+          <div class="empty-hero">
+            <div class="empty-icon-ring">
+              <div class="empty-icon">⏪</div>
+            </div>
+            <h2>Select a Recording</h2>
+            <p>Choose a recording from the left panel to inspect its timeline.</p>
+            <p class="hint">Or run: <code>npx tsx demo/app.ts</code> and make requests.</p>
+            <div class="empty-shortcuts">
+              <span class="shortcut-hint"><kbd>←</kbd><kbd>→</kbd> Navigate</span>
+              <span class="shortcut-hint"><kbd>Space</kbd> Play/Pause</span>
+              <span class="shortcut-hint"><kbd>?</kbd> Help</span>
+            </div>
+          </div>
         </div>
 
         <!-- Session Detail (hidden until session selected) -->
@@ -68,17 +107,16 @@
           <!-- Timeline Scrubber -->
           <div class="timeline-container">
             <div class="timeline-controls">
-              <button class="btn btn-icon" onclick="seekFirst()" title="First event">&#9198;</button>
-              <button class="btn btn-icon" onclick="seekPrev()" title="Previous event">&#9664;</button>
-              <button id="btn-play" class="btn btn-icon btn-play" onclick="togglePlay()" title="Play/Pause">&#9654;</button>
-              <button class="btn btn-icon" onclick="seekNext()" title="Next event">&#9654;</button>
-              <button class="btn btn-icon" onclick="seekLast()" title="Last event">&#9197;</button>
+              <button class="btn btn-icon" onclick="seekFirst()" title="First event (Home)">⏮</button>
+              <button class="btn btn-icon" onclick="seekPrev()" title="Previous (←)">◀</button>
+              <button id="btn-play" class="btn btn-icon btn-play" onclick="togglePlay()" title="Play/Pause (Space)">▶</button>
+              <button class="btn btn-icon" onclick="seekNext()" title="Next (→)">▶</button>
+              <button class="btn btn-icon" onclick="seekLast()" title="Last event (End)">⏭</button>
               <span id="timeline-position" class="timeline-pos">0 / 0</span>
             </div>
             <div class="timeline-track" id="timeline-track" onclick="onTimelineClick(event)">
               <div class="timeline-progress" id="timeline-progress"></div>
               <div class="timeline-cursor" id="timeline-cursor"></div>
-              <!-- Event markers will be injected here -->
             </div>
             <div class="timeline-labels">
               <span id="timeline-start">0ms</span>
@@ -139,6 +177,72 @@
           </div>
         </div>
       </main>
+
+      <!-- Right Panel: Metrics -->
+      <aside class="panel panel-metrics" id="panel-metrics">
+        <div class="panel-header">
+          <h2>Metrics</h2>
+        </div>
+        <div class="metrics-content">
+          <div class="metric-card">
+            <div class="metric-icon">📊</div>
+            <div class="metric-value" id="metric-sessions">0</div>
+            <div class="metric-label">Total Sessions</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">⚡</div>
+            <div class="metric-value" id="metric-events">0</div>
+            <div class="metric-label">Total Events</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🕐</div>
+            <div class="metric-value" id="metric-uptime">0s</div>
+            <div class="metric-label">Collector Uptime</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">📡</div>
+            <div class="metric-value" id="metric-services">—</div>
+            <div class="metric-label">Active Services</div>
+          </div>
+          <div class="metrics-divider"></div>
+          <div class="metric-card metric-mini">
+            <div class="metric-label">License</div>
+            <div class="metric-value small" id="metric-tier">Community</div>
+          </div>
+          <div class="metric-card metric-mini">
+            <div class="metric-label">Status</div>
+            <div class="metric-value small" id="metric-status">
+              <span class="metric-dot metric-dot-ok"></span> Healthy
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Keyboard Shortcuts Overlay -->
+    <div id="keyboard-overlay" class="keyboard-overlay" style="display:none" onclick="toggleKeyboardHelp()">
+      <div class="keyboard-modal" onclick="event.stopPropagation()">
+        <div class="keyboard-header">
+          <h3>⌨ Keyboard Shortcuts</h3>
+          <button class="btn btn-ghost" onclick="toggleKeyboardHelp()">✕</button>
+        </div>
+        <div class="keyboard-grid">
+          <div class="kb-group">
+            <h4>Navigation</h4>
+            <div class="kb-row"><kbd>←</kbd> or <kbd>k</kbd> <span>Previous event</span></div>
+            <div class="kb-row"><kbd>→</kbd> or <kbd>j</kbd> <span>Next event</span></div>
+            <div class="kb-row"><kbd>Home</kbd> <span>First event</span></div>
+            <div class="kb-row"><kbd>End</kbd> <span>Last event</span></div>
+          </div>
+          <div class="kb-group">
+            <h4>Playback</h4>
+            <div class="kb-row"><kbd>Space</kbd> <span>Play / Pause</span></div>
+            <div class="kb-row"><kbd>?</kbd> <span>Toggle this help</span></div>
+            <div class="kb-row"><kbd>R</kbd> <span>Refresh sessions</span></div>
+            <div class="kb-row"><kbd>Esc</kbd> <span>Close overlay</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -14,9 +14,11 @@
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import type { RecordingSession } from '@paradox/core';
+import type { RecordingSession, LicenseValidation } from '@paradox/core';
 import { FileStorage } from './storage.js';
 import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
+import { loadLicense, getTierDisplay } from '@paradox/core';
+import { RateLimiter } from './rate-limiter.js';
 
 /** Maximum number of events per session batch (prevents index explosion) */
 const MAX_EVENTS_PER_SESSION = 1_000_000;
@@ -32,14 +34,18 @@ export class CollectorServer {
   private readonly config: CollectorServerConfig;
   private readonly storage: FileStorage;
   private server: ReturnType<typeof createServer> | null = null;
+  private readonly license: LicenseValidation;
 
   // Stats
   private sessionsReceived = 0;
   private eventsReceived = 0;
+  private readonly rateLimiter: RateLimiter;
 
   constructor(config: CollectorServerConfig) {
     this.config = config;
     this.storage = new FileStorage(config.storageDir);
+    this.license = loadLicense();
+    this.rateLimiter = new RateLimiter({ maxTokens: 100, refillRate: 100 / 60 });
   }
 
   async start(): Promise<void> {
@@ -55,9 +61,13 @@ export class CollectorServer {
 
     return new Promise((resolve) => {
       this.server!.listen(this.config.port, () => {
+        const tierDisplay = getTierDisplay(this.license.tier);
         console.log(
           `[PARADOX COLLECTOR] Listening on port ${this.config.port}\n` +
-          `[PARADOX COLLECTOR] Storage: ${this.config.storageDir}`
+          `[PARADOX COLLECTOR] Storage: ${this.config.storageDir}\n` +
+          `[PARADOX COLLECTOR] License: ${tierDisplay}` +
+          (this.license.limits.maxSessions !== -1 ? ` | max sessions: ${this.license.limits.maxSessions}` : '') +
+          (this.license.limits.maxRetentionHours !== -1 ? ` | retention: ${this.license.limits.maxRetentionHours}h` : ' | retention: unlimited')
         );
         resolve();
       });
@@ -75,14 +85,26 @@ export class CollectorServer {
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    // CORS headers for UI
+    // Security headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
+      return;
+    }
+
+    // Rate limiting
+    const clientIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
+    if (!this.rateLimiter.consume(clientIp)) {
+      res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
+      res.end(JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }));
       return;
     }
 
@@ -198,6 +220,26 @@ export class CollectorServer {
         eventsReceived: this.eventsReceived,
         sessionsStored: sessions.length,
         uptime: process.uptime(),
+        license: {
+          tier: this.license.tier,
+          valid: this.license.valid,
+          daysUntilExpiry: this.license.daysUntilExpiry,
+          limits: this.license.limits,
+        },
+      }));
+      return;
+    }
+
+    // ── GET /api/v1/license — License information ─────────────────
+    if (req.method === 'GET' && path === '/api/v1/license') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        tier: this.license.tier,
+        valid: this.license.valid,
+        features: this.license.features,
+        limits: this.license.limits,
+        daysUntilExpiry: this.license.daysUntilExpiry,
+        customerName: this.license.license?.customerName ?? null,
       }));
       return;
     }
@@ -205,7 +247,7 @@ export class CollectorServer {
     // ── GET /health ───────────────────────────────────────────────
     if (req.method === 'GET' && path === '/health') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', version: '0.1.0' }));
+      res.end(JSON.stringify({ status: 'ok', version: '0.4.0' }));
       return;
     }
 

@@ -1,5 +1,6 @@
 // ============================================================================
 // PARADOX UI — Time-Travel Debugger Application Logic
+// Premium Dashboard — Metrics, License Tier, Keyboard Shortcuts
 // ============================================================================
 
 let sessions = [];
@@ -8,6 +9,7 @@ let currentEvents = [];
 let currentCursor = 0;
 let currentFilter = 'all';
 let playInterval = null;
+let currentTier = 'community';
 
 // ── API Calls ────────────────────────────────────────────────────
 
@@ -122,13 +124,7 @@ async function selectSession(sessionId) {
   updateCursor();
 
   // Highlight in session list
-  document.querySelectorAll('.session-item').forEach(el => el.classList.remove('active'));
-  const items = document.querySelectorAll('.session-item');
-  items.forEach(el => {
-    if (el.onclick.toString().includes(sessionId)) el.classList.add('active');
-  });
-
-  renderSessionList(sessions); // Re-render to update active state
+  renderSessionList(sessions);
 }
 
 // ── Timeline ─────────────────────────────────────────────────────
@@ -163,6 +159,7 @@ function getMarkerType(type) {
   if (type.startsWith('db') || type.startsWith('cache')) return 'db';
   if (type === 'error') return 'error';
   if (type === 'random' || type === 'timestamp' || type === 'uuid') return 'random';
+  if (type.startsWith('timer')) return 'timer';
   return 'other';
 }
 
@@ -230,10 +227,6 @@ function togglePlay() {
 
 function renderFlowGraph() {
   const container = document.getElementById('flow-graph');
-
-  // Extract unique services from events
-  const services = new Set();
-  services.add(currentSession.serviceName);
 
   // Find cross-service calls
   const crossCalls = [];
@@ -350,7 +343,7 @@ function syntaxHighlight(obj) {
   const json = JSON.stringify(obj, null, 2);
   if (!json) return '';
 
-  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
     let cls = 'json-number';
     if (/^"/.test(match)) {
       if (/:$/.test(match)) {
@@ -373,13 +366,125 @@ function syntaxHighlight(obj) {
 function setStatus(state) {
   const dot = document.getElementById('status-indicator');
   const text = document.getElementById('status-text');
+  const livePulse = document.getElementById('live-pulse');
+  const liveLabel = document.getElementById('live-label');
+
   dot.className = `status-dot status-${state}`;
   text.textContent = state === 'connected' ? 'Connected' : state === 'connecting' ? 'Connecting...' : 'Disconnected';
+
+  // Live pulse indicator
+  if (state === 'connected') {
+    livePulse.style.borderColor = 'rgba(34, 197, 94, 0.15)';
+    livePulse.style.background = 'rgba(34, 197, 94, 0.08)';
+    liveLabel.style.color = '#22c55e';
+  } else {
+    livePulse.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+    livePulse.style.background = 'rgba(239, 68, 68, 0.08)';
+    liveLabel.style.color = '#ef4444';
+    liveLabel.textContent = state === 'connecting' ? '...' : 'OFF';
+  }
+}
+
+// ── Metrics Polling ──────────────────────────────────────────────
+
+async function loadMetrics() {
+  const data = await api('/stats');
+  if (!data) return;
+
+  document.getElementById('metric-sessions').textContent = formatNumber(data.sessionsStored || 0);
+  document.getElementById('metric-events').textContent = formatNumber(data.eventsReceived || 0);
+  document.getElementById('metric-uptime').textContent = formatUptime(data.uptime || 0);
+
+  // Extract unique services
+  const uniqueServices = new Set(sessions.map(s => s.serviceName));
+  document.getElementById('metric-services').textContent = uniqueServices.size || '—';
+
+  // License tier from stats
+  if (data.license) {
+    const tier = data.license.tier || 'community';
+    document.getElementById('metric-tier').textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+  }
+
+  // Health status
+  const statusEl = document.getElementById('metric-status');
+  statusEl.innerHTML = `<span class="metric-dot metric-dot-ok"></span> Healthy`;
+}
+
+function formatNumber(n) {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function formatUptime(seconds) {
+  if (seconds < 60) return `${Math.floor(seconds)}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
+// ── License Info ─────────────────────────────────────────────────
+
+async function loadLicenseInfo() {
+  try {
+    const res = await fetch('/api/v1/ui-license');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    currentTier = data.tier || 'community';
+    const badge = document.getElementById('tier-badge');
+    const banner = document.getElementById('upgrade-banner');
+
+    // Update tier badge
+    badge.textContent = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
+    badge.className = `tier-badge tier-${currentTier}`;
+
+    // Show upgrade banner for community
+    if (currentTier === 'community') {
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+
+    // Show expiry warning
+    if (data.daysUntilExpiry > 0 && data.daysUntilExpiry <= 14) {
+      console.warn(`[PARADOX] License expires in ${data.daysUntilExpiry} days`);
+    }
+  } catch {
+    // Silently fall back to community display
+  }
+}
+
+function dismissUpgrade() {
+  document.getElementById('upgrade-banner').style.display = 'none';
 }
 
 // ── Keyboard Shortcuts ───────────────────────────────────────────
 
+function toggleKeyboardHelp() {
+  const overlay = document.getElementById('keyboard-overlay');
+  overlay.style.display = overlay.style.display === 'none' ? 'flex' : 'none';
+}
+
 document.addEventListener('keydown', (e) => {
+  // Keyboard overlay
+  if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    toggleKeyboardHelp();
+    return;
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('keyboard-overlay').style.display = 'none';
+    return;
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    if (!e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      loadSessions();
+      return;
+    }
+  }
+
   if (!currentSession) return;
 
   switch (e.key) {
@@ -411,5 +516,8 @@ document.addEventListener('keydown', (e) => {
 // ── Init ─────────────────────────────────────────────────────────
 
 loadSessions();
-// Auto-refresh every 5 seconds
+loadLicenseInfo();
+loadMetrics();
+// Auto-refresh
 setInterval(loadSessions, 5000);
+setInterval(loadMetrics, 10000);

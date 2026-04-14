@@ -4,6 +4,8 @@
 // Serves the time-travel debugger UI and proxies API calls to the collector.
 // Self-contained: no build step, no bundler, just run it.
 //
+// License-aware: displays tier status and shows upgrade prompts for Community.
+//
 // Run: npx tsx packages/paradox-ui/src/server.ts
 // ============================================================================
 
@@ -11,11 +13,17 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { readFile } from 'node:fs/promises';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadLicense, getTierDisplay } from '@paradox/core';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const UI_PORT = parseInt(process.env['PARADOX_UI_PORT'] ?? '3001', 10);
 const COLLECTOR_URL = process.env['PARADOX_COLLECTOR_URL'] ?? 'http://localhost:4380';
+
+// Load license for tier display
+const license = loadLicense();
+const tier = license.tier;
+const tierDisplay = getTierDisplay(tier);
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -28,6 +36,24 @@ const MIME_TYPES: Record<string, string> = {
 
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const url = new URL(req.url ?? '/', `http://localhost:${UI_PORT}`);
+
+  // ── Inject license info endpoint (local, no collector needed) ──
+  if (url.pathname === '/api/v1/ui-license') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(JSON.stringify({
+      tier: license.tier,
+      tierDisplay,
+      valid: license.valid,
+      features: license.features,
+      limits: license.limits,
+      daysUntilExpiry: license.daysUntilExpiry,
+      customerName: license.license?.customerName ?? null,
+    }));
+    return;
+  }
 
   // Proxy API calls to collector
   if (url.pathname.startsWith('/api/')) {
@@ -81,6 +107,7 @@ server.listen(UI_PORT, () => {
 ║                                                              ║
 ║   UI:        http://localhost:${UI_PORT}                          ║
 ║   Collector: ${COLLECTOR_URL.padEnd(44)}║
+║   License:   ${tierDisplay.padEnd(44)}║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `);

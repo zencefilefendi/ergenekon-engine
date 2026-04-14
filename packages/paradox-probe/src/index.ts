@@ -9,10 +9,28 @@
 //
 //   // Later, to stop:
 //   await probe.shutdown();
+//
+// License System:
+//   The probe automatically searches for a license file on startup:
+//     1. PARADOX_LICENSE_KEY env var (inline JSON)
+//     2. PARADOX_LICENSE env var (file path)
+//     3. .paradox-license.json in current directory
+//     4. ~/.paradox-license.json in home directory
+//
+//   No license = Community mode (basic features only)
+//   Pro license = All interceptors + sampling + redaction + UI
+//   Enterprise  = Everything + SSO + RBAC + unlimited
 // ============================================================================
 
-import type { ProbeConfig, RecordingSession } from '@paradox/core';
-import { DEFAULT_PROBE_CONFIG, HybridLogicalClock, ulid } from '@paradox/core';
+import type { ProbeConfig, RecordingSession, LicenseValidation, LicenseTier } from '@paradox/core';
+import {
+  DEFAULT_PROBE_CONFIG,
+  HybridLogicalClock,
+  ulid,
+  loadLicense,
+  hasFeature,
+  getTierDisplay,
+} from '@paradox/core';
 import { installGlobalInterceptors, uninstallGlobalInterceptors } from './interceptors/globals.js';
 import { installFetchInterceptor, uninstallFetchInterceptor } from './interceptors/http-outgoing.js';
 import { installTimerInterceptors, uninstallTimerInterceptors } from './interceptors/timers.js';
@@ -34,6 +52,7 @@ export class ParadoxProbe {
   private readonly collector: CollectorClient;
   private readonly sampler: SamplingEngine;
   private started = false;
+  private licenseValidation: LicenseValidation | null = null;
 
   constructor(userConfig: Partial<ProbeConfig> & { serviceName: string } & { sampling?: Partial<SamplingConfig> }) {
     this.config = { ...DEFAULT_PROBE_CONFIG, ...userConfig };
@@ -47,6 +66,9 @@ export class ParadoxProbe {
       baseRate: this.config.samplingRate,
       ...userConfig.sampling,
     });
+
+    // Load and validate license on construction
+    this.licenseValidation = loadLicense();
   }
 
   /**
@@ -65,33 +87,88 @@ export class ParadoxProbe {
   /**
    * Start the probe — installs interceptors and begins recording.
    * Called automatically by middleware(), but can be called manually.
+   *
+   * Interceptors are gated by license tier:
+   *   Community: globals + http (basic record/replay)
+   *   Pro:       + fs + dns + database + sampling + redaction
+   *   Enterprise: + all future features
    */
   start(): void {
     if (this.started) return;
     this.started = true;
 
+    const license = this.licenseValidation!;
+    const tier = license.tier;
+
+    // ── Always installed (Community + Pro + Enterprise) ──────────
     installGlobalInterceptors();
     installFetchInterceptor();
     installTimerInterceptors();
     installErrorInterceptors();
-    installFsInterceptor();
-    installDnsInterceptor();
 
-    // Auto-detect and install database interceptors
+    // ── Pro+ features ───────────────────────────────────────────
+    const gatedFeatures: string[] = [];
+
+    if (hasFeature(license, 'fs_interceptor')) {
+      installFsInterceptor();
+      gatedFeatures.push('fs');
+    }
+
+    if (hasFeature(license, 'dns_interceptor')) {
+      installDnsInterceptor();
+      gatedFeatures.push('dns');
+    }
+
+    // Auto-detect and install database interceptors (Pro+)
     const dbDrivers: string[] = [];
-    if (installPgInterceptor()) dbDrivers.push('pg');
-    if (installRedisInterceptor()) dbDrivers.push('ioredis');
-    if (installMongoInterceptor()) dbDrivers.push('mongoose');
+    if (hasFeature(license, 'database_interceptor')) {
+      if (installPgInterceptor()) dbDrivers.push('pg');
+      if (installRedisInterceptor()) dbDrivers.push('ioredis');
+      if (installMongoInterceptor()) dbDrivers.push('mongoose');
+      if (dbDrivers.length > 0) gatedFeatures.push(`db(${dbDrivers.join(',')})`);
+    }
+
+    if (hasFeature(license, 'smart_sampling')) {
+      gatedFeatures.push('sampling');
+    }
+
+    if (hasFeature(license, 'deep_redaction')) {
+      gatedFeatures.push('redaction');
+    }
 
     this.collector.start();
 
-    const samplingInfo = `smart (base: ${this.config.samplingRate * 100}%, errors: 100%, adaptive: on)`;
-    console.log(
-      `[PARADOX] Probe started for "${this.config.serviceName}" ` +
-      `→ collector: ${this.config.collectorUrl} ` +
-      `| sampling: ${samplingInfo}` +
-      (dbDrivers.length > 0 ? ` | db: ${dbDrivers.join(', ')}` : '')
-    );
+    // ── Startup Banner ──────────────────────────────────────────
+    const tierDisplay = getTierDisplay(tier);
+    const samplingInfo = hasFeature(license, 'smart_sampling')
+      ? `smart (base: ${this.config.samplingRate * 100}%, errors: 100%, adaptive: on)`
+      : `basic (${this.config.samplingRate * 100}%)`;
+
+    const parts = [
+      `[PARADOX] Probe started for "${this.config.serviceName}"`,
+      `→ license: ${tierDisplay}`,
+      `→ collector: ${this.config.collectorUrl}`,
+      `| sampling: ${samplingInfo}`,
+    ];
+
+    if (gatedFeatures.length > 0) {
+      parts.push(`| pro: ${gatedFeatures.join(', ')}`);
+    }
+
+    if (license.daysUntilExpiry > 0 && license.daysUntilExpiry <= 30) {
+      parts.push(`⚠️  License expires in ${license.daysUntilExpiry} days`);
+    }
+
+    console.log(parts.join(' '));
+
+    // Community tier upgrade hint
+    if (tier === 'community') {
+      console.log(
+        `[PARADOX] 🆓 Running in Community mode — ` +
+        `upgrade to Pro for distributed replay, smart sampling, and more. ` +
+        `Visit https://paradoxengine.dev/pricing`
+      );
+    }
   }
 
   /**
@@ -135,6 +212,22 @@ export class ParadoxProbe {
   /** Get the current probe configuration */
   getConfig(): Readonly<ProbeConfig> {
     return { ...this.config };
+  }
+
+  /** Get the current license validation result */
+  getLicense(): Readonly<LicenseValidation> {
+    return this.licenseValidation!;
+  }
+
+  /** Get the current license tier */
+  getTier(): LicenseTier {
+    return this.licenseValidation?.tier ?? 'community';
+  }
+
+  /** Check if a specific feature is available in the current license */
+  hasFeature(feature: string): boolean {
+    if (!this.licenseValidation) return false;
+    return hasFeature(this.licenseValidation, feature as any);
   }
 
   /** Dynamically enable/disable recording */
