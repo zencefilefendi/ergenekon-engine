@@ -82,8 +82,8 @@ async function processEvent(event: StripeEvent): Promise<WebhookResult> {
 async function handleCheckoutCompleted(
   session: Record<string, unknown>,
 ): Promise<WebhookResult> {
-  const customerEmail = session.customer_email as string || session.customer_details?.email || 'unknown@example.com';
-  const customerId = session.customer as string || `cus_${Date.now()}`;
+  const customerEmail = (session.customer_email as string) || (session.customer_details as any)?.email || 'unknown@example.com';
+  const customerId = (session.customer as string) || `cus_${Date.now()}`;
   const customerName = (session.customer_details as any)?.name || customerEmail.split('@')[0];
 
   // Determine tier from metadata or line items
