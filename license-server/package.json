@@ -1,0 +1,19 @@
+{
+  "name": "@paradox/license-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PARADOX License Generation Server — Stripe webhook + Ed25519 signing",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "stripe": "^17.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "tsx": "^4.15.0"
+  }
+}

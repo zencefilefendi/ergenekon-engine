@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Build
+dist/
+
+# Keys
+*.pem
+*.key

@@ -4,3 +4,4 @@ dist/
 .env
 .paradox-recordings/
 coverage/
+**/.DS_Store

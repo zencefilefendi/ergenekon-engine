@@ -497,6 +497,121 @@
       .comparison-table td, .comparison-table th { padding: 10px 8px; }
     }
 
+    /* ── INTERACTIVE TERMINAL DEMO ─────────────────────────── */
+    .demo-section { padding: 100px 0; }
+    .terminal {
+      max-width: 720px; margin: 0 auto;
+      background: #0d0d14; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-lg); overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(139,92,246,0.08);
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px; background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+    .terminal-title { margin-left: 12px; font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); }
+    .terminal-body {
+      padding: 20px 24px; font-family: var(--font-mono); font-size: 13px;
+      line-height: 1.8; min-height: 280px; color: var(--text-secondary);
+    }
+    .terminal-body .prompt { color: var(--accent-emerald); }
+    .terminal-body .cmd { color: var(--text-primary); }
+    .terminal-body .output { color: var(--text-tertiary); }
+    .terminal-body .success { color: var(--accent-emerald); }
+    .terminal-body .highlight { color: var(--accent-violet); }
+    .terminal-body .warn { color: var(--accent-amber); }
+    .typing-cursor {
+      display: inline-block; width: 8px; height: 16px;
+      background: var(--accent-violet); vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* ── ARCHITECTURE DIAGRAM ──────────────────────────────── */
+    .arch-section { padding: 100px 0; }
+    .arch-flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: wrap; margin-top: 48px;
+    }
+    .arch-node {
+      padding: 20px 28px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle); background: var(--bg-card);
+      text-align: center; min-width: 140px;
+      transition: all 0.3s; position: relative;
+    }
+    .arch-node:hover {
+      border-color: var(--accent-violet); transform: translateY(-4px);
+      box-shadow: var(--shadow-glow);
+    }
+    .arch-node .arch-icon { font-size: 28px; margin-bottom: 8px; }
+    .arch-node .arch-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .arch-node .arch-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .arch-arrow {
+      font-size: 24px; color: var(--accent-violet); padding: 0 12px;
+      animation: arrowPulse 2s ease-in-out infinite;
+    }
+    .arch-arrow:nth-child(4) { animation-delay: 0.3s; }
+    .arch-arrow:nth-child(6) { animation-delay: 0.6s; }
+    .arch-arrow:nth-child(8) { animation-delay: 0.9s; }
+    @keyframes arrowPulse {
+      0%,100% { opacity: 0.4; transform: translateX(0); }
+      50% { opacity: 1; transform: translateX(4px); }
+    }
+
+    /* ── FAQ ACCORDION ─────────────────────────────────────── */
+    .faq-section { padding: 100px 0; }
+    .faq-list { max-width: 700px; margin: 48px auto 0; }
+    .faq-item {
+      border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      margin-bottom: 12px; overflow: hidden; transition: all 0.2s;
+    }
+    .faq-item:hover { border-color: rgba(255,255,255,0.1); }
+    .faq-question {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 24px; cursor: pointer; font-weight: 600;
+      font-size: 15px; background: var(--bg-card); transition: background 0.2s;
+    }
+    .faq-question:hover { background: var(--bg-card-hover); }
+    .faq-toggle { font-size: 18px; color: var(--text-muted); transition: transform 0.3s; }
+    .faq-item.open .faq-toggle { transform: rotate(45deg); color: var(--accent-violet); }
+    .faq-answer {
+      padding: 0 24px; max-height: 0; overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+      background: var(--bg-card);
+    }
+    .faq-item.open .faq-answer { max-height: 300px; padding: 0 24px 20px; }
+
+    /* ── PRICING TOGGLE ────────────────────────────────────── */
+    .pricing-toggle {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin: 24px 0 40px;
+    }
+    .pricing-toggle span { font-size: 14px; color: var(--text-secondary); font-weight: 500; }
+    .pricing-toggle span.active { color: var(--text-primary); font-weight: 700; }
+    .toggle-switch {
+      width: 48px; height: 26px; border-radius: 13px;
+      background: var(--bg-tertiary); border: 1px solid var(--border-subtle);
+      cursor: pointer; position: relative; transition: all 0.3s;
+    }
+    .toggle-switch.active { background: var(--accent-violet); border-color: var(--accent-violet); }
+    .toggle-knob {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: white; position: absolute; top: 2px; left: 2px;
+      transition: transform 0.3s;
+    }
+    .toggle-switch.active .toggle-knob { transform: translateX(22px); }
+    .save-badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 100px;
+      background: rgba(16,185,129,0.1); color: var(--accent-emerald);
+      font-weight: 700;
+    }
+
     /* ── ANIMATIONS ────────────────────────────────────────── */
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
@@ -531,10 +646,11 @@
       PARADOX
     </a>
     <ul class="nav-links">
-      <li><a href="#problem">Problem</a></li>
+      <li><a href="#demo">Demo</a></li>
       <li><a href="#how-it-works">How It Works</a></li>
-      <li><a href="#comparison">Compare</a></li>
+      <li><a href="#architecture">Architecture</a></li>
       <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/zencefilefendi/paradox-engine" target="_blank">GitHub</a></li>
       <li><a href="#cta" class="btn-nav">Get Started</a></li>
     </ul>
@@ -576,6 +692,25 @@
       <div>&nbsp;&nbsp;Response body&nbsp;&nbsp;→ <span class="value">identical</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="check">✓</span> <span class="dim">byte-for-byte</span></div>
       <br>
       <div><span class="dim">━━━</span> <span class="label">2 services, 98 events</span> <span class="dim">━━━━━━━━━━━━━━━━━━━━</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INTERACTIVE TERMINAL DEMO ════════════════════════ -->
+<section class="demo-section" id="demo">
+  <div class="container">
+    <div class="section-label">See It In Action</div>
+    <h2 class="section-title">From install to <span class="text-gradient">replay</span><br>in 60 seconds</h2>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot red"></span>
+        <span class="terminal-dot yellow"></span>
+        <span class="terminal-dot green"></span>
+        <span class="terminal-title">~/my-app — zsh</span>
+      </div>
+      <div class="terminal-body" id="terminal-output">
+        <span class="typing-cursor"></span>
+      </div>
     </div>
   </div>
 </section>
@@ -857,14 +992,13 @@
     });
   }, { threshold: 0.1 });
 
-  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item').forEach(el => {
+  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item, .arch-node, .faq-item').forEach(el => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(20px)';
     el.style.transition = 'all 0.6s ease';
     observer.observe(el);
   });
 
-  // When animated-in, reset inline styles
   const mutationObserver = new MutationObserver((mutations) => {
     mutations.forEach(mutation => {
       if (mutation.target.classList.contains('animate-in')) {
@@ -873,9 +1007,111 @@
       }
     });
   });
-  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item').forEach(el => {
+  document.querySelectorAll('.problem-card, .step, .pricing-card, .stat-item, .arch-node, .faq-item').forEach(el => {
     mutationObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
   });
+
+  // ── Interactive Terminal Demo ───────────────────────────
+  const terminalLines = [
+    { type: 'prompt', text: '$ ', delay: 500 },
+    { type: 'cmd', text: 'npm install @paradox/probe @paradox/collector', delay: 40 },
+    { type: 'output', text: '\n\nadded 2 packages in 1.2s', delay: 800 },
+    { type: 'prompt', text: '\n\n$ ', delay: 600 },
+    { type: 'cmd', text: 'npx paradox-collector --port 4380', delay: 40 },
+    { type: 'output', text: '\n[PARADOX COLLECTOR] Listening on port 4380', delay: 400 },
+    { type: 'success', text: '\n[PARADOX COLLECTOR] License: ⚡ Pro', delay: 300 },
+    { type: 'prompt', text: '\n\n$ ', delay: 800 },
+    { type: 'cmd', text: 'curl http://localhost:3000/api/users/42', delay: 40 },
+    { type: 'output', text: '\n{"id": 42, "name": "İlhan", "requestId": "57wbkit6"}', delay: 600 },
+    { type: 'highlight', text: '\n\n[PARADOX] ✅ Session recorded — 23 events, 3 services', delay: 400 },
+    { type: 'prompt', text: '\n\n$ ', delay: 800 },
+    { type: 'cmd', text: 'npx paradox replay session_01HWXYZ', delay: 40 },
+    { type: 'output', text: '\n\n━━━ VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━', delay: 500 },
+    { type: 'success', text: '\n\n  ✅ PERFECT REPLAY — BYTE-FOR-BYTE IDENTICAL', delay: 300 },
+    { type: 'output', text: '\n\n  Date.now()     → ', delay: 200 },
+    { type: 'highlight', text: '1712345678901', delay: 100 },
+    { type: 'success', text: '  ✓ deterministic', delay: 200 },
+    { type: 'output', text: '\n  Math.random()  → ', delay: 200 },
+    { type: 'highlight', text: '0.73421847', delay: 100 },
+    { type: 'success', text: '     ✓ deterministic', delay: 200 },
+    { type: 'output', text: '\n  Response body  → ', delay: 200 },
+    { type: 'highlight', text: 'identical', delay: 100 },
+    { type: 'success', text: '       ✓ byte-for-byte', delay: 200 },
+    { type: 'output', text: '\n\n━━━ 3 services, 23 events ━━━━━━━━━━━━━', delay: 400 },
+  ];
+
+  async function runTerminalDemo() {
+    const output = document.getElementById('terminal-output');
+    if (!output) return;
+    output.innerHTML = '';
+
+    for (const line of terminalLines) {
+      if (line.type === 'cmd') {
+        // Typewriter effect for commands
+        const span = document.createElement('span');
+        span.className = line.type;
+        output.appendChild(span);
+        for (const char of line.text) {
+          span.textContent += char;
+          await sleep(line.delay);
+        }
+      } else {
+        await sleep(line.delay);
+        const span = document.createElement('span');
+        span.className = line.type;
+        span.textContent = line.text;
+        output.appendChild(span);
+      }
+      output.scrollTop = output.scrollHeight;
+    }
+
+    // Add blinking cursor at end
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    output.appendChild(cursor);
+
+    // Restart after delay
+    await sleep(5000);
+    runTerminalDemo();
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Start demo when section is visible
+  const demoObs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      runTerminalDemo();
+      demoObs.disconnect();
+    }
+  }, { threshold: 0.3 });
+  const demoEl = document.querySelector('.demo-section');
+  if (demoEl) demoObs.observe(demoEl);
+
+  // ── FAQ Accordion ──────────────────────────────────────
+  function toggleFaq(el) {
+    const item = el.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+
+  // ── Pricing Toggle ─────────────────────────────────────
+  let isAnnual = false;
+  function toggleBilling() {
+    isAnnual = !isAnnual;
+    const toggle = document.getElementById('billing-toggle');
+    const monthly = document.getElementById('toggle-monthly');
+    const annual = document.getElementById('toggle-annual');
+
+    toggle.classList.toggle('active', isAnnual);
+    monthly.classList.toggle('active', !isAnnual);
+    annual.classList.toggle('active', isAnnual);
+
+    document.getElementById('pro-price').textContent = isAnnual ? '$39' : '$49';
+    document.getElementById('pro-detail').textContent = isAnnual ? 'per developer / month (billed annually)' : 'per developer / month';
+    document.getElementById('ent-price').textContent = isAnnual ? '$159' : '$199';
+    document.getElementById('ent-detail').textContent = isAnnual ? 'per developer / month (billed annually)' : 'per developer / month';
+  }
 </script>
 
 </body>

@@ -1,2 +1,9 @@
 tsconfig.json
 *.tsbuildinfo
+src/license-generator.ts
+src/license-generator.js
+dist/license-generator.js
+dist/license-generator.d.ts
+*.test.ts
+*.test.js
+*.test.d.ts
