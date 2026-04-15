@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@ergenekon/core": ["../paradox-core/src/index.ts", "../paradox-core/src/index.js"]
+    }
   },
   "include": [
     "src"
