@@ -6,7 +6,7 @@
 //
 // License-aware: displays tier status and shows upgrade prompts for Community.
 //
-// Run: npx tsx packages/paradox-ui/src/server.ts
+// Run: npx tsx packages/ergenekon-ui/src/server.ts
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';

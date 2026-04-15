@@ -14,8 +14,8 @@
 // ============================================================================
 
 import express from 'express';
-import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
-import { CollectorServer } from '../packages/paradox-collector/src/index.js';
+import { ErgenekonProbe } from '../packages/ergenekon-probe/src/index.js';
+import { CollectorServer } from '../packages/ergenekon-collector/src/index.js';
 import { join } from 'node:path';
 
 const RECORDINGS_DIR = join(import.meta.dirname ?? '.', '..', '.ergenekon-recordings');
@@ -134,7 +134,7 @@ const orderServer = orderApp.listen(3001, () => {
 // Set UI port before importing
 process.env['ERGENEKON_UI_PORT'] = '3000';
 process.env['ERGENEKON_COLLECTOR_URL'] = 'http://localhost:4380';
-await import('../packages/paradox-ui/src/server.js');
+await import('../packages/ergenekon-ui/src/server.js');
 
 // ── 5. Generate Sample Recordings ────────────────────────────────
 

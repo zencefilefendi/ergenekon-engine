@@ -4,13 +4,13 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@ergenekon/core": ["../paradox-core/src/index.ts"],
+      "@ergenekon/core": ["../ergenekon-core/src/index.ts"],
       "@ergenekon/probe": ["./src/index.ts"]
     }
   },
   "include": ["src"],
   "references": [
-    { "path": "../paradox-core" }
+    { "path": "../ergenekon-core" }
   ],
   "exclude": [
     "src/**/*.test.ts",

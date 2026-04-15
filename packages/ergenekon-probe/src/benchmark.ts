@@ -8,7 +8,7 @@
 // 2. Run N requests WITH the probe (instrumented)
 // 3. Calculate overhead: latency added, memory used, events/sec throughput
 //
-// Run: npx tsx packages/paradox-probe/src/benchmark.ts
+// Run: npx tsx packages/ergenekon-probe/src/benchmark.ts
 // ============================================================================
 
 import { originalDateNow } from './internal-clock.js';

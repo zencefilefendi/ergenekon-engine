@@ -1,8 +1,8 @@
 {
-  "name": "@ergenekon/probe",
+  "name": "@ergenekon/cli",
   "version": "0.4.0",
   "type": "module",
-  "description": "ERGENEKON recording probe — zero-config Express middleware for time-travel debugging",
+  "description": "ERGENEKON CLI — inspect, export, and manage distributed system recordings",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -15,36 +15,31 @@
     "dist",
     "src"
   ],
+  "bin": {
+    "ergenekon": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@ergenekon/core": "0.4.0"
-  },
-  "peerDependencies": {
-    "express": ">=4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "express": {
-      "optional": true
-    }
+    "@ergenekon/core": "0.4.0",
+    "@ergenekon/replay": "0.4.0"
   },
   "license": "BUSL-1.1",
   "keywords": [
     "ergenekon",
+    "cli",
     "debugging",
-    "express",
-    "middleware",
-    "record-replay",
+    "time-travel",
     "distributed-systems"
   ],
   "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
     "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
-    "directory": "packages/paradox-probe"
+    "directory": "packages/ergenekon-cli"
   },
   "bugs": {
     "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"

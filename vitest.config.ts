@@ -17,10 +17,10 @@ import { resolve } from 'node:path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@ergenekon/core': resolve(__dirname, 'packages/paradox-core/src/index.ts'),
-      '@ergenekon/probe': resolve(__dirname, 'packages/paradox-probe/src/index.ts'),
-      '@ergenekon/collector': resolve(__dirname, 'packages/paradox-collector/src/index.ts'),
-      '@ergenekon/replay': resolve(__dirname, 'packages/paradox-replay/src/index.ts'),
+      '@ergenekon/core': resolve(__dirname, 'packages/ergenekon-core/src/index.ts'),
+      '@ergenekon/probe': resolve(__dirname, 'packages/ergenekon-probe/src/index.ts'),
+      '@ergenekon/collector': resolve(__dirname, 'packages/ergenekon-collector/src/index.ts'),
+      '@ergenekon/replay': resolve(__dirname, 'packages/ergenekon-replay/src/index.ts'),
     },
   },
   test: {

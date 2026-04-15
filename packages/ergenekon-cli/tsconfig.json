@@ -6,7 +6,7 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../paradox-core" },
-    { "path": "../paradox-replay" }
+    { "path": "../ergenekon-core" },
+    { "path": "../ergenekon-replay" }
   ]
 }

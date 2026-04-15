@@ -13,14 +13,14 @@
     "demo": "npx tsx demo/app.ts",
     "demo:replay": "npx tsx demo/replay-demo.ts",
     "demo:fullstack": "npx tsx demo/fullstack-demo.ts",
-    "cli": "npx tsx packages/paradox-cli/src/index.ts",
+    "cli": "npx tsx packages/ergenekon-cli/src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:property": "vitest run -t property",
     "test:chaos": "vitest run tests/chaos",
     "test:determinism": "vitest run tests/determinism",
-    "publish:all": "npm publish --access public --workspace=packages/paradox-core && npm publish --access public --workspace=packages/paradox-probe && npm publish --access public --workspace=packages/paradox-collector && npm publish --access public --workspace=packages/paradox-replay && npm publish --access public --workspace=packages/paradox-cli && npm publish --access public --workspace=packages/paradox-ui",
+    "publish:all": "npm publish --access public --workspace=packages/ergenekon-core && npm publish --access public --workspace=packages/ergenekon-probe && npm publish --access public --workspace=packages/ergenekon-collector && npm publish --access public --workspace=packages/ergenekon-replay && npm publish --access public --workspace=packages/ergenekon-cli && npm publish --access public --workspace=packages/ergenekon-ui",
     "version:bump": "npm version --workspaces"
   },
   "engines": {

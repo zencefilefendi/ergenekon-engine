@@ -10,9 +10,9 @@
 // ============================================================================
 
 import express from 'express';
-import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
-import { ReplayEngine } from '../packages/paradox-replay/src/index.js';
-import type { RecordingSession } from '../packages/paradox-core/src/index.js';
+import { ErgenekonProbe } from '../packages/ergenekon-probe/src/index.js';
+import { ReplayEngine } from '../packages/ergenekon-replay/src/index.js';
+import type { RecordingSession } from '../packages/ergenekon-core/src/index.js';
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗

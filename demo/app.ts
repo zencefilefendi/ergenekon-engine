@@ -12,8 +12,8 @@
 // ============================================================================
 
 import express from 'express';
-import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
-import { CollectorServer } from '../packages/paradox-collector/src/index.js';
+import { ErgenekonProbe } from '../packages/ergenekon-probe/src/index.js';
+import { CollectorServer } from '../packages/ergenekon-collector/src/index.js';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
