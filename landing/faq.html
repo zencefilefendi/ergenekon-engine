@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ — ERGENEKON Engine</title>
+  <meta name="description" content="Frequently asked questions about ERGENEKON Engine — how it works, pricing, security, licensing, and roadmap.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <style>
+    :root {
+      --bg: #000000; --bg-card: #0e0e14; --bg-hover: #14141e;
+      --border: rgba(255,255,255,0.06); --border-hover: rgba(255,255,255,0.12);
+      --text: #eaecf0; --text-sec: #9898ac; --text-muted: #55556a;
+      --accent: #8b5cf6; --cyan: #06b6d4; --green: #10b981;
+      --font: 'Inter', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+
+    /* Nav */
+    nav {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+    }
+    nav .logo {
+      font-size: 15px; font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(90deg, #00e5ff, #8b5cf6, #00ff88);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; text-decoration: none;
+    }
+    nav .back {
+      font-size: 13px; color: var(--text-muted); text-decoration: none;
+      display: flex; align-items: center; gap: 4px;
+      transition: color 0.2s;
+    }
+    nav .back:hover { color: var(--accent); }
+    nav .sep { color: var(--border); margin: 0 4px; }
+
+    /* Container */
+    .container { max-width: 780px; margin: 0 auto; padding: 64px 24px 120px; }
+
+    /* Header */
+    .page-header { margin-bottom: 56px; }
+    .page-tag {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--accent); background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.25);
+      padding: 4px 12px; border-radius: 100px; margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 40px; font-weight: 900; line-height: 1.15;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #f0f0f5 0%, #9898ac 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .page-subtitle { font-size: 16px; color: var(--text-muted); line-height: 1.6; }
+
+    /* Category labels */
+    .category {
+      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin: 48px 0 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .category::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .category:first-child { margin-top: 0; }
+
+    /* Accordion */
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .faq-item:hover { border-color: var(--border-hover); }
+    .faq-item.open {
+      border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 0 24px rgba(139,92,246,0.06);
+    }
+    .faq-q {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 24px; cursor: pointer;
+      font-size: 15px; font-weight: 600; color: var(--text);
+      background: var(--bg-card);
+      transition: background 0.2s;
+      gap: 16px;
+    }
+    .faq-q:hover { background: var(--bg-hover); }
+    .faq-icon {
+      flex-shrink: 0; width: 24px; height: 24px;
+      border: 1px solid var(--border); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: var(--text-muted);
+      transition: transform 0.3s, color 0.2s, border-color 0.2s;
+    }
+    .faq-item.open .faq-icon {
+      transform: rotate(45deg);
+      color: var(--accent); border-color: rgba(139,92,246,0.5);
+    }
+    .faq-a {
+      padding: 0 24px; max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.3s ease;
+      font-size: 14px; color: var(--text-sec); line-height: 1.8;
+      background: var(--bg-card);
+    }
+    .faq-item.open .faq-a { max-height: 600px; padding: 0 24px 22px; }
+    .faq-a code {
+      font-family: var(--mono); font-size: 12px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+      padding: 1px 6px; border-radius: 4px; color: var(--cyan);
+    }
+    .faq-a strong { color: var(--text); }
+    .faq-a a { color: var(--accent); }
+    .faq-a .note {
+      margin-top: 12px; padding: 12px 16px;
+      background: rgba(139,92,246,0.06);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 6px 6px 0;
+      font-size: 13px; color: var(--text-muted);
+    }
+    .faq-a .note strong { color: var(--accent); }
+
+    /* Footer */
+    footer {
+      padding: 28px 24px; text-align: center;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted); font-size: 13px;
+      margin-top: 80px;
+    }
+    footer a {
+      color: var(--text-sec); text-decoration: none; margin: 0 8px;
+      transition: color 0.2s;
+    }
+    footer a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="./index.html" class="logo">🐺 ERGENEKON</a>
+  <span class="sep">·</span>
+  <a href="./index.html" class="back">← Back to main site</a>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <div class="page-tag">FAQ</div>
+    <h1>Frequently Asked Questions</h1>
+    <p class="page-subtitle">
+      Straight answers about how ERGENEKON works, what it costs,<br>
+      how it handles your data, and where it's going.
+    </p>
+  </div>
+
+  <!-- ── Technical ──────────────────────────────────── -->
+  <div class="category">⚙️ Technical</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>How does ERGENEKON make replay byte-for-byte identical?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      The Probe intercepts every source of non-determinism at I/O boundaries —
+      <code>Date.now()</code>, <code>Math.random()</code>, HTTP responses, database results,
+      DNS lookups, file reads, and timer callbacks. During replay, all of these are
+      served from the recording. Your application code runs <strong>completely unmodified</strong>;
+      it simply sees the same data it saw in production.
+      <div class="note"><strong>Note:</strong> Replay never touches the network, database, or filesystem — all I/O is mocked from the captured session.</div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>What is the production performance overhead?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      <strong>Less than 1% CPU</strong> and approximately 2MB/minute per service at 100 req/min.
+      The Probe uses a lock-free spill buffer — if the Collector is unreachable, events are
+      buffered in memory/disk locally and flushed automatically when connectivity returns.
+      Pro users can enable <strong>smart sampling</strong> to record only 1-in-N requests,
+      reducing overhead to essentially zero.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>Which Node.js frameworks are supported?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Any framework built on Node.js I/O primitives works out-of-the-box:
+      <strong>Express, Fastify, Koa, NestJS, Hapi</strong>, and raw <code>http.createServer</code>.
+      Database support includes <code>pg</code> (PostgreSQL), <code>mysql2</code>, and any
+      library wrapping Node's <code>net.Socket</code>. ORMs — Prisma, Sequelize, TypeORM — are
+      all covered automatically.
+      <div class="note"><strong>Coming Q3 2026:</strong> Rust, Go, and Python (Django/FastAPI) probes.</div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>Can I replay across multiple microservices simultaneously?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Yes — that's the Pro tier's core capability. The Collector correlates events across services
+      using <strong>HLC (Hybrid Logical Clock)</strong> timestamps and the original request's
+      propagation chain. During replay, all services execute in lock-step, preserving the exact
+      inter-service call order and timing relationships from production.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>How does ERGENEKON differ from Replay.io or Mozilla rr?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Replay.io and rr are browser/process-level recorders for single-process debugging.
+      ERGENEKON is a <strong>distributed systems</strong> recorder — it captures I/O interactions
+      across an arbitrary number of networked services and replays them in lock-step.
+      <br><br>
+      Think of rr as a microscope. ERGENEKON is an MRI machine for your entire production stack.
+    </div>
+  </div>
+
+  <!-- ── Security & Privacy ─────────────────────────── -->
+  <div class="category">🔒 Security &amp; Privacy</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>What data is sent to the Collector? Is PII safe?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      The Collector runs <strong>on your own infrastructure</strong> — nothing leaves your network
+      unless you choose otherwise. All recordings stay on your servers. Pro users get deep PII
+      redaction rules (regex patterns, JSON path selectors) that scrub sensitive fields before
+      events are written to disk. Field-level encryption is also configurable.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>How does the offline license work?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Licenses are <strong>Ed25519-signed JWT tokens</strong> verified entirely locally.
+      No license server call is needed at runtime — not even on startup. The private key
+      never leaves our servers; you receive a signed token that your local installation
+      verifies cryptographically. Air-gapped environments are fully supported at the Enterprise tier.
+    </div>
+  </div>
+
+  <!-- ── Pricing & Plans ───────────────────────────── -->
+  <div class="category">💰 Pricing &amp; Plans</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>Why is everything free right now?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      We're in launch mode. We want real engineers at real companies to integrate ERGENEKON,
+      stress-test it in production, and tell us what's broken. In exchange, you get full
+      Pro/Enterprise access at zero cost.
+      <div class="note">
+        <strong>Early adopter promise:</strong> When pricing goes live (announced 30 days in advance),
+        everyone who signed up during launch gets a <strong>permanent 40% discount</strong> locked in forever.
+      </div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>How long are sessions retained per tier?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      <strong>Community:</strong> 24 hours ·
+      <strong>Pro:</strong> 30 days ·
+      <strong>Enterprise:</strong> Unlimited.<br><br>
+      Retention is enforced by the Collector's built-in TTL eviction. You can pin any session
+      with <code>ergenekon session pin &lt;id&gt;</code> to prevent eviction regardless of tier.
+    </div>
+  </div>
+
+  <!-- ── Deployment & Operations ───────────────────── -->
+  <div class="category">🐳 Deployment &amp; Operations</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>Is there a Docker or Kubernetes deployment?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Yes. The Collector ships as a <strong>stateless binary</strong> that persists sessions to
+      a mounted volume — drop it into any container. Official Docker Compose and Helm chart
+      examples are in the repo under <code>/deploy</code>.
+      <br><br>
+      For Kubernetes, we recommend a DaemonSet per node-pool with a shared PVC for session storage.
+      Enterprise tier includes a production-hardened Helm chart with SLA support.
+    </div>
+  </div>
+
+  <!-- ── Roadmap & License ─────────────────────────── -->
+  <div class="category">🚀 Roadmap &amp; License</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>What's on the roadmap?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      <strong>Q3 2026:</strong> Rust probe (sub-0.1% overhead), Go probe, Python probe (Django/FastAPI).<br>
+      <strong>Q4 2026:</strong> AI-powered root cause analysis — ERGENEKON surfaces the exact line of code responsible for a production bug.<br>
+      <strong>2027:</strong> Predictive recording — automatically capture sessions matching anomaly signatures before a bug even manifests.
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>What's the software license? Can I use it commercially?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      ERGENEKON is released under <strong>Business Source License 1.1 (BSL-1.1)</strong>. You can
+      use it freely in production for any purpose. The only restriction: you cannot offer ERGENEKON
+      itself as a commercial hosted service (i.e., re-selling our tool as SaaS).
+      <div class="note">The license converts automatically to <strong>Apache 2.0</strong> after 4 years.</div>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggle(this)">
+      <span>I have a question not listed here — how do I reach you?</span>
+      <span class="faq-icon">+</span>
+    </div>
+    <div class="faq-a">
+      Email us at <a href="mailto:hello@ergenekon.dev">hello@ergenekon.dev</a> —
+      we respond to every email within 48 hours. For bugs and feature requests, open a
+      <a href="https://github.com/zencefilefendi/ergenekon-engine/issues" target="_blank">GitHub Issue</a>.
+      For security-related disclosures, please use <a href="mailto:security@ergenekon.dev">security@ergenekon.dev</a>.
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  <a href="./index.html">Home</a> ·
+  <a href="./privacy.html">Privacy Policy</a> ·
+  <a href="./terms.html">Terms of Service</a> ·
+  <a href="./cookies.html">Cookie Policy</a> ·
+  <a href="./gdpr.html">GDPR</a> ·
+  <a href="./faq.html">FAQ</a> ·
+  © 2026 ERGENEKON Engine
+</footer>
+
+<script>
+  function toggle(el) {
+    const item = el.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  }
+</script>
+
+</body>
+</html>

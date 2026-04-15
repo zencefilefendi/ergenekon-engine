@@ -784,7 +784,6 @@
       <li><a href="#how-it-works">How It Works</a></li>
       <li><a href="#architecture">Architecture</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="#faq">FAQ</a></li>
       <li><a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank">GitHub</a></li>
       <li><a href="#cta" class="btn-nav">Get Started</a></li>
     </ul>
@@ -1240,140 +1239,6 @@
     </div>
   </div>
 </section>
-<!-- ═══ FAQ ══════════════════════════════════════════════ -->
-<section class="faq-section" id="faq">
-  <div class="container">
-    <div class="section-label">FAQ</div>
-    <h2 class="section-title">Everything you need<br><span class="text-gradient">to know.</span></h2>
-    <p class="section-subtitle">Straight answers. No marketing fluff.</p>
-
-    <div class="faq-list">
-
-      <!-- ── Technical ── -->
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>How does ERGENEKON make replay byte-for-byte identical?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          The Probe intercepts every source of non-determinism at I/O boundaries — <code>Date.now()</code>, <code>Math.random()</code>, HTTP responses, database results, DNS lookups, file reads, and timer callbacks. During replay, all of these are served from the recording. Your application code runs unmodified; it just sees the same data it saw in production.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>What's the production overhead?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Less than 1% CPU and ~2MB/min per service at 100 req/min. The Probe uses a lock-free spill buffer — if the Collector is unreachable, events are buffered locally and flushed when connectivity returns. You can also enable smart sampling (Pro) to record only 1-in-N requests, reducing overhead to near zero.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>Which Node.js frameworks are supported?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Any framework that uses Node.js I/O primitives works out-of-the-box: Express, Fastify, Koa, NestJS, Hapi, raw <code>http.createServer</code>. Database support includes <code>pg</code> (PostgreSQL), <code>mysql2</code>, and any library that wraps Node's <code>net.Socket</code>. Prisma, Sequelize, TypeORM — all covered.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>Can I replay across multiple microservices simultaneously?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Yes — that's the Pro tier's core feature. The Collector correlates events across services using HLC (Hybrid Logical Clock) timestamps and the original request's propagation chain. During replay, all services replay in lock-step, maintaining the exact inter-service call order and timing relationships that existed in production.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>What data is sent to the Collector? Is PII safe?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          The Collector runs <strong>on your infrastructure</strong> — nothing leaves your network unless you choose otherwise. All recordings stay on your servers. Pro users get deep PII redaction rules (regex patterns, JSON path selectors) that scrub sensitive fields before events are written to disk. You can also configure field-level encryption.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>How does the license system work offline?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Licenses are signed Ed25519 JWT tokens verified locally. No license server call is needed at runtime — not even on startup. The private key never leaves our servers; you receive a signed token that your local installation verifies cryptographically. Air-gapped environments are fully supported at the Enterprise tier.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>How long are sessions retained?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Community: 24 hours · Pro: 30 days · Enterprise: unlimited. Retention is enforced by the Collector's built-in TTL eviction — older sessions are deleted automatically. You can override retention per-session with the CLI: <code>ergenekon session pin &lt;id&gt;</code> to prevent eviction regardless of tier.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>Is there a Docker / Kubernetes deployment?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Yes. The Collector ships as a stateless binary that stores sessions on a mounted volume — drop it into any container. Official Helm chart and Docker Compose examples are in the repo under <code>/deploy</code>. For Kubernetes, we recommend a DaemonSet per node-pool with a shared PVC for session storage. Enterprise comes with a production-hardened Helm chart and SLA support.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>Why is it free right now?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          We're in launch mode. We want engineers at real companies to integrate ERGENEKON, stress-test it in production, and tell us what's broken. In exchange, you get full Pro/Enterprise access with zero cost. When we flip the pricing switch (which we'll announce 30 days in advance), early adopters get a permanent 40% discount locked in forever.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>What's on the roadmap?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          <strong>Q3 2026:</strong> Rust probe (sub-0.1% overhead), Go probe, Python probe (Django/FastAPI). <strong>Q4 2026:</strong> AI-powered root cause analysis — given a production bug, ERGENEKON surfaces the exact line of code responsible. <strong>2027:</strong> Predictive recording — automatically record sessions that match anomaly signatures before a bug even manifests.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>How does ERGENEKON differ from Replay.io or rr?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          Replay.io and rr are browser/process-level recorders for frontend or single-process debugging. ERGENEKON is a <strong>distributed systems</strong> recorder — it captures I/O interactions across an arbitrary number of networked services and replays them in lock-step. Think of rr as a microscope; ERGENEKON is an MRI machine for your entire stack.
-        </div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)">
-          <span>What's the license? Can I use it commercially?</span>
-          <span class="faq-toggle">+</span>
-        </div>
-        <div class="faq-answer">
-          ERGENEKON is released under Business Source License 1.1 (BSL-1.1). You can use it freely in production for any purpose. The only restriction: you cannot offer ERGENEKON itself as a commercial hosted service (i.e., you can't build a SaaS product that resells our tool). The license converts to Apache 2.0 after 4 years automatically.
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
 <!-- ═══ CTA ══════════════════════════════════════════════ -->
 <section id="cta" class="cta-section">
   <div class="container">
@@ -1425,6 +1290,7 @@
           <a href="./terms.html" style="font-size: 13px;">Terms of Service</a>
           <a href="./cookies.html" style="font-size: 13px;">Cookie Policy</a>
           <a href="./gdpr.html" style="font-size: 13px;">GDPR Compliance</a>
+          <a href="./faq.html" style="font-size: 13px;">FAQ</a>
         </div>
       </div>
     </div>
