@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — ERGENEKON Engine</title>
+  <meta name="description" content="Complete documentation for ERGENEKON Engine — installation, configuration, CLI reference, API, deployment, and advanced usage.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <style>
+    :root {
+      --bg:        #000000;
+      --bg-nav:    #080810;
+      --bg-card:   #0d0d15;
+      --bg-code:   #0a0a12;
+      --bg-hover:  #13131e;
+      --border:    rgba(255,255,255,0.06);
+      --border-2:  rgba(255,255,255,0.10);
+      --text:      #eaecf0;
+      --text-sec:  #9898ac;
+      --text-muted:#55556a;
+      --accent:    #8b5cf6;
+      --cyan:      #06b6d4;
+      --green:     #10b981;
+      --amber:     #f59e0b;
+      --rose:      #f43f5e;
+      --font:      'Inter', -apple-system, sans-serif;
+      --mono:      'JetBrains Mono', 'Fira Code', monospace;
+      --sidebar-w: 260px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+
+    /* ── TOP NAV ─────────────────────────────────────────── */
+    .topnav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 56px;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 24px; gap: 20px;
+    }
+    .topnav .logo {
+      font-size: 15px; font-weight: 900; letter-spacing: 2px;
+      background: linear-gradient(90deg, #00e5ff, #8b5cf6, #00ff88);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; text-decoration: none; white-space: nowrap;
+    }
+    .topnav .sep { color: var(--border-2); }
+    .topnav .doc-title { font-size: 13px; color: var(--text-muted); }
+    .topnav .back {
+      margin-left: auto; font-size: 13px; color: var(--text-muted);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .topnav .back:hover { color: var(--accent); }
+    .version-badge {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 100px; background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3); color: var(--green);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────────── */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 56px;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: fixed;
+      top: 56px; left: 0; bottom: 0;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--bg-nav);
+      padding: 24px 0 40px;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+    .sidebar-group { margin-bottom: 28px; }
+    .sidebar-group-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 0 20px; margin-bottom: 6px;
+    }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 20px; font-size: 13px; color: var(--text-sec);
+      text-decoration: none; border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar-link:hover { color: var(--text); background: var(--bg-hover); }
+    .sidebar-link.active {
+      color: var(--accent); border-left-color: var(--accent);
+      background: rgba(139,92,246,0.06);
+    }
+    .sidebar-link .icon { font-size: 14px; width: 18px; text-align: center; }
+
+    /* ── MAIN CONTENT ────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      max-width: 860px;
+      padding: 48px 48px 120px;
+    }
+
+    /* ── SECTION ─────────────────────────────────────────── */
+    .doc-section {
+      margin-bottom: 80px;
+      padding-top: 16px;
+    }
+    .doc-section-tag {
+      font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 8px; display: block;
+    }
+    h1 {
+      font-size: 38px; font-weight: 900; line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #f0f0f5, #9898ac);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h2 {
+      font-size: 24px; font-weight: 800;
+      margin: 48px 0 16px;
+      color: var(--text);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      scroll-margin-top: 80px;
+    }
+    h3 {
+      font-size: 17px; font-weight: 700;
+      margin: 32px 0 12px; color: var(--text);
+      scroll-margin-top: 80px;
+    }
+    h4 {
+      font-size: 14px; font-weight: 700;
+      margin: 20px 0 8px; color: var(--text-sec);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    p { font-size: 15px; color: var(--text-sec); margin-bottom: 14px; }
+    ul, ol { padding-left: 20px; margin-bottom: 14px; }
+    li { font-size: 14px; color: var(--text-sec); margin-bottom: 5px; line-height: 1.6; }
+    strong { color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+    /* ── CODE ────────────────────────────────────────────── */
+    code {
+      font-family: var(--mono); font-size: 12.5px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      padding: 1px 6px; border-radius: 4px; color: var(--cyan);
+    }
+    pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+      overflow-x: auto;
+      margin: 16px 0 20px;
+      position: relative;
+    }
+    pre code {
+      background: none; border: none; padding: 0;
+      font-size: 13px; color: #c9d1d9; line-height: 1.7;
+    }
+    .pre-label {
+      position: absolute; top: 10px; right: 14px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      color: var(--text-muted); text-transform: uppercase;
+      font-family: var(--mono);
+    }
+    .kw   { color: #ff7b72; }
+    .str  { color: #a5d6ff; }
+    .cmt  { color: #6e7681; font-style: italic; }
+    .fn   { color: #d2a8ff; }
+    .num  { color: #79c0ff; }
+    .var  { color: #ffa657; }
+    .obj  { color: #e6edf3; }
+    .prop { color: #79c0ff; }
+
+    /* ── CALLOUTS ────────────────────────────────────────── */
+    .callout {
+      border-radius: 8px; padding: 14px 18px;
+      margin: 16px 0; font-size: 14px;
+      border-left: 3px solid;
+    }
+    .callout p { margin: 0; }
+    .callout-tip   { background: rgba(16,185,129,0.06);  border-color: var(--green);  color: #6ee7b7; }
+    .callout-note  { background: rgba(139,92,246,0.06);  border-color: var(--accent); color: #c4b5fd; }
+    .callout-warn  { background: rgba(245,158,11,0.06);  border-color: var(--amber);  color: #fcd34d; }
+    .callout-danger{ background: rgba(244,63,94,0.06);   border-color: var(--rose);   color: #fda4af; }
+    .callout strong { color: inherit; }
+
+    /* ── TABLES ──────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13.5px; }
+    thead tr { border-bottom: 1px solid var(--border-2); }
+    th { text-align: left; padding: 10px 14px; color: var(--text); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 10px 14px; color: var(--text-sec); border-bottom: 1px solid var(--border); vertical-align: top; }
+    td code { font-size: 11.5px; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── CLI TABLE ───────────────────────────────────────── */
+    .cli-table td:first-child { color: var(--cyan); font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+
+    /* ── TIER BADGES ─────────────────────────────────────── */
+    .tier {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 1px 7px; border-radius: 100px; vertical-align: middle;
+      letter-spacing: 0.5px; margin-left: 4px;
+    }
+    .tier-c { background: rgba(16,185,129,0.12); color: var(--green);  border: 1px solid rgba(16,185,129,0.25); }
+    .tier-p { background: rgba(139,92,246,0.12); color: #c4b5fd;       border: 1px solid rgba(139,92,246,0.25); }
+    .tier-e { background: rgba(245,158,11,0.12); color: #fcd34d;       border: 1px solid rgba(245,158,11,0.25); }
+
+    /* ── STEP LIST ────────────────────────────────────────── */
+    .steps { list-style: none; padding: 0; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      display: flex; gap: 14px; margin-bottom: 20px; align-items: flex-start;
+    }
+    .steps li::before {
+      content: counter(steps);
+      flex-shrink: 0; width: 28px; height: 28px;
+      background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--accent);
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    .doc-footer {
+      margin-left: var(--sidebar-w);
+      padding: 24px 48px;
+      border-top: 1px solid var(--border);
+      font-size: 12px; color: var(--text-muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .doc-footer a { color: var(--text-sec); text-decoration: none; margin: 0 6px; }
+    .doc-footer a:hover { color: var(--accent); }
+
+    /* ── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 24px 20px 80px; }
+      .doc-footer { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<nav class="topnav">
+  <a href="./index.html" class="logo">🐺 ERGENEKON</a>
+  <span class="sep">·</span>
+  <span class="doc-title">Documentation</span>
+  <span class="version-badge">v0.4.0</span>
+  <a href="./index.html" class="back">← Back to site</a>
+</nav>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Getting Started</div>
+      <a href="#overview"      class="sidebar-link"><span class="icon">📖</span> Overview</a>
+      <a href="#quickstart"    class="sidebar-link"><span class="icon">⚡</span> Quick Start</a>
+      <a href="#installation"  class="sidebar-link"><span class="icon">📦</span> Installation</a>
+      <a href="#how-it-works"  class="sidebar-link"><span class="icon">🔄</span> How It Works</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Probe</div>
+      <a href="#probe-config"  class="sidebar-link"><span class="icon">⚙️</span> Configuration</a>
+      <a href="#middleware"    class="sidebar-link"><span class="icon">🔗</span> Middleware</a>
+      <a href="#interceptors"  class="sidebar-link"><span class="icon">🕵️</span> Interceptors</a>
+      <a href="#sampling"      class="sidebar-link"><span class="icon">🎲</span> Sampling</a>
+      <a href="#redaction"     class="sidebar-link"><span class="icon">🔒</span> PII Redaction</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Collector</div>
+      <a href="#collector"     class="sidebar-link"><span class="icon">📡</span> Running Collector</a>
+      <a href="#collector-api" class="sidebar-link"><span class="icon">🌐</span> REST API</a>
+      <a href="#storage"       class="sidebar-link"><span class="icon">💾</span> Storage</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">CLI</div>
+      <a href="#cli"           class="sidebar-link"><span class="icon">💻</span> CLI Reference</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Replay</div>
+      <a href="#replay"        class="sidebar-link"><span class="icon">⏪</span> Replay Engine</a>
+      <a href="#determinism"   class="sidebar-link"><span class="icon">✅</span> Determinism</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Licensing</div>
+      <a href="#license"       class="sidebar-link"><span class="icon">🔑</span> License System</a>
+      <a href="#tiers"         class="sidebar-link"><span class="icon">🏆</span> Feature Tiers</a>
+    </div>
+
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Deployment</div>
+      <a href="#docker"        class="sidebar-link"><span class="icon">🐳</span> Docker</a>
+      <a href="#kubernetes"    class="sidebar-link"><span class="icon">☸️</span> Kubernetes</a>
+      <a href="#env-vars"      class="sidebar-link"><span class="icon">🔧</span> Environment Vars</a>
+    </div>
+
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- OVERVIEW -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="overview">
+      <span class="doc-section-tag">Introduction</span>
+      <h1>ERGENEKON Engine Docs</h1>
+      <p>
+        ERGENEKON is a <strong>deterministic record-and-replay debugger</strong> for distributed Node.js systems.
+        It intercepts all I/O at runtime, stores a byte-perfect recording, and lets you replay it locally —
+        without a network, database, or external dependencies.
+      </p>
+
+      <div class="callout callout-tip">
+        <p><strong>🎁 Launch offer:</strong> All tiers (Pro + Enterprise) are free during our launch period. No credit card required.</p>
+      </div>
+
+      <h3>Package Overview</h3>
+      <table>
+        <thead><tr><th>Package</th><th>Purpose</th><th>Install</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>@ergenekon/probe</code></td>
+            <td>Express middleware — intercepts all I/O in production</td>
+            <td><code>npm install @ergenekon/probe</code></td>
+          </tr>
+          <tr>
+            <td><code>@ergenekon/collector</code></td>
+            <td>HTTP ingest server — receives and stores recordings</td>
+            <td><code>npm install @ergenekon/collector</code></td>
+          </tr>
+          <tr>
+            <td><code>@ergenekon/replay</code></td>
+            <td>Replay engine — deterministic re-execution from recordings</td>
+            <td><code>npm install @ergenekon/replay</code></td>
+          </tr>
+          <tr>
+            <td><code>@ergenekon/core</code></td>
+            <td>Shared types, HLC clock, ULID, license validation</td>
+            <td>Installed as dependency</td>
+          </tr>
+          <tr>
+            <td><code>@ergenekon/cli</code></td>
+            <td>Command-line tool — inspect, replay, export sessions</td>
+            <td><code>npm install -g @ergenekon/cli</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- QUICK START -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="quickstart">
+      <h2>⚡ Quick Start</h2>
+      <p>Get from zero to your first recorded replay in under 2 minutes.</p>
+
+      <ol class="steps">
+        <li>
+          <div>
+            <strong>Install the packages</strong>
+            <pre><code>npm install @ergenekon/probe @ergenekon/collector</code></pre>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Start the Collector</strong><br>
+            <p>The Collector runs as a separate HTTP server on port 4380.</p>
+            <pre><code>npx ergenekon-collector --port 4380 --storage ./recordings</code></pre>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Add the Probe to your Express app</strong>
+            <pre><span class="pre-label">TypeScript</span><code><span class="kw">import</span> { ErgenekonProbe } <span class="kw">from</span> <span class="str">'@ergenekon/probe'</span>;
+<span class="kw">import</span> express <span class="kw">from</span> <span class="str">'express'</span>;
+
+<span class="kw">const</span> <span class="var">app</span> = express();
+<span class="kw">const</span> <span class="var">probe</span> = <span class="kw">new</span> <span class="fn">ErgenekonProbe</span>({
+  serviceName: <span class="str">'checkout-service'</span>,
+  collectorUrl: <span class="str">'http://localhost:4380'</span>,
+});
+
+app.<span class="fn">use</span>(probe.<span class="fn">middleware</span>()); <span class="cmt">// Must be first middleware</span>
+
+app.<span class="fn">get</span>(<span class="str">'/api/orders'</span>, async (req, res) => {
+  <span class="cmt">// Your existing code — untouched</span>
+  <span class="kw">const</span> orders = <span class="kw">await</span> db.<span class="fn">query</span>(<span class="str">'SELECT * FROM orders'</span>);
+  res.<span class="fn">json</span>(orders);
+});
+
+app.<span class="fn">listen</span>(<span class="num">3000</span>);</code></pre>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>Make a request — it's recorded automatically</strong>
+            <pre><code>curl http://localhost:3000/api/orders</code></pre>
+          </div>
+        </li>
+        <li>
+          <div>
+            <strong>View and replay the session</strong>
+            <pre><code>npx ergenekon sessions       <span class="cmt"># list recordings</span>
+npx ergenekon replay &lt;id&gt;   <span class="cmt"># replay and verify</span></code></pre>
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout callout-note">
+        <p><strong>Note:</strong> The probe must be added <em>before</em> any other middleware so it can intercept the full request lifecycle.</p>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- HOW IT WORKS -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="how-it-works">
+      <h2>🔄 How It Works</h2>
+      <p>
+        ERGENEKON operates on a simple principle: <strong>intercept all sources of non-determinism at I/O boundaries</strong>,
+        record them, and replay them exactly during debugging.
+      </p>
+
+      <h3>The Recording Pipeline</h3>
+      <pre><code>Incoming Request
+     │
+     ▼
+ ┌──────────────────────────────────────────────────────┐
+ │  PROBE (your service)                                │
+ │                                                      │
+ │  ① HTTP middleware wraps the request                 │
+ │  ② All I/O interceptions installed:                  │
+ │    • Date.now(), Math.random(), crypto.randomUUID()  │
+ │    • http.request(), fetch()                         │
+ │    • fs.readFile(), fs.writeFile()                   │
+ │    • dns.lookup(), dns.resolve()                     │
+ │    • pg.query(), mysql2.execute()                    │
+ │    • setTimeout(), setInterval()                     │
+ │  ③ Each call → ErgenekonEvent (ULID + HLC timestamp) │
+ │  ④ Events buffered in SpillBuffer                    │
+ └──────────────────────────────────┬───────────────────┘
+                                    │ POST /sessions
+                                    ▼
+                        ┌─────────────────────┐
+                        │  COLLECTOR SERVER   │
+                        │                     │
+                        │  Rate limiting      │
+                        │  SHA-256 checksum   │
+                        │  Durable fsync write│
+                        │  REST API           │
+                        └─────────┬───────────┘
+                                  │
+                    ┌─────────────▼──────────────┐
+                    │  REPLAY ENGINE             │
+                    │                            │
+                    │  Loads recording session   │
+                    │  Mocks all I/O from events │
+                    │  Re-executes your code     │
+                    │  Verifies byte-for-byte    │
+                    └────────────────────────────┘</code></pre>
+
+      <h3>Event Types</h3>
+      <table>
+        <thead><tr><th>Event Type</th><th>When Captured</th><th>Tier</th></tr></thead>
+        <tbody>
+          <tr><td><code>http_request_in</code> / <code>http_response_out</code></td><td>Every incoming HTTP request/response</td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>http_request_out</code> / <code>http_response_in</code></td><td>Outbound fetch/http.request calls</td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>timestamp</code></td><td><code>Date.now()</code>, <code>new Date()</code>, <code>performance.now()</code></td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>random</code></td><td><code>Math.random()</code></td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>timer_set</code> / <code>timer_fire</code></td><td>setTimeout / setInterval</td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>error</code></td><td>Uncaught exceptions, unhandled rejections</td><td><span class="tier tier-c">Community</span></td></tr>
+          <tr><td><code>db_query</code> / <code>db_result</code></td><td>PostgreSQL, MySQL2, MongoDB queries</td><td><span class="tier tier-p">Pro</span></td></tr>
+          <tr><td><code>fs_read</code> / <code>fs_write</code></td><td>File system operations</td><td><span class="tier tier-p">Pro</span></td></tr>
+          <tr><td><code>dns_lookup</code></td><td>DNS resolution calls</td><td><span class="tier tier-p">Pro</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PROBE CONFIG -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="probe-config">
+      <h2>⚙️ Probe Configuration</h2>
+
+      <pre><span class="pre-label">TypeScript</span><code><span class="kw">const</span> <span class="var">probe</span> = <span class="kw">new</span> <span class="fn">ErgenekonProbe</span>({
+  <span class="cmt">// REQUIRED</span>
+  serviceName:  <span class="str">'payment-service'</span>,
+
+  <span class="cmt">// Collector endpoint (default: http://localhost:4380)</span>
+  collectorUrl: process.env.<span class="prop">ERGENEKON_COLLECTOR_URL</span>,
+
+  <span class="cmt">// Disable in test environments</span>
+  enabled: process.env.<span class="prop">NODE_ENV</span> !== <span class="str">'test'</span>,
+
+  <span class="cmt">// Record every request (1.0 = 100%, 0.1 = 10%) — Pro tier</span>
+  samplingRate: <span class="num">1.0</span>,
+
+  <span class="cmt">// Auto-redact these headers in all events</span>
+  redactHeaders: [<span class="str">'authorization'</span>, <span class="str">'cookie'</span>, <span class="str">'x-api-key'</span>],
+
+  <span class="cmt">// Max body size to capture (bytes) — default 512KB</span>
+  maxBodyBytes: <span class="num">524288</span>,
+
+  <span class="cmt">// Advanced sampling config — Pro tier</span>
+  sampling: {
+    strategy: <span class="str">'reservoir'</span>,   <span class="cmt">// 'deterministic' | 'reservoir' | 'adaptive'</span>
+    rate: <span class="num">0.1</span>,              <span class="cmt">// sample 10% of requests</span>
+    reservoirSize: <span class="num">100</span>,     <span class="cmt">// keep 100 samples per minute</span>
+    alwaysRecord: [          <span class="cmt">// patterns that always record</span>
+      <span class="str">'POST /api/payments'</span>,
+      <span class="str">'DELETE *'</span>,
+    ],
+  },
+});</code></pre>
+
+      <h3>Full Configuration Reference</h3>
+      <table>
+        <thead><tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>serviceName</code></td><td><code>string</code></td><td>required</td><td>Unique name for this service in recordings</td></tr>
+          <tr><td><code>collectorUrl</code></td><td><code>string</code></td><td><code>http://localhost:4380</code></td><td>URL of the Collector server</td></tr>
+          <tr><td><code>enabled</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Disable to turn off all instrumentation</td></tr>
+          <tr><td><code>samplingRate</code></td><td><code>number</code></td><td><code>1.0</code></td><td>Fraction of requests to record (0–1.0)</td></tr>
+          <tr><td><code>redactHeaders</code></td><td><code>string[]</code></td><td><code>['authorization', 'cookie', 'x-api-key']</code></td><td>Headers redacted before storage</td></tr>
+          <tr><td><code>maxBodyBytes</code></td><td><code>number</code></td><td><code>524288</code></td><td>Max request/response body size (bytes)</td></tr>
+          <tr><td><code>sampling</code></td><td><code>SamplingConfig</code></td><td>see above</td><td>Advanced sampling configuration <span class="tier tier-p">Pro</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- SAMPLING -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="sampling">
+      <h2>🎲 Smart Sampling</h2>
+      <p>
+        <span class="tier tier-p">Pro</span>
+        Sampling lets you record a representative subset of requests — reducing overhead to near zero in high-traffic environments.
+      </p>
+
+      <h3>Strategies</h3>
+      <table>
+        <thead><tr><th>Strategy</th><th>Description</th><th>Best For</th></tr></thead>
+        <tbody>
+          <tr><td><code>deterministic</code></td><td>Record every N-th request (consistent, predictable)</td><td>Load testing validation</td></tr>
+          <tr><td><code>reservoir</code></td><td>Reservoir sampling — statistically uniform over time windows</td><td>Production monitoring</td></tr>
+          <tr><td><code>adaptive</code></td><td>Auto-adjusts rate based on error signals and anomalies</td><td>High-traffic APIs</td></tr>
+        </tbody>
+      </table>
+
+      <pre><span class="pre-label">TypeScript</span><code><span class="kw">const</span> probe = <span class="kw">new</span> <span class="fn">ErgenekonProbe</span>({
+  serviceName: <span class="str">'api-gateway'</span>,
+  sampling: {
+    strategy: <span class="str">'adaptive'</span>,
+    rate: <span class="num">0.05</span>,             <span class="cmt">// baseline 5%</span>
+    alwaysRecord: [        <span class="cmt">// always record these — regardless of rate</span>
+      <span class="str">'POST /api/checkout'</span>,
+      <span class="str">'POST /api/auth/*'</span>,
+      <span class="str">'DELETE *'</span>,
+    ],
+    neverRecord: [         <span class="cmt">// never record health checks / metrics</span>
+      <span class="str">'GET /health'</span>,
+      <span class="str">'GET /metrics'</span>,
+    ],
+  },
+});</code></pre>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- REDACTION -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="redaction">
+      <h2>🔒 PII Redaction</h2>
+      <p>
+        <span class="tier tier-p">Pro</span>
+        ERGENEKON includes a deep redaction engine that recursively walks recorded payloads and scrubs sensitive fields <em>before</em> they are written to disk.
+      </p>
+
+      <div class="callout callout-warn">
+        <p><strong>Design guarantee:</strong> The redaction engine <em>never mutates the original object</em> — it always returns a deep copy. Your application data is never modified at runtime.</p>
+      </div>
+
+      <pre><span class="pre-label">TypeScript</span><code><span class="kw">import</span> { redactDeep } <span class="kw">from</span> <span class="str">'@ergenekon/probe'</span>;
+
+<span class="kw">const</span> redacted = <span class="fn">redactDeep</span>(payload, {
+  <span class="cmt">// Redact these field names (case-insensitive)</span>
+  fieldNames: [<span class="str">'password'</span>, <span class="str">'ssn'</span>, <span class="str">'creditCard'</span>, <span class="str">'apiKey'</span>],
+
+  <span class="cmt">// Redact nested paths (supports * wildcard)</span>
+  pathPatterns: [<span class="str">'user.*.secret'</span>, <span class="str">'payment.card.*'</span>],
+
+  <span class="cmt">// Auto-detect emails, JWTs, credit card numbers, SSNs</span>
+  autoDetect: <span class="num">true</span>,
+
+  <span class="cmt">// Custom redactor function</span>
+  customRedactor: (field, value, path) => {
+    <span class="kw">if</span> (path.<span class="fn">includes</span>(<span class="str">'billing'</span>)) <span class="kw">return</span> <span class="str">'[BILLING_REDACTED]'</span>;
+    <span class="kw">return</span> undefined; <span class="cmt">// undefined = use default behavior</span>
+  },
+
+  replacement: <span class="str">'[REDACTED]'</span>,
+  maxDepth: <span class="num">20</span>,
+});</code></pre>
+
+      <h4>Auto-detected Patterns</h4>
+      <ul>
+        <li>Credit card numbers (Luhn-valid 13–19 digit sequences)</li>
+        <li>JSON Web Tokens (three-part base64url strings)</li>
+        <li>Email addresses</li>
+        <li>US Social Security Numbers (XXX-XX-XXXX format)</li>
+        <li>Private keys (PEM header detection)</li>
+      </ul>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- COLLECTOR -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="collector">
+      <h2>📡 Running the Collector</h2>
+
+      <h3>Standalone (Development)</h3>
+      <pre><code><span class="cmt"># Start with defaults (port 4380, ./recordings directory)</span>
+npx @ergenekon/collector
+
+<span class="cmt"># Custom port and storage path</span>
+npx @ergenekon/collector --port 4380 --storage /var/ergenekon/recordings
+
+<span class="cmt"># With license</span>
+ERGENEKON_LICENSE_KEY='...' npx @ergenekon/collector</code></pre>
+
+      <h3>Programmatic (Node.js)</h3>
+      <pre><span class="pre-label">TypeScript</span><code><span class="kw">import</span> { CollectorServer } <span class="kw">from</span> <span class="str">'@ergenekon/collector'</span>;
+
+<span class="kw">const</span> server = <span class="kw">new</span> <span class="fn">CollectorServer</span>({
+  port: <span class="num">4380</span>,
+  storageDir: <span class="str">'/var/ergenekon/recordings'</span>,
+});
+
+<span class="kw">await</span> server.<span class="fn">start</span>();
+console.<span class="fn">log</span>(<span class="str">'Collector listening on :4380'</span>);</code></pre>
+
+      <h3>Defense Layers</h3>
+      <table>
+        <thead><tr><th>Layer</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Body limit</td><td>Hard 16MB limit per request body — returns 413 on overflow</td></tr>
+          <tr><td>Rate limiting</td><td>Token bucket: 100 requests/min per IP — returns 429</td></tr>
+          <tr><td>Event cap</td><td>Max 1,000,000 events per session — prevents index explosion</td></tr>
+          <tr><td>Checksum</td><td>SHA-256 checksum per session — tamper detection on read</td></tr>
+          <tr><td>Durable write</td><td>fsync before ACK — no data loss on process crash</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- COLLECTOR REST API -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="collector-api">
+      <h2>🌐 Collector REST API</h2>
+      <p>All endpoints served on <code>http://localhost:4380</code> (default).</p>
+
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>POST</code></td><td><code>/sessions</code></td><td>Ingest a batch of recording sessions from the Probe</td></tr>
+          <tr><td><code>GET</code></td><td><code>/sessions</code></td><td>List all recorded sessions (newest first)</td></tr>
+          <tr><td><code>GET</code></td><td><code>/sessions/:id</code></td><td>Retrieve a specific session by ID</td></tr>
+          <tr><td><code>DELETE</code></td><td><code>/sessions/:id</code></td><td>Delete a session</td></tr>
+          <tr><td><code>GET</code></td><td><code>/health</code></td><td>Health check — returns uptime, session count</td></tr>
+          <tr><td><code>GET</code></td><td><code>/stats</code></td><td>Collector statistics (events, sessions, storage)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>List Sessions</h3>
+      <pre><code>GET /sessions
+
+Response:
+{
+  "sessions": [
+    {
+      "id": "01HWXYZ...",
+      "traceId": "abc123",
+      "serviceName": "checkout-service",
+      "startTime": "2026-04-15T18:00:00Z",
+      "durationMs": 234,
+      "eventCount": 47,
+      "nodeVersion": "v22.0.0"
+    }
+  ],
+  "total": 1
+}</code></pre>
+
+      <h3>Get Session Detail</h3>
+      <pre><code>GET /sessions/01HWXYZ...
+
+Response:
+{
+  "id": "01HWXYZ...",
+  "traceId": "abc123",
+  "events": [
+    {
+      "id": "01HWXYZ001",
+      "type": "http_request_in",
+      "timestamp": { "wallTime": 1712345678901, "logical": 0 },
+      "data": { "method": "POST", "url": "/api/checkout", "headers": {...} }
+    },
+    ...
+  ]
+}</code></pre>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- CLI -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="cli">
+      <h2>💻 CLI Reference</h2>
+
+      <pre><code>npx ergenekon &lt;command&gt; [options]
+
+<span class="cmt"># Or install globally:</span>
+npm install -g @ergenekon/cli
+ergenekon &lt;command&gt;</code></pre>
+
+      <h3>Commands</h3>
+      <table class="cli-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>ergenekon sessions</td><td>List all recorded sessions, sorted by timestamp</td></tr>
+          <tr><td>ergenekon inspect &lt;id&gt;</td><td>Show full session details — metadata, event breakdown, timing</td></tr>
+          <tr><td>ergenekon timeline &lt;id&gt;</td><td>Print color-coded ASCII event timeline to stdout</td></tr>
+          <tr><td>ergenekon trace &lt;traceId&gt;</td><td>Show all sessions sharing a distributed trace ID</td></tr>
+          <tr><td>ergenekon replay &lt;id&gt;</td><td>Replay a session and print verification report</td></tr>
+          <tr><td>ergenekon export &lt;id&gt; [file]</td><td>Export session to JSON or binary .prdx format</td></tr>
+          <tr><td>ergenekon import &lt;file&gt;</td><td>Import a .json or .prdx session into the Collector</td></tr>
+          <tr><td>ergenekon stats</td><td>Show Collector statistics (sessions, events, uptime)</td></tr>
+          <tr><td>ergenekon watch</td><td>Live-tail new recording sessions (streams updates)</td></tr>
+          <tr><td>ergenekon health</td><td>Check Collector health and connectivity</td></tr>
+          <tr><td>ergenekon session pin &lt;id&gt;</td><td>Pin a session to prevent TTL eviction</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Environment Variables for CLI</h3>
+      <table>
+        <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>ERGENEKON_COLLECTOR_URL</code></td><td><code>http://localhost:4380</code></td><td>Collector server URL</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Examples</h3>
+      <pre><code><span class="cmt"># List sessions from a remote Collector</span>
+ERGENEKON_COLLECTOR_URL=http://prod-collector:4380 ergenekon sessions
+
+<span class="cmt"># Show color timeline of session events</span>
+ergenekon timeline 01HWXYZ...
+
+<span class="cmt"># Export for offline debugging</span>
+ergenekon export 01HWXYZ... ./debug-session.prdx
+
+<span class="cmt"># Replay and compare output</span>
+ergenekon replay 01HWXYZ...
+<span class="cmt"># ✅ PERFECT REPLAY — BYTE-FOR-BYTE IDENTICAL</span>
+<span class="cmt"># ✓ Date.now() → 1712345678901  (deterministic)</span>
+<span class="cmt"># ✓ Math.random() → 0.73421847  (deterministic)</span>
+<span class="cmt"># ✓ Response body → identical    (byte-for-byte)</span></code></pre>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- REPLAY ENGINE -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="replay">
+      <h2>⏪ Replay Engine</h2>
+      <p>
+        The replay engine re-runs your application code against a recorded session,
+        mocking all I/O with the captured values — so you can step through the exact
+        execution path that caused a production bug.
+      </p>
+
+      <h3>Programmatic Replay</h3>
+      <pre><span class="pre-label">TypeScript</span><code><span class="kw">import</span> { MockLayer } <span class="kw">from</span> <span class="str">'@ergenekon/replay'</span>;
+<span class="kw">import</span> { importSessionJSON } <span class="kw">from</span> <span class="str">'@ergenekon/core'</span>;
+
+<span class="kw">const</span> session = <span class="kw">await</span> <span class="fn">importSessionJSON</span>(<span class="str">'./session.json'</span>);
+<span class="kw">const</span> mock = <span class="kw">new</span> <span class="fn">MockLayer</span>(session);
+
+<span class="cmt">// Install mocks before running your code</span>
+mock.<span class="fn">install</span>();
+
+<span class="kw">try</span> {
+  <span class="cmt">// Run your handler with the recorded request</span>
+  <span class="kw">await</span> <span class="fn">yourRequestHandler</span>(session.events[<span class="num">0</span>].data);
+} <span class="kw">finally</span> {
+  mock.<span class="fn">uninstall</span>();
+  <span class="kw">const</span> report = mock.<span class="fn">verificationReport</span>();
+  console.<span class="fn">log</span>(report); <span class="cmt">// pass/fail per event</span>
+}</code></pre>
+
+      <section id="determinism">
+        <h3>What "Deterministic" Means</h3>
+        <p>During replay, every I/O call returns the <em>exact value</em> captured during recording:</p>
+        <table>
+          <thead><tr><th>Call</th><th>Production value</th><th>Replay returns</th></tr></thead>
+          <tbody>
+            <tr><td><code>Date.now()</code></td><td><code>1712345678901</code></td><td><code>1712345678901</code> ← exact</td></tr>
+            <tr><td><code>Math.random()</code></td><td><code>0.73421847</code></td><td><code>0.73421847</code> ← exact</td></tr>
+            <tr><td><code>db.query()</code></td><td><code>[{id:42, name:"İlhan"}]</code></td><td><code>[{id:42, name:"İlhan"}]</code> ← exact</td></tr>
+            <tr><td><code>fetch(url)</code></td><td><code>{"status":200, body:"..."}</code></td><td><code>{"status":200, body:"..."}</code> ← exact</td></tr>
+            <tr><td><code>fs.readFile()</code></td><td><code>&lt;Buffer 68 65 6c 6c 6f&gt;</code></td><td><code>&lt;Buffer 68 65 6c 6c 6f&gt;</code> ← exact</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- LICENSE SYSTEM -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="license">
+      <h2>🔑 License System</h2>
+      <p>Licenses are <strong>Ed25519-signed JWT tokens</strong> validated entirely offline — no network call at startup or runtime.</p>
+
+      <h3>License Discovery (auto, in order)</h3>
+      <ol>
+        <li><code>ERGENEKON_LICENSE_KEY</code> env var — inline JSON token</li>
+        <li><code>ERGENEKON_LICENSE</code> env var — path to license file</li>
+        <li><code>.ergenekon-license.json</code> in the current working directory</li>
+        <li><code>~/.ergenekon-license.json</code> in the home directory</li>
+      </ol>
+
+      <div class="callout callout-note">
+        <p><strong>No license found?</strong> The system falls back to <strong>Community mode</strong> gracefully — it never crashes or throws. All Community features remain available.</p>
+      </div>
+
+      <h3>License File Format</h3>
+      <pre><span class="pre-label">JSON</span><code>{
+  "token": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...",
+  "tier": "pro",
+  "licensee": "Acme Corp",
+  "issuedAt": "2026-04-15T00:00:00Z",
+  "expiresAt": "2027-04-15T00:00:00Z"
+}</code></pre>
+
+      <h3>Setting via Environment (recommended for production)</h3>
+      <pre><code>ERGENEKON_LICENSE_KEY='{"token":"eyJ...","tier":"pro"}' node app.js</code></pre>
+
+      <section id="tiers">
+        <h3>Feature Tiers</h3>
+        <table>
+          <thead><tr><th>Feature</th><th><span class="tier tier-c">Community</span></th><th><span class="tier tier-p">Pro</span></th><th><span class="tier tier-e">Enterprise</span></th></tr></thead>
+          <tbody>
+            <tr><td>HTTP interceptor</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Globals (Date, Math, timers)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Error tracking</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>CLI tool (11 commands)</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Time-Travel UI</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Session retention</td><td>24 hours</td><td>30 days</td><td>Unlimited</td></tr>
+            <tr><td>Database interceptor (pg, mysql2)</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>FS interceptor</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>DNS interceptor</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Smart sampling engine</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Deep PII redaction</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Binary .prdx export</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Distributed multi-service replay</td><td>❌</td><td>✅</td><td>✅</td></tr>
+            <tr><td>SSO / SAML</td><td>❌</td><td>❌</td><td>✅</td></tr>
+            <tr><td>RBAC access control</td><td>❌</td><td>❌</td><td>✅</td></tr>
+            <tr><td>On-premise deployment support</td><td>❌</td><td>❌</td><td>✅</td></tr>
+            <tr><td>SLA 99.9% + dedicated support</td><td>❌</td><td>❌</td><td>✅</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- DOCKER -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="docker">
+      <h2>🐳 Docker Deployment</h2>
+
+      <h3>Docker Compose (Recommended)</h3>
+      <pre><span class="pre-label">docker-compose.yml</span><code>version: '3.9'
+services:
+  ergenekon-collector:
+    image: node:22-alpine
+    working_dir: /app
+    command: npx @ergenekon/collector --port 4380 --storage /data
+    ports:
+      - "4380:4380"
+    volumes:
+      - ergenekon-data:/data
+    environment:
+      - ERGENEKON_LICENSE_KEY=${ERGENEKON_LICENSE_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4380/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  ergenekon-data:</code></pre>
+
+      <pre><code>docker compose up -d
+docker compose logs -f ergenekon-collector</code></pre>
+
+      <h3>Standalone Dockerfile</h3>
+      <pre><span class="pre-label">Dockerfile</span><code>FROM node:22-alpine
+WORKDIR /app
+RUN npm install -g @ergenekon/collector
+EXPOSE 4380
+VOLUME /data
+CMD ["ergenekon-collector", "--port", "4380", "--storage", "/data"]</code></pre>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- KUBERNETES -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="kubernetes">
+      <h2>☸️ Kubernetes Deployment</h2>
+
+      <pre><span class="pre-label">collector-deployment.yaml</span><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ergenekon-collector
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ergenekon-collector
+  template:
+    metadata:
+      labels:
+        app: ergenekon-collector
+    spec:
+      containers:
+        - name: collector
+          image: node:22-alpine
+          command: ["npx", "@ergenekon/collector"]
+          args: ["--port", "4380", "--storage", "/data"]
+          ports:
+            - containerPort: 4380
+          env:
+            - name: ERGENEKON_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ergenekon-license
+                  key: key
+          volumeMounts:
+            - name: recordings
+              mountPath: /data
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4380
+            initialDelaySeconds: 5
+            periodSeconds: 15
+      volumes:
+        - name: recordings
+          persistentVolumeClaim:
+            claimName: ergenekon-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ergenekon-collector
+  namespace: observability
+spec:
+  selector:
+    app: ergenekon-collector
+  ports:
+    - port: 4380
+      targetPort: 4380</code></pre>
+
+      <h3>Secret for License Key</h3>
+      <pre><code>kubectl create secret generic ergenekon-license \
+  --from-literal=key='{"token":"eyJ...","tier":"enterprise"}' \
+  -n observability</code></pre>
+    </section>
+
+    <hr>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ENVIRONMENT VARS -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="env-vars">
+      <h2>🔧 Environment Variables</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Component</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>ERGENEKON_LICENSE_KEY</code></td><td>Probe, Collector</td><td>Inline JSON license token (highest priority)</td></tr>
+          <tr><td><code>ERGENEKON_LICENSE</code></td><td>Probe, Collector</td><td>Path to <code>.ergenekon-license.json</code> file</td></tr>
+          <tr><td><code>ERGENEKON_COLLECTOR_URL</code></td><td>Probe, CLI</td><td>URL of the Collector server (default: <code>http://localhost:4380</code>)</td></tr>
+          <tr><td><code>ERGENEKON_SIGNING_KEY</code></td><td>License Server</td><td>Ed25519 private key for generating license tokens</td></tr>
+          <tr><td><code>STRIPE_SECRET_KEY</code></td><td>License Server</td><td>Stripe API secret key for payment processing</td></tr>
+          <tr><td><code>STRIPE_WEBHOOK_SECRET</code></td><td>License Server</td><td>Stripe webhook signing secret</td></tr>
+          <tr><td><code>PORT</code></td><td>Collector, License Server</td><td>Override HTTP listen port</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-danger">
+        <p><strong>Never commit</strong> <code>ERGENEKON_SIGNING_KEY</code> or <code>STRIPE_SECRET_KEY</code> to source control. Use secret managers (AWS Secrets Manager, Vault, k8s Secrets).</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="doc-footer">
+  <span>© 2026 ERGENEKON Engine · BSL-1.1 License</span>
+  <span>
+    <a href="./index.html">Home</a>
+    <a href="./faq.html">FAQ</a>
+    <a href="./privacy.html">Privacy</a>
+    <a href="./terms.html">Terms</a>
+    <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank">GitHub</a>
+    <a href="mailto:hello@ergenekon.dev">Contact</a>
+  </span>
+</footer>
+
+<script>
+  // Active sidebar link highlight on scroll
+  const links = document.querySelectorAll('.sidebar-link');
+  const sections = document.querySelectorAll('[id]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar-link[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -75% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
