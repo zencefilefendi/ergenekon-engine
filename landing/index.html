@@ -458,6 +458,19 @@
       border: 1px solid var(--border-subtle);
     }
     .pricing-card .btn-plan.outline:hover { border-color: rgba(255,255,255,0.15); background: var(--bg-tertiary); }
+    .free-register-form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+    .register-email {
+      width: 100%; padding: 10px 14px; border-radius: 8px;
+      border: 1px solid var(--border-subtle); background: var(--bg-card);
+      color: var(--text-primary); font-size: 14px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .register-email:focus { border-color: var(--accent-violet); box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+    .register-email::placeholder { color: var(--text-muted); }
+    .register-msg { font-size: 12px; min-height: 18px; transition: all 0.3s; }
+    .register-msg.success { color: #10b981; }
+    .register-msg.error { color: #ef4444; }
+    .register-msg.loading { color: var(--text-muted); }
 
     /* ── STATS BAR ─────────────────────────────────────────── */
     .stats-bar {
@@ -1213,7 +1226,13 @@
           <li>Binary PRDX export</li>
           <li>Priority email support</li>
         </ul>
-        <a href="javascript:void(0)" class="btn-plan primary" onclick="startCheckout('pro_monthly')">Get Started Free</a>
+        <div class="free-register-form" id="pro-register-form">
+          <input type="email" id="pro-email" placeholder="you@company.com" class="register-email" />
+          <button class="btn-plan primary" onclick="registerFree('pro')">
+            🐺 Get Free License
+          </button>
+          <div id="pro-register-msg" class="register-msg"></div>
+        </div>
       </div>
 
       <!-- Enterprise -->
@@ -1234,7 +1253,13 @@
           <li>SLA 99.9%</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="mailto:enterprise@ergenekon.dev?subject=ERGENEKON%20Enterprise%20License" class="btn-plan outline">Contact Us</a>
+        <div class="free-register-form" id="ent-register-form">
+          <input type="email" id="ent-email" placeholder="you@company.com" class="register-email" />
+          <button class="btn-plan outline" onclick="registerFree('enterprise')">
+            🐺 Get Free License
+          </button>
+          <div id="ent-register-msg" class="register-msg"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1568,36 +1593,69 @@
   // Pricing toggle disabled — all plans are free during launch
   function toggleBilling() { /* coming soon */ }
 
-  // ── Stripe Checkout ────────────────────────────────────
+  // ── Free License Registration ──────────────────────────────
   const LICENSE_SERVER = 'https://license.ergenekon.dev';
 
-  async function startCheckout(plan) {
+  async function registerFree(tier) {
+    const prefix = tier === 'enterprise' ? 'ent' : 'pro';
+    const emailInput = document.getElementById(`${prefix}-email`);
+    const msgEl = document.getElementById(`${prefix}-register-msg`);
     const btn = event.target;
-    const originalText = btn.textContent;
-    btn.textContent = 'Redirecting...';
-    btn.style.pointerEvents = 'none';
+    const email = emailInput.value.trim();
+
+    // Validate
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      msgEl.className = 'register-msg error';
+      msgEl.textContent = 'Please enter a valid email address.';
+      emailInput.focus();
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    msgEl.className = 'register-msg loading';
+    msgEl.textContent = 'Creating your license...';
 
     try {
-      const response = await fetch(`${LICENSE_SERVER}/api/checkout`, {
+      const response = await fetch(`${LICENSE_SERVER}/api/register-free`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan: plan,
-          successUrl: window.location.origin + '/success.html',
-          cancelUrl: window.location.origin + '/#pricing',
-        }),
+        body: JSON.stringify({ email, name: email.split('@')[0] }),
       });
 
-      if (!response.ok) throw new Error('Checkout failed');
-
       const data = await response.json();
-      window.location.href = data.checkoutUrl;
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
+      }
+
+      // Success!
+      msgEl.className = 'register-msg success';
+      msgEl.textContent = '✅ License sent to ' + email + '!';
+      btn.textContent = '✅ Sent!';
+      btn.style.background = 'rgba(16,185,129,0.15)';
+      btn.style.color = '#10b981';
+      btn.style.borderColor = 'rgba(16,185,129,0.3)';
+
+      // Auto-download the license file
+      if (data.license) {
+        const blob = new Blob([JSON.stringify(data.license, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '.ergenekon-license.json';
+        a.click();
+        URL.revokeObjectURL(url);
+
+        msgEl.innerHTML = '✅ License sent to <strong>' + email + '</strong> + downloaded!';
+      }
     } catch (err) {
-      console.error('Checkout error:', err);
-      btn.textContent = originalText;
-      btn.style.pointerEvents = '';
-      // Fallback: redirect to GitHub during launch
-      alert('Checkout is not available yet during the free launch period.\n\nGet started for free via:\nnpm install @ergenekon/probe @ergenekon/collector');
+      console.error('Registration error:', err);
+      msgEl.className = 'register-msg error';
+      msgEl.textContent = err.message || 'Something went wrong. Please try again.';
+      btn.textContent = '🐺 Get Free License';
+      btn.disabled = false;
     }
   }
 </script>

@@ -14,9 +14,14 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { handleStripeWebhook } from './stripe-webhook.js';
 import { handleCreateCheckout } from './checkout.js';
-import { generateLicenseForCustomer, type LicenseRequest } from './license-gen.js';
+import { generateLicenseForCustomer, formatLicenseJSON, type LicenseRequest } from './license-gen.js';
+import { sendLicenseEmail } from './email.js';
 
 const PORT = parseInt(process.env.LICENSE_SERVER_PORT ?? '4400', 10);
+
+// Track free registrations to prevent abuse (in-memory, reset on restart)
+const freeRegistrations = new Map<string, { count: number; lastAt: number }>();
+const MAX_FREE_PER_EMAIL = 3; // max 3 registrations per email
 
 // ── Load env from .env file if present ──────────────────────────
 try {
@@ -95,6 +100,81 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       return;
     }
 
+    // ── POST /api/register-free — Launch Period Free License ──────
+    // No payment needed — generates a Pro license and emails it.
+    // Active only during the free launch period.
+    if (req.method === 'POST' && path === '/api/register-free') {
+      const body = await readBody(req);
+      let data: { email?: string; name?: string };
+      try {
+        data = JSON.parse(body.toString('utf-8'));
+      } catch {
+        json(res, 400, { error: 'Invalid JSON body' });
+        return;
+      }
+
+      const email = data.email?.trim().toLowerCase();
+      const name = data.name?.trim() || email?.split('@')[0] || 'User';
+
+      // Validate email
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        json(res, 400, { error: 'Valid email address is required' });
+        return;
+      }
+
+      // Rate limit per email
+      const reg = freeRegistrations.get(email);
+      if (reg && reg.count >= MAX_FREE_PER_EMAIL) {
+        json(res, 429, { error: 'License already sent to this email. Check your inbox (and spam folder).' });
+        return;
+      }
+
+      console.log(`[FREE] Generating free Pro license for: ${email}`);
+
+      try {
+        const license = generateLicenseForCustomer({
+          customerId: `free_${Date.now().toString(36)}`,
+          customerEmail: email,
+          customerName: name,
+          tier: 'pro',
+          durationDays: 365,
+        });
+
+        const licenseJSON = formatLicenseJSON(license);
+
+        // Send via email
+        const emailSent = await sendLicenseEmail({
+          to: email,
+          customerName: name,
+          tier: 'pro',
+          licenseId: license.payload.licenseId,
+          licenseJSON,
+        });
+
+        // Track registration
+        const existing = freeRegistrations.get(email) || { count: 0, lastAt: 0 };
+        freeRegistrations.set(email, { count: existing.count + 1, lastAt: Date.now() });
+
+        console.log(`[FREE] ✅ License generated: ${license.payload.licenseId} → ${email} (email: ${emailSent ? 'sent' : 'failed'})`);
+
+        json(res, 200, {
+          success: true,
+          message: emailSent
+            ? 'License sent to your email! Check your inbox.'
+            : 'License generated. Email delivery pending.',
+          licenseId: license.payload.licenseId,
+          tier: 'pro',
+          expiresAt: license.payload.expiresAt,
+          // Include license in response as well (so user can download directly)
+          license: license,
+        });
+      } catch (err) {
+        console.error('[FREE] License generation failed:', err);
+        json(res, 500, { error: 'Failed to generate license. Please try again.' });
+      }
+      return;
+    }
+
     // ── POST /api/generate-license — Direct License Generation ──
     // (For manual issuance / admin use)
     if (req.method === 'POST' && path === '/api/generate-license') {
@@ -146,6 +226,7 @@ server.listen(PORT, () => {
 ║   Signing:    ${(hasKey ? '✅ Ed25519 key loaded' : '❌ No signing key').padEnd(44)}║
 ║                                                              ║
 ║   Endpoints:                                                 ║
+║     POST /api/register-free   — Free launch license          ║
 ║     POST /api/checkout          — Create Stripe session      ║
 ║     POST /api/webhook           — Stripe webhook             ║
 ║     POST /api/generate-license  — Manual license gen         ║
