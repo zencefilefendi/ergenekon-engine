@@ -1,11 +1,11 @@
 // ============================================================================
-// PARADOX ENGINE — License Generator (SERVER-ONLY)
+// ERGENEKON ENGINE — License Generator (SERVER-ONLY)
 //
 // ⚠️  THIS FILE IS NOT PUBLISHED TO NPM ⚠️
 // It is excluded via .npmignore and only runs on the license server.
 //
 // Generates Ed25519-signed license tokens for paying customers.
-// The private key is provided via environment variable PARADOX_SIGNING_KEY.
+// The private key is provided via environment variable ERGENEKON_SIGNING_KEY.
 //
 // Usage (license server only):
 //   import { generateLicense } from './license-generator.js';
@@ -53,8 +53,8 @@ export interface LicenseGenerateParams {
  *
  * @param params - License parameters
  * @param privateKeyPem - Ed25519 private key in PEM format.
- *                        If not provided, reads from PARADOX_SIGNING_KEY env var.
- * @returns SignedLicense — ready to write to .paradox-license.json
+ *                        If not provided, reads from ERGENEKON_SIGNING_KEY env var.
+ * @returns SignedLicense — ready to write to .ergenekon-license.json
  * @throws Error if private key is not available
  */
 export function generateLicense(
@@ -62,10 +62,10 @@ export function generateLicense(
   privateKeyPem?: string,
 ): SignedLicense {
   // Resolve private key
-  const keyPem = privateKeyPem || process.env.PARADOX_SIGNING_KEY;
+  const keyPem = privateKeyPem || process.env.ERGENEKON_SIGNING_KEY;
   if (!keyPem) {
     throw new Error(
-      'PARADOX_SIGNING_KEY environment variable not set. ' +
+      'ERGENEKON_SIGNING_KEY environment variable not set. ' +
       'The Ed25519 private key is required to sign licenses.'
     );
   }
@@ -102,7 +102,7 @@ export function generateLicense(
 
 /**
  * Generate a license and return it as a formatted JSON string.
- * Ready to be written to .paradox-license.json
+ * Ready to be written to .ergenekon-license.json
  */
 export function generateLicenseJSON(
   params: LicenseGenerateParams,

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service — ERGENEKON Engine</title>
+  <meta name="description" content="ERGENEKON Engine Terms of Service — the legal agreement between you and ERGENEKON Engine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏪</text></svg>">
+  <style>
+    :root {
+      --bg: #08090d; --bg-card: #12121a; --border: rgba(255,255,255,0.06);
+      --text: #eaecf0; --text-sec: #9898ac; --text-muted: #65657a;
+      --accent: #8b5cf6; --font: 'Inter', -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 800px; margin: 0 auto; padding: 60px 24px 100px; }
+    nav { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+    nav a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 14px; }
+    nav a:hover { text-decoration: underline; }
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .updated { font-size: 13px; color: var(--text-muted); margin-bottom: 40px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 40px 0 12px; color: var(--text); }
+    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: var(--text-sec); }
+    p, li { font-size: 15px; color: var(--text-sec); margin-bottom: 12px; }
+    ul, ol { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    strong { color: var(--text); }
+    a { color: var(--accent); }
+    .highlight { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+    code { background: var(--bg-card); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    footer { padding: 24px; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; margin-top: 60px; }
+    footer a { color: var(--text-sec); text-decoration: none; margin: 0 8px; }
+  </style>
+</head>
+<body>
+<nav><a href="./index.html">← Back to ERGENEKON Engine</a></nav>
+<div class="container">
+
+<h1>Terms of Service</h1>
+<p class="updated">Last updated: April 15, 2026 · Effective: April 15, 2026</p>
+
+<p>These Terms of Service ("Terms") govern your access to and use of the ERGENEKON Engine software, website, documentation, and related services (collectively, the "Service") provided by İlhan Göktaş ("Company," "we," "our," or "us"). By using the Service, you agree to be bound by these Terms.</p>
+
+<h2>1. Acceptance of Terms</h2>
+<p>By accessing or using the Service, you confirm that you are at least 16 years old and have the legal capacity to enter into a binding agreement. If you are using the Service on behalf of an organization, you represent that you have authority to bind that organization to these Terms.</p>
+
+<h2>2. Service Description</h2>
+<p>ERGENEKON Engine is a deterministic record-and-replay debugging platform for distributed systems. The Service includes:</p>
+<ul>
+  <li><strong>Open-Source Software:</strong> The Community tier, licensed under BSL-1.1 (Business Source License).</li>
+  <li><strong>Commercial Software:</strong> Pro and Enterprise tiers, available via paid license.</li>
+  <li><strong>Website:</strong> Documentation, marketing pages, and the pricing portal at ergenekon.dev.</li>
+  <li><strong>Support:</strong> Email support included with paid plans.</li>
+</ul>
+
+<h2>3. License Tiers</h2>
+
+<h3>3.1 Community (Free)</h3>
+<ul>
+  <li>Licensed under BSL-1.1 with an AGPL-3.0 conversion after 4 years.</li>
+  <li>Single-service record and replay.</li>
+  <li>24-hour data retention.</li>
+  <li>No SLA or priority support.</li>
+</ul>
+
+<h3>3.2 Pro ($49/developer/month)</h3>
+<ul>
+  <li>All Community features plus distributed replay, smart sampling, deep redaction, and advanced interceptors.</li>
+  <li>License key delivered via email as a <code>.ergenekon-license.json</code> file.</li>
+  <li>30-day data retention.</li>
+  <li>Priority email support (24-hour response).</li>
+</ul>
+
+<h3>3.3 Enterprise ($199/developer/month)</h3>
+<ul>
+  <li>All Pro features plus SSO/SAML, RBAC, on-premise deployment, unlimited retention, and SLA 99.9%.</li>
+  <li>Custom contract and dedicated support.</li>
+  <li>Available upon request — contact enterprise@ergenekon.dev.</li>
+</ul>
+
+<h2>4. License Keys and Usage</h2>
+<ul>
+  <li>License keys are issued per developer seat and are non-transferable.</li>
+  <li>License keys are cryptographically signed using Ed25519 and validated offline.</li>
+  <li>You may not share, redistribute, sublicense, or resell your license key.</li>
+  <li>Tampering with, modifying, or reverse-engineering license validation constitutes a material breach.</li>
+  <li>Expired or invalid licenses will cause the software to operate in Community mode (graceful degradation).</li>
+</ul>
+
+<h2>5. Payment Terms</h2>
+<ul>
+  <li>Payments are processed through Stripe. You agree to Stripe's <a href="https://stripe.com/legal" target="_blank">Terms of Service</a>.</li>
+  <li>Subscriptions are billed monthly or annually, depending on your chosen plan.</li>
+  <li>All fees are in USD and exclude applicable taxes.</li>
+  <li>Annual plans are billed upfront and include a 20% discount.</li>
+  <li>No refunds are provided for partial billing periods. You may cancel at any time; your access continues until the end of the current billing period.</li>
+</ul>
+
+<h2>6. Acceptable Use</h2>
+<p>You agree not to:</p>
+<ul>
+  <li>Use the Service for any unlawful purpose or in violation of any applicable law.</li>
+  <li>Attempt to reverse-engineer, decompile, or extract the source code of proprietary components.</li>
+  <li>Circumvent or disable license validation, rate limiting, or security measures.</li>
+  <li>Use the Service to build a competing product or service.</li>
+  <li>Transmit malware, viruses, or harmful code through the Service.</li>
+  <li>Overwhelm the Service with automated requests (exceeding rate limits).</li>
+</ul>
+
+<h2>7. Intellectual Property</h2>
+<ul>
+  <li>The ERGENEKON Engine software, logo, branding, and documentation are owned by İlhan Göktaş.</li>
+  <li>The Community tier is licensed under BSL-1.1. You may use, modify, and distribute it under the terms of that license.</li>
+  <li>Pro and Enterprise features are proprietary and may not be copied, distributed, or used without a valid license.</li>
+  <li>Your application code, recordings, and data remain entirely yours. We claim no rights to your data.</li>
+</ul>
+
+<h2>8. Data and Privacy</h2>
+<ul>
+  <li>ERGENEKON Engine runs entirely on your infrastructure. We have no access to your application data.</li>
+  <li>Our data practices are described in our <a href="./privacy.html">Privacy Policy</a>.</li>
+  <li>We comply with GDPR, CCPA, and other applicable data protection laws.</li>
+</ul>
+
+<h2>9. Disclaimer of Warranties</h2>
+<div class="highlight">
+  <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
+</div>
+<p>While we strive for reliability, we do not guarantee that the Service will be uninterrupted, error-free, or that defects will be corrected. The Community tier has no SLA.</p>
+
+<h2>10. Limitation of Liability</h2>
+<div class="highlight">
+  <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE COMPANY BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, OR BUSINESS OPPORTUNITIES, ARISING OUT OF OR RELATED TO YOUR USE OF THE SERVICE, REGARDLESS OF THE THEORY OF LIABILITY.</p>
+  <p>OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE 12 MONTHS PRECEDING THE CLAIM.</p>
+</div>
+
+<h2>11. Indemnification</h2>
+<p>You agree to indemnify and hold harmless the Company from any claims, damages, losses, or expenses (including reasonable attorney's fees) arising from your use of the Service, your violation of these Terms, or your violation of any third-party rights.</p>
+
+<h2>12. Termination</h2>
+<ul>
+  <li><strong>By You:</strong> You may cancel your subscription at any time. Access continues until the end of the billing period.</li>
+  <li><strong>By Us:</strong> We may suspend or terminate your access if you violate these Terms, with or without notice.</li>
+  <li><strong>Effect:</strong> Upon termination, your license key will no longer be valid. The software will revert to Community mode.</li>
+  <li><strong>Survival:</strong> Sections 7, 9, 10, 11, and 14 survive termination.</li>
+</ul>
+
+<h2>13. Changes to These Terms</h2>
+<p>We reserve the right to modify these Terms at any time. We will provide notice of material changes by updating the "Last updated" date and, where appropriate, sending an email notification. Continued use of the Service after changes constitutes acceptance.</p>
+
+<h2>14. Governing Law and Disputes</h2>
+<ul>
+  <li>These Terms are governed by the laws of the Republic of Turkey.</li>
+  <li>Any disputes shall be resolved through good-faith negotiation first.</li>
+  <li>If negotiation fails, disputes shall be submitted to the courts of Istanbul, Turkey.</li>
+  <li>Nothing in these Terms limits your statutory rights under applicable consumer protection laws.</li>
+</ul>
+
+<h2>15. Contact</h2>
+<div class="highlight">
+  <p><strong>Legal Inquiries:</strong> <a href="mailto:legal@ergenekon.dev">legal@ergenekon.dev</a></p>
+  <p><strong>General Support:</strong> <a href="mailto:hello@ergenekon.dev">hello@ergenekon.dev</a></p>
+  <p><strong>Website:</strong> <a href="https://ergenekon.dev">ergenekon.dev</a></p>
+</div>
+
+</div>
+
+<footer>
+  <a href="./privacy.html">Privacy Policy</a> ·
+  <a href="./terms.html">Terms of Service</a> ·
+  <a href="./cookies.html">Cookie Policy</a> ·
+  <a href="./gdpr.html">GDPR</a> ·
+  © 2026 ERGENEKON Engine
+</footer>
+</body>
+</html>

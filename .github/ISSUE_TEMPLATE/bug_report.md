@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve PARADOX Engine
+about: Create a report to help us improve ERGENEKON Engine
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -10,7 +10,7 @@ assignees: ''
 
 ```
 Node.js version: v22.x.x
-PARADOX version: 0.x.x
+ERGENEKON version: 0.x.x
 OS: macOS / Linux / Windows
 ```
 
@@ -30,7 +30,7 @@ What actually happened.
 
 ```bash
 # Minimal reproduction
-npm install @paradox/probe
+npm install @ergenekon/probe
 # ...
 ```
 

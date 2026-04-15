@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Recording Context
+// ERGENEKON PROBE — Recording Context
 //
 // Uses AsyncLocalStorage to propagate recording state through the entire
 // async call chain of a request. This is the invisible thread that connects
@@ -9,8 +9,8 @@
 // ============================================================================
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { ParadoxEvent, HLCTimestamp } from '@paradox/core';
-import { HybridLogicalClock, ulid } from '@paradox/core';
+import type { ErgenekonEvent, HLCTimestamp } from '@ergenekon/core';
+import { HybridLogicalClock, ulid } from '@ergenekon/core';
 import { originalDateNow } from './internal-clock.js';
 
 /**
@@ -25,7 +25,7 @@ export class RecordingSession {
   readonly serviceName: string;
   readonly startedAt: number;
 
-  private events: ParadoxEvent[] = [];
+  private events: ErgenekonEvent[] = [];
   private sequence = 0;
   private readonly hlc: HybridLogicalClock;
 
@@ -50,13 +50,13 @@ export class RecordingSession {
    * Events are automatically assigned a sequence number and HLC timestamp.
    */
   record(
-    type: ParadoxEvent['type'],
+    type: ErgenekonEvent['type'],
     operationName: string,
     data: Record<string, unknown>,
-    opts?: { durationMs?: number; error?: ParadoxEvent['error']; tags?: Record<string, string> }
-  ): ParadoxEvent {
+    opts?: { durationMs?: number; error?: ErgenekonEvent['error']; tags?: Record<string, string> }
+  ): ErgenekonEvent {
     const now = this.hlc.now();
-    const event: ParadoxEvent = {
+    const event: ErgenekonEvent = {
       id: ulid(),
       traceId: this.traceId,
       spanId: this.spanId,
@@ -78,7 +78,7 @@ export class RecordingSession {
   }
 
   /** Get all recorded events (immutable copy) */
-  getEvents(): readonly ParadoxEvent[] {
+  getEvents(): readonly ErgenekonEvent[] {
     return [...this.events];
   }
 
@@ -93,7 +93,7 @@ export class RecordingSession {
   }
 
   /** Export as a serializable recording */
-  finalize(): import('@paradox/core').RecordingSession {
+  finalize(): import('@ergenekon/core').RecordingSession {
     return {
       id: this.id,
       traceId: this.traceId,

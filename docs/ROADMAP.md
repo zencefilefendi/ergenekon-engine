@@ -1,4 +1,4 @@
-# PARADOX Engine — Geliştirme Yol Haritası
+# ERGENEKON Engine — Geliştirme Yol Haritası
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### Tamamlananlar
 - [x] Monorepo yapısı (npm workspaces, TypeScript strict)
-- [x] Core event schema (`ParadoxEvent`, `RecordingSession`, `HLCTimestamp`)
+- [x] Core event schema (`ErgenekonEvent`, `RecordingSession`, `HLCTimestamp`)
 - [x] Hybrid Logical Clock (HLC) implementasyonu
 - [x] ULID üretici (sıfır bağımlılık)
 - [x] HTTP incoming intercept (Express middleware)
@@ -53,7 +53,7 @@ Math.random()  → deterministic ✓
 - [x] Console capture (`console.log/warn/error`)
 - [x] Auto-detection: Yüklü DB driver'ları otomatik bulunur
 - [x] Multi-service demo (Order → User, 2 servis, 98 event)
-- [x] Cross-service trace propagation (W3C `traceparent` + `x-paradox-hlc`)
+- [x] Cross-service trace propagation (W3C `traceparent` + `x-ergenekon-hlc`)
 
 ### Kanıtlanan Başarı ✅
 ```
@@ -71,7 +71,7 @@ Cross-service traceId: abc123... (her iki serviste de aynı)
 **Hedef**: Görsel zaman yolculuğu debugger
 
 ### Tamamlananlar
-- [x] Web UI server (`@paradox/ui`) — static files + API proxy
+- [x] Web UI server (`@ergenekon/ui`) — static files + API proxy
 - [x] Dark theme tasarım
 - [x] Session listesi + arama
 - [x] İnteraktif event timeline (tıklanabilir markerlar)
@@ -93,30 +93,30 @@ Keyboard navigation → ← → Space Home/End çalışıyor
 
 **Hedef**: Production'a hazır güvenlik ve kontrol katmanları
 
-### Smart Sampling (`packages/paradox-probe/src/sampling.ts`)
+### Smart Sampling (`packages/ergenekon-probe/src/sampling.ts`)
 - [x] Head+tail hybrid sampling (tail asla hata kaçırmaz)
 - [x] 6 sampling reason: `error`, `latency`, `new_path`, `upstream`, `adaptive`, `random`
 - [x] Adaptive auto-escalation (hata oranı >%5 → 30sn %100 sampling)
 - [x] Path normalization (`/users/123` → `/users/:id`)
 - [x] Sliding window stats (son 1 dakika)
 
-### Deep Field Redaction (`packages/paradox-probe/src/redaction.ts`)
+### Deep Field Redaction (`packages/ergenekon-probe/src/redaction.ts`)
 - [x] Recursive object walking (iç içe nesnelerde alan tarama)
 - [x] Field name matching (case-insensitive)
 - [x] Glob path patterns
 - [x] Auto-detect: JWT, kredi kartı, Bearer token, AWS key, PEM private key
 - [x] Orijinal obje asla mutate edilmez
 
-### Session Export/Import (`packages/paradox-core/src/session-io.ts`)
+### Session Export/Import (`packages/ergenekon-core/src/session-io.ts`)
 - [x] JSON format export/import
 - [x] Binary PRDX format (magic + gzip + CRC32, ~%24 küçük)
 - [x] Roundtrip guaranteed
 
-### CLI Tool (`packages/paradox-cli/`)
+### CLI Tool (`packages/ergenekon-cli/`)
 - [x] 10 komut: `sessions`, `inspect`, `timeline`, `trace`, `export`, `import`, `stats`, `watch`, `health`, `help`
-- [x] ANSI renkli çıktı, `PARADOX_COLLECTOR_URL` env desteği
+- [x] ANSI renkli çıktı, `ERGENEKON_COLLECTOR_URL` env desteği
 
-### Performance Benchmark (`packages/paradox-probe/src/benchmark.ts`)
+### Performance Benchmark (`packages/ergenekon-probe/src/benchmark.ts`)
 - [x] Date.now() / Math.random() / redaction overhead ölçümü
 - [x] Baseline vs instrumented karşılaştırması
 
@@ -147,8 +147,8 @@ CLI: 32 session listelendi, health OK ✓
 
 ### npm Pack Test ✅
 ```
-@paradox/core:  14.3 kB  ✓
-@paradox/cli:   12.3 kB  ✓
+@ergenekon/core:  14.3 kB  ✓
+@ergenekon/cli:   12.3 kB  ✓
 Tüm paketler npm publish'e hazır
 ```
 

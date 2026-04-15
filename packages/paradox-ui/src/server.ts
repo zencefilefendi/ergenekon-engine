@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX UI — Embedded Web Server
+// ERGENEKON UI — Embedded Web Server
 //
 // Serves the time-travel debugger UI and proxies API calls to the collector.
 // Self-contained: no build step, no bundler, just run it.
@@ -13,12 +13,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { readFile } from 'node:fs/promises';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadLicense, getTierDisplay } from '@paradox/core';
+import { loadLicense, getTierDisplay } from '@ergenekon/core';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const UI_PORT = parseInt(process.env['PARADOX_UI_PORT'] ?? '3001', 10);
-const COLLECTOR_URL = process.env['PARADOX_COLLECTOR_URL'] ?? 'http://localhost:4380';
+const UI_PORT = parseInt(process.env['ERGENEKON_UI_PORT'] ?? '3001', 10);
+const COLLECTOR_URL = process.env['ERGENEKON_COLLECTOR_URL'] ?? 'http://localhost:4380';
 
 // Load license for tier display
 const license = loadLicense();
@@ -102,7 +102,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 server.listen(UI_PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║             PARADOX — Time-Travel Debugger UI                ║
+║             ERGENEKON — Time-Travel Debugger UI                ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║   UI:        http://localhost:${UI_PORT}                          ║

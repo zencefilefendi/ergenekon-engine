@@ -1,4 +1,4 @@
-# PARADOX Engine — Helm Values
+# ERGENEKON Engine — Helm Values
 # Override any value with: helm install paradox ./helm/paradox --set collector.replicas=2
 
 # ─────────────────────────────────────────────
@@ -7,7 +7,7 @@
 collector:
   replicas: 1
   image:
-    repository: ghcr.io/zencefilefendi/paradox-collector
+    repository: ghcr.io/zencefilefendi/ergenekon-collector
     tag: "0.4.1"
     pullPolicy: IfNotPresent
 
@@ -39,7 +39,7 @@ ui:
   enabled: true
   replicas: 1
   image:
-    repository: ghcr.io/zencefilefendi/paradox-ui
+    repository: ghcr.io/zencefilefendi/ergenekon-ui
     tag: "0.4.1"
     pullPolicy: IfNotPresent
 

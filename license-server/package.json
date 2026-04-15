@@ -1,9 +1,9 @@
 {
-  "name": "@paradox/license-server",
+  "name": "@ergenekon/license-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PARADOX License Generation Server — Stripe webhook + Ed25519 signing",
+  "description": "ERGENEKON License Generation Server — Stripe webhook + Ed25519 signing",
   "main": "./src/index.ts",
   "scripts": {
     "start": "tsx src/index.ts",

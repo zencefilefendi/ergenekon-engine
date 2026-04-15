@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — License Type Definitions
+// ERGENEKON ENGINE — License Type Definitions
 //
 // Defines the structure of license tokens, tier configurations,
 // feature flags, and limits for the commercial licensing system.
@@ -10,7 +10,7 @@
 
 // ── License Tiers ──────────────────────────────────────────────────
 
-/** The three commercial tiers of PARADOX Engine */
+/** The three commercial tiers of ERGENEKON Engine */
 export type LicenseTier = 'community' | 'pro' | 'enterprise';
 
 /** All gatable features in the system */
@@ -168,7 +168,7 @@ export interface LicenseToken {
   expiresAt: string;
 }
 
-/** The complete signed license file format (.paradox-license.json) */
+/** The complete signed license file format (.ergenekon-license.json) */
 export interface SignedLicense {
   /** The license payload */
   payload: LicenseToken;
@@ -206,13 +206,13 @@ export interface LicenseValidation {
 
 /** Ordered list of paths where the license file is searched */
 export const LICENSE_FILE_SEARCH_PATHS = [
-  '.paradox-license.json',                   // Current directory
+  '.ergenekon-license.json',                   // Current directory
   'paradox-license.json',                    // Current directory (alt)
-  `${process.env.HOME || '~'}/.paradox-license.json`,  // Home directory
+  `${process.env.HOME || '~'}/.ergenekon-license.json`,  // Home directory
 ];
 
 /** Environment variable for license file path override */
-export const LICENSE_ENV_VAR = 'PARADOX_LICENSE';
+export const LICENSE_ENV_VAR = 'ERGENEKON_LICENSE';
 
 /** Environment variable for inline license JSON */
-export const LICENSE_INLINE_ENV_VAR = 'PARADOX_LICENSE_KEY';
+export const LICENSE_INLINE_ENV_VAR = 'ERGENEKON_LICENSE_KEY';

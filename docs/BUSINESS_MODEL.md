@@ -1,4 +1,4 @@
-# PARADOX Engine — İş Modeli ve Strateji
+# ERGENEKON Engine — İş Modeli ve Strateji
 
 ---
 
@@ -28,10 +28,10 @@
   Debugging'e harcanan zaman: %15-20
   Debugging maliyeti: 100 × $150K × 0.175 = $2.6M/yıl
 
-  PARADOX ile %60 azalma:
+  ERGENEKON ile %60 azalma:
   Tasarruf: $2.6M × 0.6 = $1.56M/yıl
 
-  PARADOX maliyeti: 100 dev × $100/ay = $120K/yıl
+  ERGENEKON maliyeti: 100 dev × $100/ay = $120K/yıl
 
   Net ROI: 13x → Her yatırılan $1 için $13 geri döner
 ```
@@ -93,7 +93,7 @@
 2. Hacker News "Show HN" → hedef: #1 of the day
 3. Product Hunt launch → "Product of the Day"
 4. Teknik blog yazıları ("How we debug distributed systems at scale")
-5. YouTube: "PARADOX ile 5 dakikada production bug çözdüm"
+5. YouTube: "ERGENEKON ile 5 dakikada production bug çözdüm"
 6. GitHub Stars + community building
 
 **Hedef**: 5.000 GitHub star, 500 aktif kullanıcı, $0 ARR
@@ -129,7 +129,7 @@ Bu "blue ocean" — ilk olan biz olacağız.
 
 ### Dolaylı Rakipler
 
-| Rakip | Ne Yapıyor | PARADOX Farkı |
+| Rakip | Ne Yapıyor | ERGENEKON Farkı |
 |-------|-----------|---------------|
 | Datadog | Observability | Gözlem yapar, replay yapamaz |
 | Sentry | Error tracking | Hatayı görür, reproduce edemez |
@@ -175,7 +175,7 @@ Burn Rate           $500K       $3M         $10M
 3. **AI/LLM debugging'i zorlaştırdı** — Non-deterministic AI çağrıları debug edilemez
 4. **Remote work** — Pair debugging artık zor, araç gerekli
 5. **Cloud maliyetleri artıyor** — Debugging süresini kısaltmak = maliyet düşürme
-6. **KVKK/GDPR** — Veri maskeleme zorunlu → PARADOX built-in çözer
+6. **KVKK/GDPR** — Veri maskeleme zorunlu → ERGENEKON built-in çözer
 
 ---
 

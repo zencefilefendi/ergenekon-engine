@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Server Tests
+// ERGENEKON COLLECTOR — Server Tests
 //
 // Validates:
 //   1. POST /api/v1/sessions — normal flow, 413, 400, schema errors
@@ -62,7 +62,7 @@ function request(
 
 describe('CollectorServer', () => {
   beforeAll(async () => {
-    storageDir = await mkdtemp(join(tmpdir(), 'paradox-server-test-'));
+    storageDir = await mkdtemp(join(tmpdir(), 'ergenekon-server-test-'));
     // Find a free port
     port = 14380 + Math.floor(Math.random() * 1000);
     server = new CollectorServer({ port, storageDir });

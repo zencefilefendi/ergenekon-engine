@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Diff Tests
+// ERGENEKON REPLAY — Diff Tests
 //
 // Validates Issue 6 fix:
 //   1. Key order is irrelevant (the whole point)

@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Checksum Utilities
+// ERGENEKON COLLECTOR — Checksum Utilities
 //
 // SHA-256 checksums for session integrity verification.
 // Every stored session file has a checksum header that is validated on load.
@@ -70,7 +70,7 @@ export function verifyAndUnwrap<T>(content: string): T {
 
 export class ChecksumError extends Error {
   constructor(message: string) {
-    super(`[PARADOX] Checksum verification failed: ${message}`);
+    super(`[ERGENEKON] Checksum verification failed: ${message}`);
     this.name = 'ChecksumError';
   }
 }

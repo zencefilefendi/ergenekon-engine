@@ -1,4 +1,4 @@
-# PARADOX Engine
+# ERGENEKON Engine
 
 **Distributed Systems Time-Travel Debugger**
 
@@ -29,16 +29,16 @@ Sonuç: Mühendisler saatlerce, bazen günlerce bug'ı reproduce etmeye çalış
 | **rr** | Process record/replay | Tek makine, distributed değil |
 | **Replay.io** | Browser record/replay | Sadece frontend |
 
-**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. PARADOX bunu yapıyor.**
+**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. ERGENEKON bunu yapıyor.**
 
 ---
 
 ## Çözüm
 
-PARADOX, production ortamındaki her request'i deterministik olarak kaydeder ve geliştirici makinesinde birebir replay edebilir.
+ERGENEKON, production ortamındaki her request'i deterministik olarak kaydeder ve geliştirici makinesinde birebir replay edebilir.
 
 ```
-Production → [PARADOX PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLAY]
+Production → [ERGENEKON PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLAY]
                 ↑                                        ↓
          Her I/O yakalanır                   İstediğin anda, istediğin noktaya git
 ```
@@ -93,16 +93,16 @@ Production → [PARADOX PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLA
           │  W3C traceparent│  propagation     │
           ▼                 ▼                  ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  PARADOX COLLECTOR :4380                    │
+│                  ERGENEKON COLLECTOR :4380                    │
 │          HLC Ordering + File Storage + REST API             │
 └──────────┬──────────────────────┬──────────────────────────┘
            │                      │
            ▼                      ▼
   ┌────────────────┐    ┌─────────────────────┐
-  │  TIME-TRAVEL   │    │   PARADOX CLI       │
-  │  UI :3000      │    │   paradox sessions  │
-  │  Dark theme    │    │   paradox timeline  │
-  │  Timeline      │    │   paradox watch     │
+  │  TIME-TRAVEL   │    │   ERGENEKON CLI       │
+  │  UI :3000      │    │   ergenekon sessions  │
+  │  Dark theme    │    │   ergenekon timeline  │
+  │  Timeline      │    │   ergenekon watch     │
   │  Scrubber      │    └─────────────────────┘
   └────────────────┘
            │
@@ -120,12 +120,12 @@ Production → [PARADOX PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLA
 
 | Paket | Versiyon | Açıklama |
 |-------|----------|----------|
-| [`@paradox/core`](packages/paradox-core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
-| [`@paradox/probe`](packages/paradox-probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
-| [`@paradox/collector`](packages/paradox-collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
-| [`@paradox/replay`](packages/paradox-replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
-| [`@paradox/ui`](packages/paradox-ui) | v0.4.0 | Dark theme time-travel visual debugger |
-| [`@paradox/cli`](packages/paradox-cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
+| [`@ergenekon/core`](packages/ergenekon-core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
+| [`@ergenekon/probe`](packages/ergenekon-probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
+| [`@ergenekon/collector`](packages/ergenekon-collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
+| [`@ergenekon/replay`](packages/ergenekon-replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
+| [`@ergenekon/ui`](packages/ergenekon-ui) | v0.4.0 | Dark theme time-travel visual debugger |
+| [`@ergenekon/cli`](packages/ergenekon-cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
 
 ---
 
@@ -133,8 +133,8 @@ Production → [PARADOX PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLA
 
 ```bash
 # 1. Kur
-git clone https://github.com/zencefilefendi/paradox-engine
-cd paradox-engine && npm install
+git clone https://github.com/zencefilefendi/ergenekon-engine
+cd ergenekon-engine && npm install
 
 # 2. Full-stack demo başlat (Collector + 2 Servis + UI)
 npm run demo:fullstack
@@ -151,9 +151,9 @@ curl -X POST http://localhost:3001/api/orders \
 ### Kendi Projenize Entegre (3 satır)
 
 ```typescript
-import { ParadoxProbe } from '@paradox/probe';
+import { ErgenekonProbe } from '@ergenekon/probe';
 
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'my-service',
   collectorUrl: 'http://localhost:4380',
 });
@@ -232,4 +232,4 @@ Business Source License 1.1 (BSL-1.1)
 Production kullanımı için ticari lisans gereklidir.
 Geliştirme ve test için ücretsizdir.
 
-&copy; 2026 PARADOX Engine Contributors
+&copy; 2026 ERGENEKON Engine Contributors

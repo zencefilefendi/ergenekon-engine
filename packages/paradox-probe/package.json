@@ -1,8 +1,8 @@
 {
-  "name": "@paradox/probe",
+  "name": "@ergenekon/probe",
   "version": "0.4.0",
   "type": "module",
-  "description": "PARADOX recording probe — zero-config Express middleware for time-travel debugging",
+  "description": "ERGENEKON recording probe — zero-config Express middleware for time-travel debugging",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -21,7 +21,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@paradox/core": "0.4.0"
+    "@ergenekon/core": "0.4.0"
   },
   "peerDependencies": {
     "express": ">=4.0.0"
@@ -33,21 +33,21 @@
   },
   "license": "BUSL-1.1",
   "keywords": [
-    "paradox",
+    "ergenekon",
     "debugging",
     "express",
     "middleware",
     "record-replay",
     "distributed-systems"
   ],
-  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
     "directory": "packages/paradox-probe"
   },
   "bugs": {
-    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+    "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"
   },
   "devDependencies": {
     "@types/node": "^25.5.2"

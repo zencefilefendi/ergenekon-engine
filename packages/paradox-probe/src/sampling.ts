@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Smart Sampling Engine
+// ERGENEKON PROBE — Smart Sampling Engine
 //
 // Not every request needs to be recorded. Smart sampling decides WHICH
 // requests to record based on multiple signals:

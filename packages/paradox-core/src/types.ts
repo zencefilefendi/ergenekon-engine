@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — Core Type Definitions
+// ERGENEKON ENGINE — Core Type Definitions
 // The DNA of every event flowing through the system
 // ============================================================================
 
@@ -46,12 +46,12 @@ export interface HLCTimestamp {
 }
 
 /**
- * A single PARADOX event — the atomic unit of recording.
+ * A single ERGENEKON event — the atomic unit of recording.
  *
  * Every I/O boundary crossing produces one event.
  * Events are immutable after creation.
  */
-export interface ParadoxEvent {
+export interface ErgenekonEvent {
   /** Unique event ID (ULID — time-sortable) */
   id: string;
 
@@ -123,7 +123,7 @@ export interface RecordingSession {
   endedAt: number;
 
   /** All events in this session, ordered by sequence */
-  events: ParadoxEvent[];
+  events: ErgenekonEvent[];
 
   /** Metadata about the recording */
   metadata: SessionMetadata;
@@ -143,13 +143,13 @@ export interface SessionMetadata {
 }
 
 /**
- * Configuration for a PARADOX probe.
+ * Configuration for a ERGENEKON probe.
  */
 export interface ProbeConfig {
   /** Name of the service being instrumented */
   serviceName: string;
 
-  /** URL of the PARADOX collector */
+  /** URL of the ERGENEKON collector */
   collectorUrl: string;
 
   /** Whether to record — can be toggled at runtime */

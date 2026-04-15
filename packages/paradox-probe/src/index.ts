@@ -1,10 +1,10 @@
 // ============================================================================
-// PARADOX PROBE — Main Entry Point
+// ERGENEKON PROBE — Main Entry Point
 //
 // Usage:
-//   import { ParadoxProbe } from '@paradox/probe';
+//   import { ErgenekonProbe } from '@ergenekon/probe';
 //
-//   const probe = new ParadoxProbe({ serviceName: 'user-service' });
+//   const probe = new ErgenekonProbe({ serviceName: 'user-service' });
 //   app.use(probe.middleware());
 //
 //   // Later, to stop:
@@ -12,17 +12,17 @@
 //
 // License System:
 //   The probe automatically searches for a license file on startup:
-//     1. PARADOX_LICENSE_KEY env var (inline JSON)
-//     2. PARADOX_LICENSE env var (file path)
-//     3. .paradox-license.json in current directory
-//     4. ~/.paradox-license.json in home directory
+//     1. ERGENEKON_LICENSE_KEY env var (inline JSON)
+//     2. ERGENEKON_LICENSE env var (file path)
+//     3. .ergenekon-license.json in current directory
+//     4. ~/.ergenekon-license.json in home directory
 //
 //   No license = Community mode (basic features only)
 //   Pro license = All interceptors + sampling + redaction + UI
 //   Enterprise  = Everything + SSO + RBAC + unlimited
 // ============================================================================
 
-import type { ProbeConfig, RecordingSession, LicenseValidation, LicenseTier } from '@paradox/core';
+import type { ProbeConfig, RecordingSession, LicenseValidation, LicenseTier } from '@ergenekon/core';
 import {
   DEFAULT_PROBE_CONFIG,
   HybridLogicalClock,
@@ -30,7 +30,7 @@ import {
   loadLicense,
   hasFeature,
   getTierDisplay,
-} from '@paradox/core';
+} from '@ergenekon/core';
 import { installGlobalInterceptors, uninstallGlobalInterceptors } from './interceptors/globals.js';
 import { installFetchInterceptor, uninstallFetchInterceptor } from './interceptors/http-outgoing.js';
 import { installTimerInterceptors, uninstallTimerInterceptors } from './interceptors/timers.js';
@@ -46,7 +46,7 @@ export type { SessionCallback } from './interceptors/http-incoming.js';
 export { SamplingEngine, type SamplingConfig, type SamplingDecision, type SamplingReason } from './sampling.js';
 export { redactDeep, redactHeaders, type RedactionConfig, DEFAULT_REDACTION_CONFIG } from './redaction.js';
 
-export class ParadoxProbe {
+export class ErgenekonProbe {
   private readonly config: ProbeConfig;
   private readonly hlc: HybridLogicalClock;
   private readonly collector: CollectorClient;
@@ -145,7 +145,7 @@ export class ParadoxProbe {
       : `basic (${this.config.samplingRate * 100}%)`;
 
     const parts = [
-      `[PARADOX] Probe started for "${this.config.serviceName}"`,
+      `[ERGENEKON] Probe started for "${this.config.serviceName}"`,
       `→ license: ${tierDisplay}`,
       `→ collector: ${this.config.collectorUrl}`,
       `| sampling: ${samplingInfo}`,
@@ -164,9 +164,9 @@ export class ParadoxProbe {
     // Community tier upgrade hint
     if (tier === 'community') {
       console.log(
-        `[PARADOX] 🆓 Running in Community mode — ` +
+        `[ERGENEKON] 🆓 Running in Community mode — ` +
         `upgrade to Pro for distributed replay, smart sampling, and more. ` +
-        `Visit https://paradoxengine.dev/pricing`
+        `Visit https://ergenekon.dev/pricing`
       );
     }
   }
@@ -187,7 +187,7 @@ export class ParadoxProbe {
     uninstallDnsInterceptor();
     await this.collector.stop();
 
-    console.log(`[PARADOX] Probe stopped for "${this.config.serviceName}"`);
+    console.log(`[ERGENEKON] Probe stopped for "${this.config.serviceName}"`);
   }
 
   /**

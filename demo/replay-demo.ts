@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — Replay Demo
+// ERGENEKON ENGINE — Replay Demo
 //
 // Demonstrates the core magic: recording a request and replaying it
 // deterministically, producing the EXACT same result.
@@ -10,13 +10,13 @@
 // ============================================================================
 
 import express from 'express';
-import { ParadoxProbe } from '../packages/paradox-probe/src/index.js';
+import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
 import { ReplayEngine } from '../packages/paradox-replay/src/index.js';
 import type { RecordingSession } from '../packages/paradox-core/src/index.js';
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║            PARADOX ENGINE — Replay Demonstration             ║
+║            ERGENEKON ENGINE — Replay Demonstration             ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Step 1: Record a request                                    ║
 ║  Step 2: Replay it deterministically                         ║
@@ -27,12 +27,12 @@ console.log(`
 // ── Step 1: Create an app and record a request ───────────────────
 
 console.log('━━━ STEP 1: RECORDING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('Creating Express app with PARADOX probe...\n');
+console.log('Creating Express app with ERGENEKON probe...\n');
 
 const app = express();
 app.use(express.json());
 
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'replay-demo-service',
   collectorUrl: 'http://localhost:4380', // won't actually connect in local mode
 });

@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Mock I/O Layer
+// ERGENEKON REPLAY — Mock I/O Layer
 //
 // The heart of deterministic replay. This module replaces all I/O
 // operations with recorded values, making the application behave
@@ -13,7 +13,7 @@
 // and the replay is no longer valid.
 // ============================================================================
 
-import type { ParadoxEvent, EventType, RecordingSession } from '@paradox/core';
+import type { ErgenekonEvent, EventType, RecordingSession } from '@ergenekon/core';
 
 export class ReplayDivergenceError extends Error {
   constructor(
@@ -37,9 +37,9 @@ export class ReplayDivergenceError extends Error {
  * during replay, replacing all real I/O operations.
  */
 export class MockLayer {
-  private readonly events: ParadoxEvent[];
+  private readonly events: ErgenekonEvent[];
   private cursor = 0;
-  private readonly eventsByType = new Map<EventType, ParadoxEvent[]>();
+  private readonly eventsByType = new Map<EventType, ErgenekonEvent[]>();
 
   // Track replay state
   private replayLog: Array<{ sequence: number; type: EventType; operation: string }> = [];
@@ -60,7 +60,7 @@ export class MockLayer {
   /**
    * Get the next event of ANY type (sequential consumption).
    */
-  next(): ParadoxEvent | null {
+  next(): ErgenekonEvent | null {
     if (this.cursor >= this.events.length) return null;
     const event = this.events[this.cursor++];
     this.replayLog.push({
@@ -75,7 +75,7 @@ export class MockLayer {
    * Get the next event of a SPECIFIC type.
    * Used by typed interceptors (e.g., "give me the next timestamp event").
    */
-  nextOfType(type: EventType): ParadoxEvent | null {
+  nextOfType(type: EventType): ErgenekonEvent | null {
     const queue = this.eventsByType.get(type);
     if (!queue || queue.length === 0) return null;
     const event = queue.shift()!;
@@ -90,7 +90,7 @@ export class MockLayer {
   /**
    * Peek at the next event without consuming it.
    */
-  peek(): ParadoxEvent | null {
+  peek(): ErgenekonEvent | null {
     if (this.cursor >= this.events.length) return null;
     return this.events[this.cursor];
   }
@@ -99,7 +99,7 @@ export class MockLayer {
    * Get the next event, asserting its type.
    * Throws ReplayDivergenceError if the type doesn't match.
    */
-  expect(type: EventType): ParadoxEvent {
+  expect(type: EventType): ErgenekonEvent {
     const event = this.nextOfType(type);
     if (!event) {
       throw new ReplayDivergenceError(
@@ -275,12 +275,12 @@ export class MockLayer {
   }
 
   /** Get the incoming request event */
-  getRequestEvent(): ParadoxEvent | null {
+  getRequestEvent(): ErgenekonEvent | null {
     return this.events.find(e => e.type === 'http_request_in') ?? null;
   }
 
   /** Get the outgoing response event */
-  getResponseEvent(): ParadoxEvent | null {
+  getResponseEvent(): ErgenekonEvent | null {
     return [...this.events].reverse().find(e => e.type === 'http_response_out') ?? null;
   }
 

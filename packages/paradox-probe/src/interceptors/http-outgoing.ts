@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — HTTP Outgoing Interceptor
+// ERGENEKON PROBE — HTTP Outgoing Interceptor
 //
 // Monkey-patches globalThis.fetch to capture all outgoing HTTP calls.
 // When a service calls another service (or any external API), we record

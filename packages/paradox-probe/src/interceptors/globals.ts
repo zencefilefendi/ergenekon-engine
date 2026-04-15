@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Global Interceptors
+// ERGENEKON PROBE — Global Interceptors
 //
 // Monkey-patches non-determinism sources: Date.now, Math.random, crypto
 //

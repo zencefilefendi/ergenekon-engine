@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a new feature or improvement for PARADOX Engine
+about: Suggest a new feature or improvement for ERGENEKON Engine
 title: '[FEAT] '
 labels: enhancement
 assignees: ''

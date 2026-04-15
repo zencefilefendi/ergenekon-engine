@@ -1,9 +1,9 @@
 // ============================================================================
-// PARADOX PROBE — Error & Console Interceptors
+// ERGENEKON PROBE — Error & Console Interceptors
 //
 // Captures uncaught exceptions, unhandled rejections, and console output.
 // These are critical for debugging — when something crashes in production,
-// PARADOX records exactly what happened, including the full stack trace
+// ERGENEKON records exactly what happened, including the full stack trace
 // and the console output leading up to the crash.
 // ============================================================================
 

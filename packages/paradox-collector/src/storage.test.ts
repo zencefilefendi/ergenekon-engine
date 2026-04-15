@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Storage Tests
+// ERGENEKON COLLECTOR — Storage Tests
 //
 // Validates Issue 2 fix invariants:
 //   1. durableWrite guarantees crash-safe files
@@ -15,7 +15,7 @@ import { wrapWithChecksum, verifyAndUnwrap, ChecksumError, computeChecksum } fro
 import { mkdtempSync, rmSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { RecordingSession, EventType } from '@paradox/core';
+import type { RecordingSession, EventType } from '@ergenekon/core';
 
 function makeSession(id: string): RecordingSession {
   return {
@@ -58,7 +58,7 @@ describe('checksum utilities', () => {
   });
 
   it('wrapWithChecksum + verifyAndUnwrap round-trips', () => {
-    const original = { x: 42, name: 'PARADOX' };
+    const original = { x: 42, name: 'ERGENEKON' };
     const wrapped = wrapWithChecksum(original);
     const unwrapped = verifyAndUnwrap<typeof original>(wrapped);
     expect(unwrapped).toEqual(original);

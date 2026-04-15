@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Collector Client Tests
+// ERGENEKON PROBE — Collector Client Tests
 //
 // Validates the Issue 1 fix invariants:
 //   1. A session is NEVER silently dropped
@@ -15,7 +15,7 @@ import { CollectorClient } from './collector-client.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import type { RecordingSession, EventType } from '@paradox/core';
+import type { RecordingSession, EventType } from '@ergenekon/core';
 
 // ─── Test Helpers ───
 
@@ -43,7 +43,7 @@ function makeSession(id: string): RecordingSession {
 }
 
 function makeTmpDir(): string {
-  return mkdtempSync(join(tmpdir(), 'paradox-test-'));
+  return mkdtempSync(join(tmpdir(), 'ergenekon-test-'));
 }
 
 describe('SpillBuffer', () => {

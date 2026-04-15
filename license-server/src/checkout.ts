@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX LICENSE SERVER — Stripe Checkout Session Creator
+// ERGENEKON LICENSE SERVER — Stripe Checkout Session Creator
 //
 // Creates Stripe Checkout sessions for Pro and Enterprise plans.
 // The customer is redirected to Stripe's hosted checkout page.
@@ -38,7 +38,7 @@ export async function handleCreateCheckout(data: CheckoutRequest): Promise<Check
   // Enterprise → custom quote (no checkout)
   if (data.plan === 'enterprise') {
     return {
-      checkoutUrl: 'mailto:enterprise@paradoxengine.dev?subject=PARADOX%20Enterprise%20License',
+      checkoutUrl: 'mailto:enterprise@ergenekon.dev?subject=ERGENEKON%20Enterprise%20License',
       sessionId: 'enterprise_contact',
     };
   }
@@ -52,8 +52,8 @@ export async function handleCreateCheckout(data: CheckoutRequest): Promise<Check
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     customer_email: data.customerEmail,
-    success_url: data.successUrl || 'https://paradoxengine.dev/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: data.cancelUrl || 'https://paradoxengine.dev/pricing',
+    success_url: data.successUrl || 'https://ergenekon.dev/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url: data.cancelUrl || 'https://ergenekon.dev/pricing',
     metadata: { tier },
     subscription_data: {
       metadata: { tier },

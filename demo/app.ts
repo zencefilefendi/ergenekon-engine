@@ -1,7 +1,7 @@
 // ============================================================================
-// PARADOX ENGINE — Demo Application
+// ERGENEKON ENGINE — Demo Application
 //
-// A simple Express server instrumented with PARADOX probe.
+// A simple Express server instrumented with ERGENEKON probe.
 // Demonstrates: HTTP recording, Date.now/Math.random capture,
 // external API calls, and request lifecycle tracking.
 //
@@ -12,14 +12,14 @@
 // ============================================================================
 
 import express from 'express';
-import { ParadoxProbe } from '../packages/paradox-probe/src/index.js';
+import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
 import { CollectorServer } from '../packages/paradox-collector/src/index.js';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const COLLECTOR_PORT = 4380;
 const APP_PORT = 3000;
-const RECORDINGS_DIR = join(import.meta.dirname ?? '.', '..', '.paradox-recordings');
+const RECORDINGS_DIR = join(import.meta.dirname ?? '.', '..', '.ergenekon-recordings');
 
 // ── 1. Start the Collector ───────────────────────────────────────
 
@@ -29,18 +29,18 @@ const collector = new CollectorServer({
 });
 await collector.start();
 
-// ── 2. Create Express App with PARADOX Probe ─────────────────────
+// ── 2. Create Express App with ERGENEKON Probe ─────────────────────
 
 const app = express();
 app.use(express.json());
 
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'demo-service',
   collectorUrl: `http://localhost:${COLLECTOR_PORT}`,
   samplingRate: 1.0, // Record everything in demo
 });
 
-// Install PARADOX middleware FIRST (before routes)
+// Install ERGENEKON middleware FIRST (before routes)
 app.use(probe.middleware());
 
 // ── 3. Demo Routes ───────────────────────────────────────────────
@@ -116,7 +116,7 @@ app.get('/health', (_req, res) => {
 
 // ── 4. Utility: List and export recordings ───────────────────────
 
-app.get('/paradox/recordings', async (_req, res) => {
+app.get('/ergenekon/recordings', async (_req, res) => {
   const sessions = await collector.getStorage().listSessions();
   res.json({
     count: sessions.length,
@@ -124,7 +124,7 @@ app.get('/paradox/recordings', async (_req, res) => {
   });
 });
 
-app.get('/paradox/recordings/:id', async (req, res) => {
+app.get('/ergenekon/recordings/:id', async (req, res) => {
   const session = await collector.getStorage().load(req.params['id']!);
   if (!session) {
     res.status(404).json({ error: 'Recording not found' });
@@ -138,7 +138,7 @@ app.get('/paradox/recordings/:id', async (req, res) => {
 app.listen(APP_PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║                    PARADOX ENGINE — Demo                     ║
+║                    ERGENEKON ENGINE — Demo                     ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  Demo server:     http://localhost:${APP_PORT}                    ║
@@ -150,10 +150,10 @@ app.listen(APP_PORT, () => {
 ║    curl localhost:3000/api/users/42                           ║
 ║    curl -X POST localhost:3000/api/echo \\                    ║
 ║         -H "Content-Type: application/json" \\               ║
-║         -d '{"msg":"hello paradox"}'                         ║
+║         -d '{"msg":"hello ergenekon"}'                         ║
 ║                                                              ║
 ║  View recordings:                                            ║
-║    curl localhost:3000/paradox/recordings                     ║
+║    curl localhost:3000/ergenekon/recordings                     ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `);

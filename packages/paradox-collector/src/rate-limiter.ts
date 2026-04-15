@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Token Bucket Rate Limiter
+// ERGENEKON COLLECTOR — Token Bucket Rate Limiter
 //
 // Protects the collector from abuse with per-IP rate limiting.
 // Uses a classic token bucket algorithm with automatic cleanup.

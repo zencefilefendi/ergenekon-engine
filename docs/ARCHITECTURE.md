@@ -1,6 +1,6 @@
-# PARADOX Engine — Teknik Mimari
+# ERGENEKON Engine — Teknik Mimari
 
-Bu belge PARADOX Engine'in tüm paketlerini, iç tasarım kararlarını, kritik algoritmaları ve bileşenler arası bağımlılıkları açıklar.
+Bu belge ERGENEKON Engine'in tüm paketlerini, iç tasarım kararlarını, kritik algoritmaları ve bileşenler arası bağımlılıkları açıklar.
 
 **Durum**: Phase 0 ✅ Phase 1 ✅ Phase 2 ✅ Phase 3 ✅ Phase 4 ✅
 
@@ -9,35 +9,35 @@ Bu belge PARADOX Engine'in tüm paketlerini, iç tasarım kararlarını, kritik 
 ## Paket Bağımlılık Grafiği
 
 ```
-@paradox/core          (0 bağımlılık — temel katman)
+@ergenekon/core          (0 bağımlılık — temel katman)
       ▲
       │ import
       ├──────────────────────────────────┐
       │                                  │
-@paradox/probe          @paradox/collector    @paradox/replay
+@ergenekon/probe          @ergenekon/collector    @ergenekon/replay
 (interceptors,          (storage, REST API)   (mock layer,
  sampling, redaction)                          timeline)
       │                      │                    │
       │                      │                    │
       └──────────────────────┴────────────────────┘
                              │
-                    @paradox/ui  @paradox/cli
+                    @ergenekon/ui  @ergenekon/cli
                     (web UI)     (terminal CLI)
 ```
 
 ---
 
-## 1. @paradox/core
+## 1. @ergenekon/core
 
 **Rol**: Sıfır bağımlılıklı temel tip kütüphanesi  
 **Dosyalar**: `src/types.ts`, `src/hlc.ts`, `src/ulid.ts`, `src/session-io.ts`, `src/index.ts`
 
 ### 1.1 Event Schema
 
-Sistemin atom birimi `ParadoxEvent`'tir. Her I/O sınır geçişi bir event üretir.
+Sistemin atom birimi `ErgenekonEvent`'tir. Her I/O sınır geçişi bir event üretir.
 
 ```typescript
-interface ParadoxEvent {
+interface ErgenekonEvent {
   id: string;                    // ULID — zaman sıralı, URL-safe
   traceId: string;               // W3C Trace ID — servisleri bağlar
   spanId: string;                // Bu operation'ın ID'si
@@ -101,7 +101,7 @@ Avantaj: Lexicographic sıralama = zaman sıralaması. DB indexleme için ideald
 **JSON Format** — insan okunabilir, debug için:
 ```json
 {
-  "_format": "paradox-session-v1",
+  "_format": "ergenekon-session-v1",
   "_exportedAt": 1712345678901,
   "session": { "id": "...", "events": [...] }
 }
@@ -126,15 +126,15 @@ Byte M+1-4:  CRC32 checksum (uint32BE)
 
 ---
 
-## 2. @paradox/probe
+## 2. @ergenekon/probe
 
 **Rol**: Uygulamaya yerleştirilen "kamera" — sıfır config ile her I/O'yu yakalar  
-**Ana Dosya**: `src/index.ts` → `ParadoxProbe` sınıfı
+**Ana Dosya**: `src/index.ts` → `ErgenekonProbe` sınıfı
 
 ### 2.1 Başlatma Sırası
 
 ```
-ParadoxProbe constructor
+ErgenekonProbe constructor
     │
     ├── HybridLogicalClock oluştur
     ├── CollectorClient oluştur
@@ -173,7 +173,7 @@ export const originalMathRandom = Math.random.bind(Math);
 // globals.ts
 let _recording = false;
 
-Date.now = function paradoxDateNow(): number {
+Date.now = function ergenekonDateNow(): number {
   const value = _originalDateNow();   // Her zaman çalışır
   if (_recording) return value;       // ← GUARD: iç çağrıda kayıt yapma
 
@@ -271,13 +271,13 @@ export function redactDeep(obj: unknown, config?: Partial<RedactionConfig>): unk
 ### 2.7 HTTP Incoming Middleware (http-incoming.ts)
 
 ```
-Request → paradoxMiddleware
+Request → ergenekonMiddleware
     │
     ├── enabled? sampling? → karar ver
     │
     ├── traceparent header parse → traceId al / yeni üret
     │
-    ├── x-paradox-hlc header → HLC.receive() → distributed clock sync
+    ├── x-ergenekon-hlc header → HLC.receive() → distributed clock sync
     │
     ├── RecordingSession oluştur
     │
@@ -301,13 +301,13 @@ Request → paradoxMiddleware
 ### 2.8 HTTP Outgoing Interceptor (http-outgoing.ts)
 
 ```typescript
-globalThis.fetch = async function paradoxFetch(input, init): Promise<Response> {
+globalThis.fetch = async function ergenekonFetch(input, init): Promise<Response> {
   const session = getActiveSession();
   if (!session) return _originalFetch(input, init); // zero overhead
 
   // 1. http_request_out kaydet
   // 2. traceparent header enjekte et
-  // 3. x-paradox-hlc header enjekte et
+  // 3. x-ergenekon-hlc header enjekte et
   // 4. _originalFetch çağır
   // 5. Response klonla (body stream bir kez okunabilir)
   // 6. http_response_in kaydet
@@ -317,7 +317,7 @@ globalThis.fetch = async function paradoxFetch(input, init): Promise<Response> {
 
 ---
 
-## 3. @paradox/collector
+## 3. @ergenekon/collector
 
 **Rol**: Merkezi kayıt deposu  
 **Dosyalar**: `src/server.ts`, `src/storage.ts`, `src/index.ts`
@@ -336,7 +336,7 @@ GET  /health              → Sağlık kontrolü
 ### 3.2 File Storage Yapısı
 
 ```
-.paradox-recordings/
+.ergenekon-recordings/
 ├── sessions/
 │   ├── 01HWXYZ123ABC.json    ← Her session ayrı JSON dosyası
 │   ├── 01HWXYZ456DEF.json
@@ -359,7 +359,7 @@ traceIndex:   Map<traceId, sessionId[]>  // trace assembly
 
 ---
 
-## 4. @paradox/replay
+## 4. @ergenekon/replay
 
 **Rol**: Deterministik replay motoru  
 **Dosyalar**: `src/mock-layer.ts`, `src/replay-engine.ts`, `src/index.ts`
@@ -369,7 +369,7 @@ traceIndex:   Map<traceId, sessionId[]>  // trace assembly
 ```typescript
 class MockLayer {
   private cursor = 0;           // Sıralı event okuyucu
-  private typeQueues: Map<EventType, ParadoxEvent[]>; // Tip bazlı kuyruklar
+  private typeQueues: Map<EventType, ErgenekonEvent[]>; // Tip bazlı kuyruklar
 
   mockDateNow(): number        → cursor'dan sonraki timestamp event'i al
   mockMathRandom(): number     → cursor'dan sonraki random event'i al
@@ -417,7 +417,7 @@ class ReplayEngine {
 Node.js single-threaded'dır — thread scheduling non-determinizmi yoktur.
 
 ```
-Non-determinizm kaynakları + PARADOX çözümleri:
+Non-determinizm kaynakları + ERGENEKON çözümleri:
 
 ┌──────────────────────┬──────────────────────────────────────┐
 │  Kaynak              │  Çözüm                               │
@@ -436,7 +436,7 @@ Bunlar yakalanırsa: Node.js tek thread → deterministik ✓
 
 ---
 
-## 5. @paradox/ui
+## 5. @ergenekon/ui
 
 **Rol**: Dark theme time-travel web arayüzü  
 **Dosyalar**: `src/server.ts`, `src/public/index.html`, `src/public/styles.css`, `src/public/app.js`
@@ -486,7 +486,7 @@ Bunlar yakalanırsa: Node.js tek thread → deterministik ✓
 
 ---
 
-## 6. @paradox/cli
+## 6. @ergenekon/cli
 
 **Rol**: 10-komutluk ANSI renkli terminal aracı  
 **Dosya**: `src/index.ts`
@@ -517,7 +517,7 @@ Command Router (switch)
 ### 6.2 Environment Variables
 
 ```bash
-PARADOX_COLLECTOR_URL=http://localhost:4380  # varsayılan
+ERGENEKON_COLLECTOR_URL=http://localhost:4380  # varsayılan
 ```
 
 ---
@@ -555,6 +555,6 @@ PARADOX_COLLECTOR_URL=http://localhost:4380  # varsayılan
 **Trade-off**: Monkey-patching kodlarında bazı yerlerde `any` cast gerekir.
 
 ### ADR-007: Sıfır Bağımlılık (core)
-**Karar**: @paradox/core sıfır npm bağımlılığı  
+**Karar**: @ergenekon/core sıfır npm bağımlılığı  
 **Gerekçe**: Her pakete eklenir, supply chain riski minimum olmalı.  
 **Trade-off**: gzip, CRC32 gibi şeyler sıfırdan yazıldı.

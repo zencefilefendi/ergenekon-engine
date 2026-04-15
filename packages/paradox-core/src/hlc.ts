@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — Hybrid Logical Clock
+// ERGENEKON ENGINE — Hybrid Logical Clock
 //
 // Provides globally-ordered timestamps for distributed events
 // without requiring synchronized physical clocks.

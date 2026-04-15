@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Mock Layer Tests
+// ERGENEKON REPLAY — Mock Layer Tests
 //
 // Validates Issue 5 fix — the EXISTENTIAL invariant:
 //   1. mockDateNow() NEVER falls back to real Date.now()
@@ -11,11 +11,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { MockLayer, ReplayDivergenceError } from './mock-layer.js';
-import type { RecordingSession, EventType, ParadoxEvent } from '@paradox/core';
+import type { RecordingSession, EventType, ErgenekonEvent } from '@ergenekon/core';
 
 // ─── Test Helpers ───
 
-function makeEvent(overrides: Partial<ParadoxEvent> & { type: EventType }): ParadoxEvent {
+function makeEvent(overrides: Partial<ErgenekonEvent> & { type: EventType }): ErgenekonEvent {
   return {
     id: `evt-${Math.random().toString(36).slice(2)}`,
     sessionId: 'test-session',
@@ -28,7 +28,7 @@ function makeEvent(overrides: Partial<ParadoxEvent> & { type: EventType }): Para
   };
 }
 
-function makeSession(events: ParadoxEvent[]): RecordingSession {
+function makeSession(events: ErgenekonEvent[]): RecordingSession {
   return {
     id: 'test-session',
     traceId: 'trace-1',

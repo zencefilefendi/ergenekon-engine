@@ -1,6 +1,6 @@
-# PARADOX Engine — Teknik Derinlik Analizi
+# ERGENEKON Engine — Teknik Derinlik Analizi
 
-Bu belge PARADOX Engine'in teorik temellerini, algoritma detaylarını ve kanıtlanmış teknik tasarım kararlarını açıklar.
+Bu belge ERGENEKON Engine'in teorik temellerini, algoritma detaylarını ve kanıtlanmış teknik tasarım kararlarını açıklar.
 
 ---
 
@@ -75,10 +75,10 @@ Karşılaştırma:
 
 **Garanti**: `A → B` (A, B'ye neden olduysa) `HLC(A) < HLC(B)` her zaman.
 
-### PARADOX'ta HLC Kullanımı
+### ERGENEKON'ta HLC Kullanımı
 
 1. Her servis kendi HLC instance'ına sahip.
-2. `x-paradox-hlc` HTTP header'ı ile clock değerleri yayılır.
+2. `x-ergenekon-hlc` HTTP header'ı ile clock değerleri yayılır.
 3. Collector, tüm servislerin eventlerini HLC sıralamasıyla düzenler.
 4. Replay sırasında HLC sırası kullanılır.
 
@@ -110,7 +110,7 @@ Ama hataları asla kaçırmamalıyız.
 Klasik Head-Based:
   Request gelince karar ver → kaçırılan hatalar var
 
-Tail-Based (PARADOX):
+Tail-Based (ERGENEKON):
   Her requesti buffer'la → sonucu gör → sonra karar ver
 
 Avantaj: Hata %100 yakalanır (statusCode >= 500 → her zaman kaydet)
@@ -341,7 +341,7 @@ Crockford Base32 charset:
 
 ## 9. W3C Trace Context Propagation
 
-PARADOX, W3C Trace Context standardını (RFC) tam uygular:
+ERGENEKON, W3C Trace Context standardını (RFC) tam uygular:
 
 ```
 traceparent header formatı:
@@ -353,8 +353,8 @@ traceparent header formatı:
   parentId: 16-hex UUID (64-bit)  — bu servisin spanId'si
   flags:    "01" = sampled, "00" = not sampled
 
-PARADOX eklentisi:
-  x-paradox-hlc: {"wallTime":1712345678,"logical":3,"nodeId":"order-abc"}
+ERGENEKON eklentisi:
+  x-ergenekon-hlc: {"wallTime":1712345678,"logical":3,"nodeId":"order-abc"}
   ← Downstream servis HLC.receive() ile kendi saatini sync eder
 ```
 

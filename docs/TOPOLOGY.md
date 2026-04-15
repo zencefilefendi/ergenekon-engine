@@ -1,6 +1,6 @@
-# PARADOX Engine — Sistem Topolojisi
+# ERGENEKON Engine — Sistem Topolojisi
 
-Bu belge PARADOX Engine'in deployment topolojisini, servisler arası iletişimi, port haritasını ve veri akışını açıklar.
+Bu belge ERGENEKON Engine'in deployment topolojisini, servisler arası iletişimi, port haritasını ve veri akışını açıklar.
 
 ---
 
@@ -15,7 +15,7 @@ Bu belge PARADOX Engine'in deployment topolojisini, servisler arası iletişimi,
 ║  │    :3001            │───►│    :3002             │                     ║
 ║  │                     │    │                      │                     ║
 ║  │  ┌───────────────┐  │    │  ┌───────────────┐  │                     ║
-║  │  │ @paradox/probe│  │    │  │ @paradox/probe│  │                     ║
+║  │  │ @ergenekon/probe│  │    │  │ @ergenekon/probe│  │                     ║
 ║  │  │               │  │    │  │               │  │                     ║
 ║  │  │ HTTP intercept│  │    │  │ HTTP intercept│  │                     ║
 ║  │  │ DB intercept  │  │    │  │ DB intercept  │  │                     ║
@@ -30,12 +30,12 @@ Bu belge PARADOX Engine'in deployment topolojisini, servisler arası iletişimi,
               │  (async, non-blocking)     │
               ▼                            ▼
 ╔══════════════════════════════════════════════════════════════════════════╗
-║                     PARADOX COLLECTOR  :4380                            ║
+║                     ERGENEKON COLLECTOR  :4380                            ║
 ║                                                                          ║
 ║  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────────┐    ║
 ║  │  REST API    │   │  HLC         │   │  File Storage            │    ║
 ║  │  Ingestion   │──►│  Ordering    │──►│                          │    ║
-║  │              │   │  Engine      │   │  .paradox-recordings/    │    ║
+║  │              │   │  Engine      │   │  .ergenekon-recordings/    │    ║
 ║  │  POST /api/  │   │              │   │  sessions/               │    ║
 ║  │  v1/sessions │   │  Causal      │   │  ├── 01HWXYZ.json        │    ║
 ║  │  GET  /api/  │   │  ordering    │   │  ├── 01HWABC.json        │    ║
@@ -46,14 +46,14 @@ Bu belge PARADOX Engine'in deployment topolojisini, servisler arası iletişimi,
               │                    │                    │
               ▼                    ▼                    ▼
 ╔════════════════╗   ╔═══════════════════╗   ╔══════════════════════════╗
-║ TIME-TRAVEL UI ║   ║  PARADOX CLI      ║   ║  REPLAY ENGINE           ║
+║ TIME-TRAVEL UI ║   ║  ERGENEKON CLI      ║   ║  REPLAY ENGINE           ║
 ║ :3000          ║   ║                   ║   ║                          ║
-║                ║   ║  paradox sessions ║   ║  Mocked I/O:             ║
-║ Session list   ║   ║  paradox inspect  ║   ║  - Date.now() → recorded ║
-║ Timeline       ║   ║  paradox timeline ║   ║  - Math.random() → rec.  ║
-║ scrubber       ║   ║  paradox trace    ║   ║  - fetch() → recorded    ║
-║ Service flow   ║   ║  paradox export   ║   ║  - DB queries → recorded ║
-║ Event detail   ║   ║  paradox watch    ║   ║                          ║
+║                ║   ║  ergenekon sessions ║   ║  Mocked I/O:             ║
+║ Session list   ║   ║  ergenekon inspect  ║   ║  - Date.now() → recorded ║
+║ Timeline       ║   ║  ergenekon timeline ║   ║  - Math.random() → rec.  ║
+║ scrubber       ║   ║  ergenekon trace    ║   ║  - fetch() → recorded    ║
+║ Service flow   ║   ║  ergenekon export   ║   ║  - DB queries → recorded ║
+║ Event detail   ║   ║  ergenekon watch    ║   ║                          ║
 ╚════════════════╝   ╚═══════════════════╝   ╚══════════════════════════╝
 ```
 
@@ -66,7 +66,7 @@ Bu belge PARADOX Engine'in deployment topolojisini, servisler arası iletişimi,
 | **Time-Travel UI** | 3000 | HTTP | Web arayüzü (static files + API proxy) |
 | **Order Service** (demo) | 3001 | HTTP | Örnek downstream servis |
 | **User Service** (demo) | 3002 | HTTP | Örnek upstream servis |
-| **PARADOX Collector** | 4380 | HTTP REST | Probe'lardan kayıt alır, UI'ye sunar |
+| **ERGENEKON Collector** | 4380 | HTTP REST | Probe'lardan kayıt alır, UI'ye sunar |
 | **PostgreSQL** (isteğe bağlı) | 5432 | TCP | İzlenen veritabanı |
 | **Redis** (isteğe bağlı) | 6379 | TCP | İzlenen cache |
 | **MongoDB** (isteğe bağlı) | 27017 | TCP | İzlenen document store |
@@ -85,7 +85,7 @@ Dış dünya (curl/browser)
 ┌──────────────────────────────────────────────┐
 │  order-service :3001                         │
 │                                              │
-│  1. paradoxMiddleware çalışır                │
+│  1. ergenekonMiddleware çalışır                │
 │  2. SamplingEngine.headDecision() çağrılır   │
 │     → new_path? upstream? adaptive? random?  │
 │  3. RecordingSession oluşturulur             │
@@ -119,7 +119,7 @@ fetch('http://user-service/api/users/1')
     ▼
   1. http_request_out event → kaydet
   2. W3C traceparent header enjekte → cross-service trace
-  3. x-paradox-hlc header enjekte → distributed clock sync
+  3. x-ergenekon-hlc header enjekte → distributed clock sync
   4. Gerçek fetch çalışır
   5. Response klonlanır (body stream bir kez okunabilir)
   6. http_response_in event → kaydet
@@ -175,7 +175,7 @@ POST /api/v1/sessions
 └──────────────────────────────────────┘
           │
           ▼
-  .paradox-recordings/
+  .ergenekon-recordings/
     sessions/
       01HWXYZ...json  ← Bu session'ın tüm event'leri
 ```
@@ -193,11 +193,11 @@ order-service                          user-service
      │                                      │
      │  Headers enjekte et:                 │
      │  traceparent: 00-{traceId}-{spanId}-01
-     │  x-paradox-hlc: {"wallTime":...}    │
+     │  x-ergenekon-hlc: {"wallTime":...}    │
      │                                      │
      │──────────────────────────────────────►│
      │                                      │
-     │                          paradoxMiddleware:
+     │                          ergenekonMiddleware:
      │                          1. traceparent parse et
      │                          2. traceId'yi al (AYNI traceId)
      │                          3. parentSpanId'yi al
@@ -217,7 +217,7 @@ Bu sayede Collector `GET /api/v1/traces/abc123...` ile iki session'ı birden get
 
 ## Bileşen Sorumlulukları
 
-### @paradox/probe — "Kamera"
+### @ergenekon/probe — "Kamera"
 
 Her servise yerleştirilen kamera. Uygulamayı değiştirmeden, sıfır konfigürasyonla, tüm I/O'yu yakalar.
 
@@ -229,7 +229,7 @@ Her servise yerleştirilen kamera. Uygulamayı değiştirmeden, sıfır konfigü
 - CollectorClient ile async gönderi
 - W3C trace context propagation
 
-### @paradox/collector — "Kayıt Merkezi"
+### @ergenekon/collector — "Kayıt Merkezi"
 
 Tüm probe'lardan gelen kayıtları toplayan, sıralayan ve saklayan sunucu.
 
@@ -241,7 +241,7 @@ Tüm probe'lardan gelen kayıtları toplayan, sıralayan ve saklayan sunucu.
 - UI ve CLI için sorgu API'si
 - CORS headers (UI erişimi için)
 
-### @paradox/replay — "VCR"
+### @ergenekon/replay — "VCR"
 
 Kaydedilmiş bir session'ı alıp, tüm I/O'yu mock'layarak deterministik şekilde tekrar çalıştıran motor.
 
@@ -252,7 +252,7 @@ Kaydedilmiş bir session'ı alıp, tüm I/O'yu mock'layarak deterministik şekil
 - Divergence detection (ReplayDivergenceError)
 - Time-travel scrubbing (seekTo)
 
-### @paradox/ui — "İzleme Odası"
+### @ergenekon/ui — "İzleme Odası"
 
 Dark theme web arayüzü. Session'ları listele, timeline'ı scrub et, event detaylarını incele.
 
@@ -266,7 +266,7 @@ Dark theme web arayüzü. Session'ları listele, timeline'ı scrub et, event det
 - Keyboard shortcuts (←/→, Space, Home/End)
 - 5 saniyede bir auto-refresh
 
-### @paradox/cli — "Terminal Araçları"
+### @ergenekon/cli — "Terminal Araçları"
 
 10 komutluk ANSI renkli CLI. Arayüz açmadan terminal'den tam kontrol.
 
@@ -277,12 +277,12 @@ Dark theme web arayüzü. Session'ları listele, timeline'ı scrub et, event det
 - Canlı izleme (watch/tail modu)
 - Sağlık kontrolü
 
-### @paradox/core — "Temel Katman"
+### @ergenekon/core — "Temel Katman"
 
 Tüm paketlerin paylaştığı sıfır-bağımlılık temel kütüphane.
 
 **Sorumluluklar:**
-- TypeScript tip tanımları (ParadoxEvent, RecordingSession, ...)
+- TypeScript tip tanımları (ErgenekonEvent, RecordingSession, ...)
 - Hybrid Logical Clock (HLC) implementasyonu
 - ULID üretici (time-sortable, URL-safe)
 - Session import/export (JSON + binary PRDX format)
@@ -302,11 +302,11 @@ npm run demo:fullstack
 
 ```typescript
 // services/order-service/src/app.ts
-import { ParadoxProbe } from '@paradox/probe';
+import { ErgenekonProbe } from '@ergenekon/probe';
 
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'order-service',
-  collectorUrl: process.env.PARADOX_COLLECTOR_URL || 'http://paradox-collector:4380',
+  collectorUrl: process.env.ERGENEKON_COLLECTOR_URL || 'http://ergenekon-collector:4380',
   sampling: { baseRate: 0.01, alwaysSampleErrors: true },
 });
 app.use(probe.middleware());
@@ -314,7 +314,7 @@ app.use(probe.middleware());
 
 ```bash
 # Collector ayrı çalışıyor
-docker run -p 4380:4380 paradox/collector
+docker run -p 4380:4380 ergenekon/collector
 ```
 
 ### Senaryo 3: Docker Compose
@@ -323,37 +323,37 @@ docker run -p 4380:4380 paradox/collector
 # docker-compose.yml
 services:
   collector:
-    image: paradox/collector:0.4.0
+    image: ergenekon/collector:0.4.0
     ports: ["4380:4380"]
     volumes: ["./recordings:/data"]
 
   ui:
-    image: paradox/ui:0.4.0
+    image: ergenekon/ui:0.4.0
     ports: ["3000:3000"]
     environment:
-      - PARADOX_COLLECTOR_URL=http://collector:4380
+      - ERGENEKON_COLLECTOR_URL=http://collector:4380
 
   order-service:
     build: ./services/order-service
     environment:
-      - PARADOX_COLLECTOR_URL=http://collector:4380
+      - ERGENEKON_COLLECTOR_URL=http://collector:4380
 ```
 
 ### Senaryo 4: Kubernetes (gelecek)
 
 ```yaml
-# paradox-collector deployment
+# ergenekon-collector deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: paradox-collector
+  name: ergenekon-collector
 spec:
   replicas: 1
   template:
     spec:
       containers:
       - name: collector
-        image: paradox/collector:0.4.0
+        image: ergenekon/collector:0.4.0
         ports: [{containerPort: 4380}]
         volumeMounts:
         - name: recordings

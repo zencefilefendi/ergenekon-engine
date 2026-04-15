@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — FS Interceptor Tests
+// ERGENEKON PROBE — FS Interceptor Tests
 //
 // Validates:
 //   1. Install/uninstall symmetry (original functions restored)

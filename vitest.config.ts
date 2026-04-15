@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 /**
- * PARADOX Engine — Root Vitest Config (Vitest 4)
+ * ERGENEKON Engine — Root Vitest Config (Vitest 4)
  *
  * Monorepo-aware test runner. Covers:
  *   - Unit tests in packages/*\/src/**\/*.test.ts
@@ -17,10 +17,10 @@ import { resolve } from 'node:path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@paradox/core': resolve(__dirname, 'packages/paradox-core/src/index.ts'),
-      '@paradox/probe': resolve(__dirname, 'packages/paradox-probe/src/index.ts'),
-      '@paradox/collector': resolve(__dirname, 'packages/paradox-collector/src/index.ts'),
-      '@paradox/replay': resolve(__dirname, 'packages/paradox-replay/src/index.ts'),
+      '@ergenekon/core': resolve(__dirname, 'packages/paradox-core/src/index.ts'),
+      '@ergenekon/probe': resolve(__dirname, 'packages/paradox-probe/src/index.ts'),
+      '@ergenekon/collector': resolve(__dirname, 'packages/paradox-collector/src/index.ts'),
+      '@ergenekon/replay': resolve(__dirname, 'packages/paradox-replay/src/index.ts'),
     },
   },
   test: {

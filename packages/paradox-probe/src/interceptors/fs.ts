@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — File System Interceptor
+// ERGENEKON PROBE — File System Interceptor
 //
 // Captures fs.promises and key fs callback operations for deterministic replay.
 // Fintech services read certs, configs, and key material from the filesystem —

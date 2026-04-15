@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — DNS Interceptor Tests
+// ERGENEKON PROBE — DNS Interceptor Tests
 //
 // Validates:
 //   1. Install/uninstall symmetry (original functions restored)

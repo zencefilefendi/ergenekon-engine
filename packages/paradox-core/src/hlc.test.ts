@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — HLC Tests
+// ERGENEKON ENGINE — HLC Tests
 //
 // Validates the core invariants of Hybrid Logical Clocks:
 //   1. Monotonicity — timestamps never go backwards

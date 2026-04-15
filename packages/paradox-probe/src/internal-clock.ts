@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Internal Clock
+// ERGENEKON PROBE — Internal Clock
 //
 // Captures the ORIGINAL Date.now and Math.random references before
 // any monkey-patching occurs. Used internally by the probe to avoid

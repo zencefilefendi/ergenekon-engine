@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — ULID Tests
+// ERGENEKON ENGINE — ULID Tests
 //
 // Validates:
 //   1. Correct length and character set (Crockford Base32)
