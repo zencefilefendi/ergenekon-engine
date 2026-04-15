@@ -4,7 +4,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@ergenekon/core": ["../paradox-core/src/index.ts", "../paradox-core/src/index.js"]
+      "@ergenekon/core": ["../paradox-core/src/index.ts"]
     }
   },
   "include": ["src"],
