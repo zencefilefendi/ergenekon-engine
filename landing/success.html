@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful — ERGENEKON</title>
+  <meta name="description" content="Thank you for purchasing ERGENEKON Engine. Your license key is on the way.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #000; color: #eaecf0;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 640px; width: 100%; padding: 40px 24px; text-align: center; }
+    
+    /* Success animation */
+    .success-ring {
+      width: 120px; height: 120px; margin: 0 auto 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02));
+      border: 2px solid rgba(34,197,94,0.25);
+      display: flex; align-items: center; justify-content: center;
+      animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .success-check {
+      font-size: 56px;
+      animation: checkPop 0.4s 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+    @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes checkPop { from { transform: scale(0) rotate(-45deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+
+    h1 { font-size: 32px; font-weight: 900; margin-bottom: 8px; letter-spacing: -0.02em; }
+    h1 span {
+      background: linear-gradient(90deg, #22c55e, #00fff7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: #8891a4; font-size: 16px; margin-bottom: 40px; line-height: 1.6; }
+
+    /* Card */
+    .card {
+      background: #0b0c12; border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; padding: 32px; text-align: left;
+      margin-bottom: 24px; animation: fadeUp 0.6s 0.4s both;
+    }
+    @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .card h3 { font-size: 14px; color: #eaecf0; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .card p { font-size: 13px; color: #8891a4; margin-bottom: 20px; line-height: 1.6; }
+
+    /* Steps */
+    .steps { list-style: none; counter-reset: step; }
+    .steps li {
+      counter-increment: step;
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px; color: #8891a4;
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: counter(step);
+      display: flex; align-items: center; justify-content: center;
+      min-width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+      color: #6366f1; font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .step-content { flex: 1; }
+    .step-title { color: #eaecf0; font-weight: 600; margin-bottom: 2px; }
+    .step-code {
+      background: #12141c; border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; padding: 8px 12px; margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
+      color: #a5d6ff; word-break: break-all;
+    }
+
+    /* Email notice */
+    .email-notice {
+      background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 12px; padding: 20px; margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.6s both;
+    }
+    .email-icon { font-size: 28px; margin-bottom: 8px; }
+    .email-notice h4 { color: #eaecf0; font-size: 14px; margin-bottom: 4px; }
+    .email-notice p { color: #8891a4; font-size: 13px; line-height: 1.6; }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 12px; justify-content: center; margin-top: 32px; animation: fadeUp 0.6s 0.8s both; }
+    .btn {
+      padding: 12px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      text-decoration: none; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-primary { background: #6366f1; color: #fff; border: 1px solid #6366f1; }
+    .btn-primary:hover { background: #818cf8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.3); }
+    .btn-secondary { background: transparent; color: #8891a4; border: 1px solid rgba(255,255,255,0.1); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.04); color: #eaecf0; }
+
+    /* Footer */
+    .footer { margin-top: 48px; color: #505872; font-size: 11px; animation: fadeUp 0.6s 1s both; }
+    .footer a { color: #6366f1; text-decoration: none; }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 24px; }
+      .btn-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Success Animation -->
+    <div class="success-ring">
+      <span class="success-check">✓</span>
+    </div>
+
+    <h1><span>Payment Successful!</span></h1>
+    <p class="subtitle">
+      Thank you for choosing ERGENEKON Engine.<br>
+      Your license key is being generated and delivered to your email.
+    </p>
+
+    <!-- Email Notice -->
+    <div class="email-notice">
+      <div class="email-icon">📧</div>
+      <h4>Check Your Inbox</h4>
+      <p>
+        Your <code style="background:rgba(99,102,241,0.1);padding:2px 6px;border-radius:4px;color:#818cf8;font-size:12px;">.ergenekon-license.json</code> file 
+        has been sent to the email address you used during checkout. It should arrive within 60 seconds.
+      </p>
+    </div>
+
+    <!-- Setup Instructions -->
+    <div class="card">
+      <h3>🐺 Get Started in 5 Minutes</h3>
+      <p>Follow these steps while you wait for your license email.</p>
+
+      <ol class="steps">
+        <li>
+          <div class="step-content">
+            <div class="step-title">Install the packages</div>
+            <div class="step-code">npm install @ergenekon/probe @ergenekon/collector</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <div class="step-title">Save your license file</div>
+            <div>Download <code style="color:#818cf8">.ergenekon-license.json</code> from your email and place it in your project root directory.</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <div class="step-title">Add the probe to your Express app</div>
+            <div class="step-code">import { ErgenekonProbe } from '@ergenekon/probe';<br>const probe = new ErgenekonProbe({ serviceName: 'my-api' });<br>app.use(probe.expressMiddleware());</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <div class="step-title">Start the collector & dashboard</div>
+            <div class="step-code">npx @ergenekon/collector --port 4380<br>npx @ergenekon/ui &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; # → localhost:3001</div>
+          </div>
+        </li>
+        <li>
+          <div class="step-content">
+            <div class="step-title">Make requests and inspect</div>
+            <div>Open <code style="color:#818cf8">http://localhost:3001</code> — your sessions appear in real-time. Click Play to step through every I/O event. 🎉</div>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="btn-group">
+      <a href="./docs.html" class="btn btn-primary">
+        <span>📖</span> Read the Docs
+      </a>
+      <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" class="btn btn-secondary">
+        <span>📦</span> View on GitHub
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>
+        Need help? Email us at <a href="mailto:support@ergenekon.dev">support@ergenekon.dev</a><br>
+        <a href="./">← Back to ergenekon.dev</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

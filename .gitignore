@@ -5,3 +5,8 @@ dist/
 .paradox-recordings/
 coverage/
 **/.DS_Store
+
+# License Server Keys
+license-server/keys/private.pem
+license-server/.env
+*.pem

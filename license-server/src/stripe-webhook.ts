@@ -9,6 +9,7 @@
 // ============================================================================
 
 import { generateLicenseForCustomer, formatLicenseJSON } from './license-gen.js';
+import { sendLicenseEmail } from './email.js';
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -107,11 +108,18 @@ async function handleCheckoutCompleted(
     console.log(`[WEBHOOK] Customer: ${customerEmail} (${tier})`);
     console.log(`[WEBHOOK] Expires: ${license.payload.expiresAt}`);
 
-    // TODO: Send license via email (Resend/SendGrid)
-    // await sendLicenseEmail(customerEmail, customerName, licenseJSON);
+    // Send license via email (Resend)
+    const emailSent = await sendLicenseEmail({
+      to: customerEmail,
+      customerName,
+      tier,
+      licenseId: license.payload.licenseId,
+      licenseJSON,
+    });
 
-    // For now, log the license (in production, save to DB + send email)
-    console.log(`[WEBHOOK] License JSON:\n${licenseJSON}`);
+    if (!emailSent) {
+      console.log(`[WEBHOOK] Email not sent — license JSON:\n${licenseJSON}`);
+    }
 
     return {
       received: true,

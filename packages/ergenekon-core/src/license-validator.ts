@@ -39,7 +39,7 @@ import {
 // This is the PUBLIC key — safe to distribute in the npm package.
 // The corresponding PRIVATE key exists only on the license generation server.
 const ERGENEKON_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEA19R1JXWK+QMczbg35nJ7InM8LYzSx5Vcfi6NkhhV3Ow=
+MCowBQYDK2VwAyEAVP3KV5BrkTN64LmyKqhgK8LB+WPJupfuNnuUmZx49KE=
 -----END PUBLIC KEY-----`;
 
 // ── Community Fallback ─────────────────────────────────────────────

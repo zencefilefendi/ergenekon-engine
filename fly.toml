@@ -1,0 +1,31 @@
+# Fly.io configuration for ERGENEKON License Server
+# Deploy: fly launch && fly secrets set ... && fly deploy
+
+app = "ergenekon-license-server"
+primary_region = "fra"
+kill_signal = "SIGINT"
+kill_timeout = 5
+
+[build]
+  dockerfile = "docker/license-server.Dockerfile"
+
+[env]
+  LICENSE_SERVER_PORT = "4400"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 4400
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

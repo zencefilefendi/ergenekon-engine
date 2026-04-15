@@ -1192,7 +1192,7 @@
           <li>Time-Travel UI</li>
           <li>Community support</li>
         </ul>
-        <a href="#cta" class="btn-plan outline">Get Started</a>
+        <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" class="btn-plan outline">Get Started</a>
       </div>
 
       <!-- Pro -->
@@ -1213,7 +1213,7 @@
           <li>Binary PRDX export</li>
           <li>Priority email support</li>
         </ul>
-        <a href="#cta" class="btn-plan primary">Get Started Free</a>
+        <a href="javascript:void(0)" class="btn-plan primary" onclick="startCheckout('pro_monthly')">Get Started Free</a>
       </div>
 
       <!-- Enterprise -->
@@ -1234,7 +1234,7 @@
           <li>SLA 99.9%</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="mailto:hello@ergenekon.dev" class="btn-plan outline">Contact Us</a>
+        <a href="mailto:enterprise@ergenekon.dev?subject=ERGENEKON%20Enterprise%20License" class="btn-plan outline">Contact Us</a>
       </div>
     </div>
   </div>
@@ -1567,6 +1567,39 @@
   // ── Pricing Toggle ─────────────────────────────────────
   // Pricing toggle disabled — all plans are free during launch
   function toggleBilling() { /* coming soon */ }
+
+  // ── Stripe Checkout ────────────────────────────────────
+  const LICENSE_SERVER = 'https://license.ergenekon.dev';
+
+  async function startCheckout(plan) {
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Redirecting...';
+    btn.style.pointerEvents = 'none';
+
+    try {
+      const response = await fetch(`${LICENSE_SERVER}/api/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: plan,
+          successUrl: window.location.origin + '/success.html',
+          cancelUrl: window.location.origin + '/#pricing',
+        }),
+      });
+
+      if (!response.ok) throw new Error('Checkout failed');
+
+      const data = await response.json();
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      btn.textContent = originalText;
+      btn.style.pointerEvents = '';
+      // Fallback: redirect to GitHub during launch
+      alert('Checkout is not available yet during the free launch period.\n\nGet started for free via:\nnpm install @ergenekon/probe @ergenekon/collector');
+    }
+  }
 </script>
 
 </body>
