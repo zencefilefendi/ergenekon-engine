@@ -21,8 +21,8 @@
        ═══════════════════════════════════════════════════════════ */
 
     :root {
-      --bg-primary: #0a0a0f;
-      --bg-secondary: #12121a;
+      --bg-primary: #000000;
+      --bg-secondary: #080810;
       --bg-tertiary: #1a1a26;
       --bg-card: #15151f;
       --bg-card-hover: #1c1c2a;
@@ -67,12 +67,68 @@
 
     body {
       font-family: var(--font-sans);
-      background: var(--bg-primary);
+      background: #000000;
       color: var(--text-primary);
       line-height: 1.6;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── NEURAL NETWORK CANVAS ─────────────────────────── */
+    #neural-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    body > *:not(#neural-canvas) { position: relative; z-index: 1; }
+
+    /* ── ANIMATED LOGO ─────────────────────────────────── */
+    .logo-text {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, #00fff7, #7c3aed, #00ff88, #00fff7);
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: logoShift 4s linear infinite;
+      text-shadow: none;
+      filter: drop-shadow(0 0 8px rgba(0,255,247,0.5));
+    }
+    @keyframes logoShift {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+    .logo-icon-cyber {
+      width: 32px; height: 32px;
+      border: 2px solid #00fff7;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 0 12px rgba(0,255,247,0.4), inset 0 0 8px rgba(0,255,247,0.1);
+      animation: iconPulse 2s ease-in-out infinite;
+      position: relative;
+      overflow: hidden;
+    }
+    .logo-icon-cyber::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(0,255,247,0.15), transparent);
+      animation: iconSweep 3s linear infinite;
+    }
+    @keyframes iconPulse {
+      0%,100% { box-shadow: 0 0 8px rgba(0,255,247,0.3), inset 0 0 4px rgba(0,255,247,0.1); }
+      50% { box-shadow: 0 0 20px rgba(0,255,247,0.7), inset 0 0 12px rgba(0,255,247,0.2); }
+    }
+    @keyframes iconSweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* ── UTILITY ───────────────────────────────────────────── */
@@ -635,15 +691,15 @@
 </head>
 <body>
 
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
+<!-- Neural Network Canvas -->
+<canvas id="neural-canvas"></canvas>
 
 <!-- ═══ NAVBAR ═══════════════════════════════════════════ -->
 <nav>
   <div class="container">
-    <a href="#" class="logo">
-      <div class="logo-icon">⏪</div>
-      ERGENEKON
+    <a href="#" class="logo" style="gap:10px;">
+      <div class="logo-icon-cyber">⟳</div>
+      <span class="logo-text">ERGENEKON</span>
     </a>
     <ul class="nav-links">
       <li><a href="#demo">Demo</a></li>
@@ -1002,6 +1058,145 @@
 
 <!-- ═══ SCRIPTS ═════════════════════════════════════════ -->
 <script>
+  // ── Neural Network Canvas ──────────────────────────────
+  (function() {
+    const canvas = document.getElementById('neural-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, nodes, mouse = { x: -9999, y: -9999 };
+    const NODE_COUNT = 90;
+    const MAX_DIST = 160;
+    const MOUSE_RADIUS = 200;
+    const MOUSE_FORCE = 0.06;
+
+    const COLORS = [
+      { r: 0,   g: 255, b: 247 },  // cyan
+      { r: 0,   g: 255, b: 136 },  // green
+      { r: 139, g: 92,  b: 246 },  // violet
+      { r: 0,   g: 180, b: 255 },  // blue
+    ];
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function randColor() {
+      return COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+
+    function initNodes() {
+      nodes = Array.from({ length: NODE_COUNT }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: (Math.random() - 0.5) * 0.6,
+        r: Math.random() * 2.5 + 1,
+        color: randColor(),
+        pulse: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Update nodes
+      for (const n of nodes) {
+        n.pulse += 0.03;
+
+        // Mouse repulsion
+        const dx = n.x - mouse.x;
+        const dy = n.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MOUSE_RADIUS && dist > 0) {
+          const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
+          n.vx += (dx / dist) * force * MOUSE_FORCE * 3;
+          n.vy += (dy / dist) * force * MOUSE_FORCE * 3;
+        }
+
+        // Friction
+        n.vx *= 0.98;
+        n.vy *= 0.98;
+
+        // Speed cap
+        const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+        if (speed > 2.5) { n.vx = (n.vx / speed) * 2.5; n.vy = (n.vy / speed) * 2.5; }
+
+        n.x += n.vx;
+        n.y += n.vy;
+
+        // Bounce walls
+        if (n.x < 0 || n.x > W) n.vx *= -1;
+        if (n.y < 0 || n.y > H) n.vy *= -1;
+        n.x = Math.max(0, Math.min(W, n.x));
+        n.y = Math.max(0, Math.min(H, n.y));
+      }
+
+      // Draw edges
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < MAX_DIST) {
+            const alpha = (1 - d / MAX_DIST) * 0.55;
+            const c = a.color;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${alpha})`;
+            ctx.lineWidth = alpha * 1.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw mouse halo
+      if (mouse.x > 0) {
+        const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_RADIUS * 0.6);
+        grad.addColorStop(0, 'rgba(0,255,247,0.07)');
+        grad.addColorStop(1, 'rgba(0,255,247,0)');
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, MOUSE_RADIUS * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+
+      // Draw nodes
+      for (const n of nodes) {
+        const glow = 0.7 + 0.3 * Math.sin(n.pulse);
+        const { r, g, b } = n.color;
+
+        // Glow halo
+        const radGrad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 8);
+        radGrad.addColorStop(0, `rgba(${r},${g},${b},${0.25 * glow})`);
+        radGrad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * 8, 0, Math.PI * 2);
+        ctx.fillStyle = radGrad;
+        ctx.fill();
+
+        // Core dot
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r * glow, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${0.9 * glow})`;
+        ctx.shadowColor = `rgb(${r},${g},${b})`;
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+    window.addEventListener('resize', () => { resize(); initNodes(); });
+
+    resize();
+    initNodes();
+    draw();
+  })();
+
   // Mouse-follow glow effect
   document.addEventListener('mousemove', (e) => {
     document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
