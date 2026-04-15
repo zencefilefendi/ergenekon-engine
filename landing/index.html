@@ -1069,10 +1069,10 @@
     const MOUSE_FORCE = 0.06;
 
     const COLORS = [
-      { r: 0,   g: 255, b: 247 },  // cyan
-      { r: 0,   g: 255, b: 136 },  // green
-      { r: 139, g: 92,  b: 246 },  // violet
-      { r: 0,   g: 180, b: 255 },  // blue
+      { r: 0,   g: 160, b: 155 },  // dim cyan
+      { r: 0,   g: 160, b: 90  },  // dim green
+      { r: 90,  g: 55,  b: 180 },  // dim violet
+      { r: 0,   g: 110, b: 180 },  // dim blue
     ];
 
     function resize() {
@@ -1138,13 +1138,13 @@
           const dx = a.x - b.x, dy = a.y - b.y;
           const d = Math.sqrt(dx * dx + dy * dy);
           if (d < MAX_DIST) {
-            const alpha = (1 - d / MAX_DIST) * 0.55;
+            const alpha = (1 - d / MAX_DIST) * 0.22;
             const c = a.color;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
             ctx.strokeStyle = `rgba(${c.r},${c.g},${c.b},${alpha})`;
-            ctx.lineWidth = alpha * 1.5;
+            ctx.lineWidth = alpha * 0.8;
             ctx.stroke();
           }
         }
@@ -1152,35 +1152,35 @@
 
       // Draw mouse halo
       if (mouse.x > 0) {
-        const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_RADIUS * 0.6);
-        grad.addColorStop(0, 'rgba(0,255,247,0.07)');
-        grad.addColorStop(1, 'rgba(0,255,247,0)');
+        const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, MOUSE_RADIUS * 0.5);
+        grad.addColorStop(0, 'rgba(0,140,135,0.04)');
+        grad.addColorStop(1, 'rgba(0,140,135,0)');
         ctx.beginPath();
-        ctx.arc(mouse.x, mouse.y, MOUSE_RADIUS * 0.6, 0, Math.PI * 2);
+        ctx.arc(mouse.x, mouse.y, MOUSE_RADIUS * 0.5, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
       }
 
       // Draw nodes
       for (const n of nodes) {
-        const glow = 0.7 + 0.3 * Math.sin(n.pulse);
+        const glow = 0.6 + 0.2 * Math.sin(n.pulse);
         const { r, g, b } = n.color;
 
-        // Glow halo
-        const radGrad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 8);
-        radGrad.addColorStop(0, `rgba(${r},${g},${b},${0.25 * glow})`);
+        // Glow halo (subtle)
+        const radGrad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5);
+        radGrad.addColorStop(0, `rgba(${r},${g},${b},${0.10 * glow})`);
         radGrad.addColorStop(1, `rgba(${r},${g},${b},0)`);
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r * 8, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI * 2);
         ctx.fillStyle = radGrad;
         ctx.fill();
 
         // Core dot
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r * glow, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${0.9 * glow})`;
+        ctx.fillStyle = `rgba(${r},${g},${b},${0.65 * glow})`;
         ctx.shadowColor = `rgb(${r},${g},${b})`;
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 4;
         ctx.fill();
         ctx.shadowBlur = 0;
       }
