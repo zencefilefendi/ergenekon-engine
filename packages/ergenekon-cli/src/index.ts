@@ -15,7 +15,7 @@
 //   paradox health                    — Check collector health
 //
 // Usage:
-//   npx tsx packages/paradox-cli/src/index.ts sessions
+//   npx tsx packages/ergenekon-cli/src/index.ts sessions
 //   npx paradox sessions  (after npm link)
 // ============================================================================
 

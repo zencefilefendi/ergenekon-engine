@@ -1,8 +1,8 @@
 {
-  "name": "@ergenekon/cli",
+  "name": "@ergenekon/core",
   "version": "0.4.0",
   "type": "module",
-  "description": "ERGENEKON CLI — inspect, export, and manage distributed system recordings",
+  "description": "Shared types, HLC clock, ULID, and session I/O for ERGENEKON Engine",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -15,31 +15,24 @@
     "dist",
     "src"
   ],
-  "bin": {
-    "ergenekon": "./dist/index.js"
-  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
-  "dependencies": {
-    "@ergenekon/core": "0.4.0",
-    "@ergenekon/replay": "0.4.0"
-  },
   "license": "BUSL-1.1",
   "keywords": [
     "ergenekon",
-    "cli",
     "debugging",
     "time-travel",
-    "distributed-systems"
+    "distributed-systems",
+    "record-replay"
   ],
   "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
     "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
-    "directory": "packages/paradox-cli"
+    "directory": "packages/ergenekon-core"
   },
   "bugs": {
     "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"

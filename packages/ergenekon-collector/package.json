@@ -1,8 +1,8 @@
 {
-  "name": "@ergenekon/core",
+  "name": "@ergenekon/collector",
   "version": "0.4.0",
   "type": "module",
-  "description": "Shared types, HLC clock, ULID, and session I/O for ERGENEKON Engine",
+  "description": "ERGENEKON collector server — receives, orders, and stores recordings",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -15,29 +15,36 @@
     "dist",
     "src"
   ],
+  "bin": {
+    "ergenekon-collector": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
+    "start": "node dist/index.js",
     "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@ergenekon/core": "0.4.0"
   },
   "license": "BUSL-1.1",
   "keywords": [
     "ergenekon",
+    "collector",
     "debugging",
-    "time-travel",
-    "distributed-systems",
-    "record-replay"
+    "distributed-systems"
   ],
   "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
     "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
-    "directory": "packages/paradox-core"
+    "directory": "packages/ergenekon-collector"
   },
   "bugs": {
     "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"
   },
   "devDependencies": {
-    "@types/node": "^25.5.2"
+    "@types/node": "^25.5.2",
+    "zod": "^4.3.6"
   }
 }

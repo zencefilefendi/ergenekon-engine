@@ -7,7 +7,7 @@ export { FileStorage } from './storage.js';
 
 // ── CLI: Start collector as standalone server ──────────────────────
 
-const isDirectRun = process.argv[1]?.includes('paradox-collector');
+const isDirectRun = process.argv[1]?.includes('ergenekon-collector');
 
 if (isDirectRun) {
   const port = parseInt(process.env['ERGENEKON_PORT'] ?? '4380', 10);
