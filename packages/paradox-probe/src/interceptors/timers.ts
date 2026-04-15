@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Timer & Crypto Interceptors
+// ERGENEKON PROBE — Timer & Crypto Interceptors
 //
 // Captures: setTimeout, setInterval, crypto.randomUUID
 //

@@ -1,18 +1,18 @@
 // ============================================================================
-// PARADOX PROBE — Spill Buffer
+// ERGENEKON PROBE — Spill Buffer
 //
 // When the collector is unreachable and the in-memory buffer is full,
 // sessions spill to disk as append-only NDJSON files.
 // This ensures ZERO recording loss during collector outages.
 //
-// The spill directory defaults to ~/.paradox/spill/
+// The spill directory defaults to ~/.ergenekon/spill/
 // Each spill file is fsync'd after every append.
 // ============================================================================
 
 import { mkdirSync, appendFileSync, readdirSync, readFileSync, unlinkSync, openSync, fsyncSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
-import type { RecordingSession } from '@paradox/core';
+import type { RecordingSession } from '@ergenekon/core';
 
 export interface SpillBufferConfig {
   spillDir?: string;

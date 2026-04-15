@@ -1,11 +1,11 @@
 // ============================================================================
-// PARADOX ENGINE — Multi-Service Demo
+// ERGENEKON ENGINE — Multi-Service Demo
 //
 // Two Express services communicating with each other:
 //   - Order Service (port 3001): Receives orders, calls User Service
 //   - User Service (port 3002): Provides user data
 //
-// Both are instrumented with PARADOX probes.
+// Both are instrumented with ERGENEKON probes.
 // We record a request flowing through BOTH services, then replay it.
 //
 // This proves distributed deterministic replay works.
@@ -14,19 +14,19 @@
 // ============================================================================
 
 import express from 'express';
-import { ParadoxProbe } from '../packages/paradox-probe/src/index.js';
+import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
 import { ReplayEngine } from '../packages/paradox-replay/src/index.js';
 import type { RecordingSession } from '../packages/paradox-core/src/index.js';
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║       PARADOX ENGINE — Multi-Service Replay Demo             ║
+║       ERGENEKON ENGINE — Multi-Service Replay Demo             ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║   Order Service ──fetch──► User Service                      ║
 ║       :3001                    :3002                         ║
 ║                                                              ║
-║   Both instrumented with PARADOX probes.                     ║
+║   Both instrumented with ERGENEKON probes.                     ║
 ║   Record → Replay → Verify BOTH services match.              ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -37,7 +37,7 @@ console.log(`
 const userApp = express();
 userApp.use(express.json());
 
-const userProbe = new ParadoxProbe({
+const userProbe = new ErgenekonProbe({
   serviceName: 'user-service',
   collectorUrl: 'http://localhost:4380',
 });
@@ -49,9 +49,9 @@ userApp.get('/api/users/:id', (req, res) => {
   const lookupTime = Date.now();
 
   const users: Record<string, { name: string; email: string; credit: number }> = {
-    '1': { name: 'Ahmet Yilmaz', email: 'ahmet@paradox.dev', credit: 1500 },
-    '2': { name: 'Ayse Demir', email: 'ayse@paradox.dev', credit: 3200 },
-    '3': { name: 'Mehmet Kaya', email: 'mehmet@paradox.dev', credit: 750 },
+    '1': { name: 'Ahmet Yilmaz', email: 'ahmet@ergenekon.dev', credit: 1500 },
+    '2': { name: 'Ayse Demir', email: 'ayse@ergenekon.dev', credit: 3200 },
+    '3': { name: 'Mehmet Kaya', email: 'mehmet@ergenekon.dev', credit: 750 },
   };
 
   const user = users[userId];
@@ -78,7 +78,7 @@ userApp.get('/api/users/:id', (req, res) => {
 const orderApp = express();
 orderApp.use(express.json());
 
-const orderProbe = new ParadoxProbe({
+const orderProbe = new ErgenekonProbe({
   serviceName: 'order-service',
   collectorUrl: 'http://localhost:4380',
 });
@@ -143,7 +143,7 @@ console.log('POST /api/orders → Order Service → fetch → User Service\n');
 const response = await fetch(`http://localhost:${orderServicePort}/api/orders`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ userId: '2', item: 'PARADOX Pro License' }),
+  body: JSON.stringify({ userId: '2', item: 'ERGENEKON Pro License' }),
 });
 const originalResult = await response.json();
 
@@ -225,7 +225,7 @@ if (identical) {
 ║   Business logic (credit check) → deterministic ✓            ║
 ║                                                              ║
 ║   TWO services, ONE distributed request,                     ║
-║   PERFECT replay. This is PARADOX.                           ║
+║   PERFECT replay. This is ERGENEKON.                           ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `);

@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Deep Field Redaction Engine
+// ERGENEKON PROBE — Deep Field Redaction Engine
 //
 // Production recordings MUST NOT contain sensitive data.
 // This engine recursively walks any object and redacts fields matching

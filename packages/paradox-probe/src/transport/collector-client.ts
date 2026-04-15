@@ -1,13 +1,13 @@
 // ============================================================================
-// PARADOX PROBE — Collector Client (Phase 6 Hardened)
+// ERGENEKON PROBE — Collector Client (Phase 6 Hardened)
 //
-// Sends completed recording sessions to the PARADOX collector.
+// Sends completed recording sessions to the ERGENEKON collector.
 //
 // Phase 6 improvements:
 //   - FlushHealth struct: tracks consecutive failures, dropped count, last error
 //   - Circuit breaker: after N failures, switch to disk-spill mode
 //   - SpillBuffer: fsync'd NDJSON on disk, zero recording loss
-//   - PARADOX_STRICT=1: throws on first failure (CI/test use)
+//   - ERGENEKON_STRICT=1: throws on first failure (CI/test use)
 //   - EventEmitter for health state changes
 //   - Automatic spill drain on collector recovery
 //
@@ -18,7 +18,7 @@
 // ============================================================================
 
 import { EventEmitter } from 'node:events';
-import type { RecordingSession } from '@paradox/core';
+import type { RecordingSession } from '@ergenekon/core';
 import { SpillBuffer, type SpillBufferConfig } from './spill-buffer.js';
 
 // ─── Capture original Date.now before any monkey-patching ───
@@ -35,7 +35,7 @@ export interface CollectorClientConfig {
   /** Spill buffer configuration */
   spillConfig?: SpillBufferConfig;
 
-  /** Strict mode: throw on first failure (set PARADOX_STRICT=1 for CI) */
+  /** Strict mode: throw on first failure (set ERGENEKON_STRICT=1 for CI) */
   strict?: boolean;
 }
 
@@ -85,7 +85,7 @@ export class CollectorClient extends EventEmitter {
       flushIntervalMs: config.flushIntervalMs,
       maxBufferSize: config.maxBufferSize,
       circuitBreakerThreshold: config.circuitBreakerThreshold ?? 5,
-      strict: config.strict ?? (process.env.PARADOX_STRICT === '1'),
+      strict: config.strict ?? (process.env.ERGENEKON_STRICT === '1'),
       spillConfig: config.spillConfig,
     };
     this.spill = new SpillBuffer(config.spillConfig);
@@ -217,15 +217,15 @@ export class CollectorClient extends EventEmitter {
       this._lastErrorAt = _originalDateNow();
 
       this.emit('error', new Error(
-        `[PARADOX] Collector flush failed (attempt ${this._consecutiveFailures}): ${errorMessage}`
+        `[ERGENEKON] Collector flush failed (attempt ${this._consecutiveFailures}): ${errorMessage}`
       ));
 
       // Strict mode: throw immediately (for CI/test use)
       if (this.config.strict) {
         this._flushing = false;
         throw new Error(
-          `[PARADOX STRICT] Collector unreachable after ${this._consecutiveFailures} attempts: ${errorMessage}. ` +
-          `Set PARADOX_STRICT=0 to allow graceful degradation.`
+          `[ERGENEKON STRICT] Collector unreachable after ${this._consecutiveFailures} attempts: ${errorMessage}. ` +
+          `Set ERGENEKON_STRICT=0 to allow graceful degradation.`
         );
       }
 

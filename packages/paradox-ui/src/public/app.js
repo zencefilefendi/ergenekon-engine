@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX UI — Time-Travel Debugger Application Logic
+// ERGENEKON UI — Time-Travel Debugger Application Logic
 // Premium Dashboard — Metrics, License Tier, Keyboard Shortcuts
 // ============================================================================
 
@@ -448,7 +448,7 @@ async function loadLicenseInfo() {
 
     // Show expiry warning
     if (data.daysUntilExpiry > 0 && data.daysUntilExpiry <= 14) {
-      console.warn(`[PARADOX] License expires in ${data.daysUntilExpiry} days`);
+      console.warn(`[ERGENEKON] License expires in ${data.daysUntilExpiry} days`);
     }
   } catch {
     // Silently fall back to community display

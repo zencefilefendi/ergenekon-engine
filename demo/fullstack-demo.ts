@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — Full-Stack Demo
+// ERGENEKON ENGINE — Full-Stack Demo
 //
 // Starts everything together:
 //   1. Collector (port 4380) — receives and stores recordings
@@ -14,15 +14,15 @@
 // ============================================================================
 
 import express from 'express';
-import { ParadoxProbe } from '../packages/paradox-probe/src/index.js';
+import { ErgenekonProbe } from '../packages/paradox-probe/src/index.js';
 import { CollectorServer } from '../packages/paradox-collector/src/index.js';
 import { join } from 'node:path';
 
-const RECORDINGS_DIR = join(import.meta.dirname ?? '.', '..', '.paradox-recordings');
+const RECORDINGS_DIR = join(import.meta.dirname ?? '.', '..', '.ergenekon-recordings');
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║          PARADOX ENGINE — Full-Stack Demo                    ║
+║          ERGENEKON ENGINE — Full-Stack Demo                    ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║   Launching: Collector + 2 Services + Time-Travel UI         ║
@@ -43,17 +43,17 @@ await collector.start();
 const userApp = express();
 userApp.use(express.json());
 
-const userProbe = new ParadoxProbe({
+const userProbe = new ErgenekonProbe({
   serviceName: 'user-service',
   collectorUrl: 'http://localhost:4380',
 });
 userApp.use(userProbe.middleware());
 
 const users: Record<string, { name: string; email: string; credit: number; role: string }> = {
-  '1': { name: 'Ahmet Yilmaz', email: 'ahmet@paradox.dev', credit: 1500, role: 'admin' },
-  '2': { name: 'Ayse Demir', email: 'ayse@paradox.dev', credit: 3200, role: 'user' },
-  '3': { name: 'Mehmet Kaya', email: 'mehmet@paradox.dev', credit: 750, role: 'user' },
-  '4': { name: 'Fatma Celik', email: 'fatma@paradox.dev', credit: 50, role: 'user' },
+  '1': { name: 'Ahmet Yilmaz', email: 'ahmet@ergenekon.dev', credit: 1500, role: 'admin' },
+  '2': { name: 'Ayse Demir', email: 'ayse@ergenekon.dev', credit: 3200, role: 'user' },
+  '3': { name: 'Mehmet Kaya', email: 'mehmet@ergenekon.dev', credit: 750, role: 'user' },
+  '4': { name: 'Fatma Celik', email: 'fatma@ergenekon.dev', credit: 50, role: 'user' },
 };
 
 userApp.get('/api/users/:id', (req, res) => {
@@ -85,7 +85,7 @@ const userServer = userApp.listen(3002, () => {
 const orderApp = express();
 orderApp.use(express.json());
 
-const orderProbe = new ParadoxProbe({
+const orderProbe = new ErgenekonProbe({
   serviceName: 'order-service',
   collectorUrl: 'http://localhost:4380',
 });
@@ -132,8 +132,8 @@ const orderServer = orderApp.listen(3001, () => {
 // ── 4. Start Time-Travel UI ─────────────────────────────────────
 
 // Set UI port before importing
-process.env['PARADOX_UI_PORT'] = '3000';
-process.env['PARADOX_COLLECTOR_URL'] = 'http://localhost:4380';
+process.env['ERGENEKON_UI_PORT'] = '3000';
+process.env['ERGENEKON_COLLECTOR_URL'] = 'http://localhost:4380';
 await import('../packages/paradox-ui/src/server.js');
 
 // ── 5. Generate Sample Recordings ────────────────────────────────
@@ -154,7 +154,7 @@ for (const scenario of scenarios) {
     const resp = await fetch('http://localhost:3001/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: scenario.userId, item: 'PARADOX License' }),
+      body: JSON.stringify({ userId: scenario.userId, item: 'ERGENEKON License' }),
     });
     const result = await resp.json() as Record<string, unknown>;
     const status = result['status'] || result['error'] || 'unknown';
@@ -168,7 +168,7 @@ for (const scenario of scenarios) {
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
-║   PARADOX is running!                                        ║
+║   ERGENEKON is running!                                        ║
 ║                                                              ║
 ║   Time-Travel UI:  http://localhost:3000                     ║
 ║   Order Service:   http://localhost:3001                     ║

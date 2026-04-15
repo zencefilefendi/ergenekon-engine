@@ -1,8 +1,8 @@
 // ============================================================================
-// PARADOX LICENSE SERVER — License Generator
+// ERGENEKON LICENSE SERVER — License Generator
 //
 // Generates Ed25519-signed license tokens for paying customers.
-// Uses the private key from PARADOX_SIGNING_KEY environment variable.
+// Uses the private key from ERGENEKON_SIGNING_KEY environment variable.
 // ============================================================================
 
 import { createPrivateKey, sign } from 'node:crypto';
@@ -61,9 +61,9 @@ function generateId(): string {
 // ── License Generator ───────────────────────────────────────────
 
 export function generateLicenseForCustomer(request: LicenseRequest): SignedLicense {
-  const privateKeyPem = process.env.PARADOX_SIGNING_KEY;
+  const privateKeyPem = process.env.ERGENEKON_SIGNING_KEY;
   if (!privateKeyPem) {
-    throw new Error('PARADOX_SIGNING_KEY not set');
+    throw new Error('ERGENEKON_SIGNING_KEY not set');
   }
 
   const now = new Date();
@@ -98,7 +98,7 @@ export function generateLicenseForCustomer(request: LicenseRequest): SignedLicen
 
 /**
  * Format a license as a pretty-printed JSON string
- * ready to be saved as .paradox-license.json
+ * ready to be saved as .ergenekon-license.json
  */
 export function formatLicenseJSON(license: SignedLicense): string {
   return JSON.stringify(license, null, 2);

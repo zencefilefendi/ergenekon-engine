@@ -1,18 +1,18 @@
-# @paradox/cli
+# @ergenekon/cli
 
-> PARADOX CLI — inspect, export, and live-watch distributed system recordings from your terminal
+> ERGENEKON CLI — inspect, export, and live-watch distributed system recordings from your terminal
 
-[![npm](https://img.shields.io/npm/v/@paradox/cli)](https://www.npmjs.com/package/@paradox/cli)
+[![npm](https://img.shields.io/npm/v/@ergenekon/cli)](https://www.npmjs.com/package/@ergenekon/cli)
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 
-A beautiful ANSI-colored CLI for working with PARADOX recordings. List sessions, inspect event timelines, visualize distributed traces, export to binary format, and live-tail new recordings — all without leaving your terminal.
+A beautiful ANSI-colored CLI for working with ERGENEKON recordings. List sessions, inspect event timelines, visualize distributed traces, export to binary format, and live-tail new recordings — all without leaving your terminal.
 
 ## Install
 
 ```bash
-npm install -g @paradox/cli
+npm install -g @ergenekon/cli
 # or use npx
-npx @paradox/cli sessions
+npx @ergenekon/cli sessions
 ```
 
 ## Commands
@@ -77,18 +77,18 @@ paradox watch
 
 ```bash
 # Point to a non-default collector
-PARADOX_COLLECTOR_URL=http://staging:4380 paradox sessions
+ERGENEKON_COLLECTOR_URL=http://staging:4380 paradox sessions
 ```
 
-## Part of PARADOX Engine
+## Part of ERGENEKON Engine
 
 | Package | Description |
 |---------|-------------|
-| `@paradox/core` | Shared types, HLC clock, ULID |
-| `@paradox/probe` | Express middleware — records every request |
-| `@paradox/collector` | Ingestion server — stores recordings |
-| `@paradox/replay` | Replay engine — deterministic re-execution |
-| **`@paradox/cli`** | ← You are here |
+| `@ergenekon/core` | Shared types, HLC clock, ULID |
+| `@ergenekon/probe` | Express middleware — records every request |
+| `@ergenekon/collector` | Ingestion server — stores recordings |
+| `@ergenekon/replay` | Replay engine — deterministic re-execution |
+| **`@ergenekon/cli`** | ← You are here |
 
 ## License
 

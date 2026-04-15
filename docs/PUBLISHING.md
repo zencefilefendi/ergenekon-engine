@@ -1,6 +1,6 @@
-# PARADOX Engine — npm Publish Kılavuzu
+# ERGENEKON Engine — npm Publish Kılavuzu
 
-Bu belge PARADOX paketlerini npm'e nasıl yayınlayacağını açıklar.
+Bu belge ERGENEKON paketlerini npm'e nasıl yayınlayacağını açıklar.
 
 ---
 
@@ -10,7 +10,7 @@ Bu belge PARADOX paketlerini npm'e nasıl yayınlayacağını açıklar.
 
 ```bash
 # npm hesabı oluştur: https://www.npmjs.com/signup
-# @paradox organizasyonu oluştur: https://www.npmjs.com/org/create
+# @ergenekon organizasyonu oluştur: https://www.npmjs.com/org/create
 
 # Login
 npm login
@@ -20,15 +20,15 @@ npm login
 npm whoami   # → zencefilefendi (veya hesap adın)
 ```
 
-### 2. `@paradox` Scope İzni
+### 2. `@ergenekon` Scope İzni
 
-`@paradox` npm scope'u için organizasyon sahibi olman gerekiyor.
-Eğer `@paradox` zaten alınmışsa, `@paradox-engine` veya kendi kullanıcı adınla scope kullanabilirsin:
+`@ergenekon` npm scope'u için organizasyon sahibi olman gerekiyor.
+Eğer `@ergenekon` zaten alınmışsa, `@ergenekon-engine` veya kendi kullanıcı adınla scope kullanabilirsin:
 
 ```bash
 # Kendi scope (hemen çalışır):
-@zencefilefendi/paradox-core
-@zencefilefendi/paradox-probe
+@zencefilefendi/ergenekon-core
+@zencefilefendi/ergenekon-probe
 # vb.
 ```
 
@@ -92,16 +92,16 @@ git push origin main --tags
 
 ```bash
 # npm'de görünüyor mu?
-npm info @paradox/probe
+npm info @ergenekon/probe
 
 # Install edebiliyoruz mı?
 cd /tmp && mkdir test-install && cd test-install
 npm init -y
-npm install @paradox/probe @paradox/collector @paradox/replay
+npm install @ergenekon/probe @ergenekon/collector @ergenekon/replay
 
 # CLI çalışıyor mu?
-npm install -g @paradox/cli
-paradox help
+npm install -g @ergenekon/cli
+ergenekon help
 ```
 
 ---
@@ -111,12 +111,12 @@ paradox help
 npm `npm publish` sırası önemlidir — bağımlılıklar önce publish edilmeli:
 
 ```
-1. @paradox/core       ← bağımlılık yok
-2. @paradox/probe      ← @paradox/core
-3. @paradox/collector  ← @paradox/core
-4. @paradox/replay     ← @paradox/core
-5. @paradox/cli        ← @paradox/core, @paradox/replay
-6. @paradox/ui         ← @paradox/core
+1. @ergenekon/core       ← bağımlılık yok
+2. @ergenekon/probe      ← @ergenekon/core
+3. @ergenekon/collector  ← @ergenekon/core
+4. @ergenekon/replay     ← @ergenekon/core
+5. @ergenekon/cli        ← @ergenekon/core, @ergenekon/replay
+6. @ergenekon/ui         ← @ergenekon/core
 ```
 
 `publish.yml` CI workflow bu sırayı doğru şekilde uygular.
@@ -127,8 +127,8 @@ npm `npm publish` sırası önemlidir — bağımlılıklar önce publish edilme
 
 ```bash
 # 72 saat içinde unpublish
-npm unpublish @paradox/probe@0.4.0
+npm unpublish @ergenekon/probe@0.4.0
 
 # Deprecate (silinmez, uyarı gösterilir)
-npm deprecate @paradox/probe@0.4.0 "Use 0.5.0 instead"
+npm deprecate @ergenekon/probe@0.4.0 "Use 0.5.0 instead"
 ```

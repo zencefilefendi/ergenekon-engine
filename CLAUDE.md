@@ -1,7 +1,7 @@
-# PARADOX Engine — Development Guide
+# ERGENEKON Engine — Development Guide
 
 ## Project Overview
-PARADOX is a deterministic record & replay engine for distributed systems.
+ERGENEKON is a deterministic record & replay engine for distributed systems.
 It enables time-travel debugging of production incidents by recording all I/O boundaries
 and replaying them deterministically on a developer's machine.
 
@@ -23,16 +23,16 @@ Yutpa/
 │   ├── BUSINESS_MODEL.md      # Pricing, GTM, financials, risk analysis
 │   └── CONTRIBUTING.md        # Dev environment setup, coding standards, PR process
 ├── packages/
-│   ├── paradox-core/          # Shared types, HLC, ULID (NO dependencies)
+│   ├── ergenekon-core/          # Shared types, HLC, ULID (NO dependencies)
 │   │   └── src/
-│   │       ├── types.ts       # ParadoxEvent, RecordingSession, ProbeConfig
+│   │       ├── types.ts       # ErgenekonEvent, RecordingSession, ProbeConfig
 │   │       ├── hlc.ts         # Hybrid Logical Clock implementation
 │   │       ├── ulid.ts        # Time-sortable unique ID generator
 │   │       ├── session-io.ts  # Session export/import (JSON + PRDX binary)
 │   │       └── index.ts       # Public API exports
-│   ├── paradox-probe/         # Node.js recording middleware
+│   ├── ergenekon-probe/         # Node.js recording middleware
 │   │   └── src/
-│   │       ├── index.ts       # ParadoxProbe class (main entry)
+│   │       ├── index.ts       # ErgenekonProbe class (main entry)
 │   │       ├── recording-context.ts  # AsyncLocalStorage session management
 │   │       ├── internal-clock.ts     # Original Date.now/Math.random refs
 │   │       ├── sampling.ts           # Smart sampling engine (head+tail hybrid)
@@ -46,20 +46,20 @@ Yutpa/
 │   │       │   └── dns.ts            # dns.lookup/resolve interceptor
 │   │       └── transport/
 │   │           └── collector-client.ts # Buffered send to collector
-│   ├── paradox-collector/     # Event collection & storage server
+│   ├── ergenekon-collector/     # Event collection & storage server
 │   │   └── src/
 │   │       ├── index.ts       # Entry point + CLI
 │   │       ├── server.ts      # HTTP REST API server
 │   │       └── storage.ts     # File-based session storage
-│   ├── paradox-replay/        # Deterministic replay engine
+│   ├── ergenekon-replay/        # Deterministic replay engine
 │   │   └── src/
 │   │       ├── index.ts       # Public API exports
 │   │       ├── mock-layer.ts  # Mock I/O (replays recorded values)
 │   │       └── replay-engine.ts # Orchestrator + timeline inspection
-│   ├── paradox-cli/           # CLI tool (10 commands, ANSI output)
+│   ├── ergenekon-cli/           # CLI tool (10 commands, ANSI output)
 │   │   └── src/
 │   │       └── index.ts       # CLI entry point + command router
-│   └── paradox-ui/            # (PLANNED) Time-travel visual debugger
+│   └── ergenekon-ui/            # (PLANNED) Time-travel visual debugger
 └── demo/
     ├── app.ts                 # Full demo: Express + Collector + routes
     └── replay-demo.ts         # Self-contained record → replay → verify
@@ -104,11 +104,11 @@ npx tsx demo/replay-demo.ts       # Quick proof: record → replay → verify
 npx tsx demo/app.ts               # Full demo server on :3000 + collector on :4380
 
 # CLI tool
-npx tsx packages/paradox-cli/src/index.ts sessions   # List recorded sessions
-npx tsx packages/paradox-cli/src/index.ts inspect <id> # Inspect a session
-npx tsx packages/paradox-cli/src/index.ts timeline <id> # View event timeline
-npx tsx packages/paradox-cli/src/index.ts export <id>   # Export session (JSON/PRDX)
-npx tsx packages/paradox-cli/src/index.ts health       # Collector health check
+npx tsx packages/ergenekon-cli/src/index.ts sessions   # List recorded sessions
+npx tsx packages/ergenekon-cli/src/index.ts inspect <id> # Inspect a session
+npx tsx packages/ergenekon-cli/src/index.ts timeline <id> # View event timeline
+npx tsx packages/ergenekon-cli/src/index.ts export <id>   # Export session (JSON/PRDX)
+npx tsx packages/ergenekon-cli/src/index.ts health       # Collector health check
 ```
 
 ## What's Been Proven (Phase 0)

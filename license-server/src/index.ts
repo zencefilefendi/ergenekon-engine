@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX LICENSE SERVER — Main Entry Point
+// ERGENEKON LICENSE SERVER — Main Entry Point
 //
 // Standalone server that handles:
 //   1. Stripe Checkout session creation
@@ -117,10 +117,10 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     if (req.method === 'GET' && path === '/health') {
       json(res, 200, {
         status: 'ok',
-        service: 'paradox-license-server',
+        service: 'ergenekon-license-server',
         version: '0.1.0',
         stripe: !!process.env.STRIPE_SECRET_KEY,
-        signingKey: !!process.env.PARADOX_SIGNING_KEY,
+        signingKey: !!process.env.ERGENEKON_SIGNING_KEY,
       });
       return;
     }
@@ -135,10 +135,10 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
 server.listen(PORT, () => {
   const hasStripe = !!process.env.STRIPE_SECRET_KEY;
-  const hasKey = !!process.env.PARADOX_SIGNING_KEY;
+  const hasKey = !!process.env.ERGENEKON_SIGNING_KEY;
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║          PARADOX — License Generation Server                 ║
+║          ERGENEKON — License Generation Server                 ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║   Server:     http://localhost:${String(PORT).padEnd(30)}║

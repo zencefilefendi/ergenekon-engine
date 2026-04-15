@@ -1,6 +1,6 @@
-# PARADOX Engine — Katkı Rehberi
+# ERGENEKON Engine — Katkı Rehberi
 
-PARADOX Engine'e katkıda bulunmak istiyorsanız doğru yerdesiniz. Bu belge geliştirme ortamı kurulumunu, kod standartlarını ve katkı sürecini açıklar.
+ERGENEKON Engine'e katkıda bulunmak istiyorsanız doğru yerdesiniz. Bu belge geliştirme ortamı kurulumunu, kod standartlarını ve katkı sürecini açıklar.
 
 ---
 
@@ -17,8 +17,8 @@ PARADOX Engine'e katkıda bulunmak istiyorsanız doğru yerdesiniz. Bu belge gel
 
 ```bash
 # 1. Fork et ve klonla
-git clone https://github.com/YOUR_USERNAME/paradox-engine
-cd paradox-engine
+git clone https://github.com/YOUR_USERNAME/ergenekon-engine
+cd ergenekon-engine
 
 # 2. Bağımlılıkları yükle (tüm workspace'ler)
 npm install
@@ -33,14 +33,14 @@ npm run demo:fullstack
 ### Proje Yapısı
 
 ```
-paradox-engine/
+ergenekon-engine/
 ├── packages/
-│   ├── paradox-core/        → Temel tipler, HLC, ULID, session I/O
-│   ├── paradox-probe/       → Express middleware, interceptors
-│   ├── paradox-collector/   → HTTP server, storage
-│   ├── paradox-replay/      → Replay engine, mock layer
-│   ├── paradox-ui/          → Web UI
-│   └── paradox-cli/         → CLI araçları
+│   ├── ergenekon-core/        → Temel tipler, HLC, ULID, session I/O
+│   ├── ergenekon-probe/       → Express middleware, interceptors
+│   ├── ergenekon-collector/   → HTTP server, storage
+│   ├── ergenekon-replay/      → Replay engine, mock layer
+│   ├── ergenekon-ui/          → Web UI
+│   └── ergenekon-cli/         → CLI araçları
 ├── demo/
 │   ├── fullstack-demo.ts    → Tüm servisleri başlatır
 │   └── replay-demo.ts       → Record → replay → verify
@@ -57,7 +57,7 @@ paradox-engine/
 
 ```bash
 # Belirli bir paketi watch modunda derle
-cd packages/paradox-probe
+cd packages/ergenekon-probe
 npx tsc --watch
 
 # Ya da tsx ile direkt çalıştır (build gerekmez)
@@ -71,7 +71,7 @@ npx tsx demo/fullstack-demo.ts
 npm run build
 
 # Tek paket
-npm run build --workspace=packages/paradox-core
+npm run build --workspace=packages/ergenekon-core
 ```
 
 ### Test
@@ -86,7 +86,7 @@ sleep 3
 curl -X POST http://localhost:3001/api/orders \
   -H "Content-Type: application/json" \
   -d '{"userId":"2"}'
-npx tsx packages/paradox-cli/src/index.ts sessions
+npx tsx packages/ergenekon-cli/src/index.ts sessions
 ```
 
 ---
@@ -156,7 +156,7 @@ docs(architecture): add HLC algorithm explanation
 
 ### Yeni Interceptor Ekleme
 
-1. `packages/paradox-probe/src/interceptors/` altında yeni dosya oluştur
+1. `packages/ergenekon-probe/src/interceptors/` altında yeni dosya oluştur
 2. Şu imzaları uygula:
 
 ```typescript
@@ -168,7 +168,7 @@ export function installXxxInterceptor(): boolean {
     // Orijinali sakla
     // Patch'i yükle
     installed = true;
-    console.log('[PARADOX] Xxx interceptor installed');
+    console.log('[ERGENEKON] Xxx interceptor installed');
     return true;
   } catch {
     return false; // bağımlılık yüklü değil
@@ -182,12 +182,12 @@ export function uninstallXxxInterceptor(): void {
 }
 ```
 
-3. `packages/paradox-probe/src/index.ts`'e ekle
-4. `packages/paradox-core/src/types.ts`'deki `EventType`'a yeni event ekle (gerekirse)
+3. `packages/ergenekon-probe/src/index.ts`'e ekle
+4. `packages/ergenekon-core/src/types.ts`'deki `EventType`'a yeni event ekle (gerekirse)
 
 ### Yeni CLI Komutu Ekleme
 
-`packages/paradox-cli/src/index.ts` içindeki `main()` switch'e ekle:
+`packages/ergenekon-cli/src/index.ts` içindeki `main()` switch'e ekle:
 
 ```typescript
 case 'mycommand':
@@ -197,7 +197,7 @@ case 'mycommand':
 
 ### Yeni API Endpoint Ekleme (Collector)
 
-`packages/paradox-collector/src/server.ts` içindeki `handleRequest()` fonksiyonuna ekle:
+`packages/ergenekon-collector/src/server.ts` içindeki `handleRequest()` fonksiyonuna ekle:
 
 ```typescript
 if (req.method === 'GET' && path === '/api/v1/myendpoint') {
@@ -268,7 +268,7 @@ GitHub Issues'da şu bilgileri ekle:
 
 ```
 Node.js version: v22.x.x
-PARADOX version: 0.4.x
+ERGENEKON version: 0.4.x
 OS: macOS/Linux/Windows
 
 Beklenen davranış:

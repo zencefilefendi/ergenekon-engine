@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Sampling Engine Tests
+// ERGENEKON PROBE — Sampling Engine Tests
 //
 // Validates:
 //   1. Head+tail sampling decisions

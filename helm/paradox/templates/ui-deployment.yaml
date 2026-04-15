@@ -28,7 +28,7 @@ spec:
               containerPort: 3000
               protocol: TCP
           env:
-            - name: PARADOX_COLLECTOR_URL
+            - name: ERGENEKON_COLLECTOR_URL
               value: "http://{{ include "paradox.fullname" . }}-collector:{{ .Values.collector.service.port }}"
           livenessProbe:
             httpGet:

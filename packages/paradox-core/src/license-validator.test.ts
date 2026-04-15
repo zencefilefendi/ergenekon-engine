@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — License System Tests
+// ERGENEKON ENGINE — License System Tests
 //
 // Comprehensive test suite for the Ed25519 license system:
 //   1. Key generation + signing
@@ -95,17 +95,17 @@ describe('License Generator', () => {
   });
 
   it('throws when no private key is available', () => {
-    const originalEnv = process.env.PARADOX_SIGNING_KEY;
-    delete process.env.PARADOX_SIGNING_KEY;
+    const originalEnv = process.env.ERGENEKON_SIGNING_KEY;
+    delete process.env.ERGENEKON_SIGNING_KEY;
 
     expect(() => generateLicense({
       customerId: 'cus_nokey',
       customerEmail: 'nokey@test.com',
       customerName: 'NoKey Corp',
       tier: 'pro',
-    })).toThrow('PARADOX_SIGNING_KEY');
+    })).toThrow('ERGENEKON_SIGNING_KEY');
 
-    if (originalEnv) process.env.PARADOX_SIGNING_KEY = originalEnv;
+    if (originalEnv) process.env.ERGENEKON_SIGNING_KEY = originalEnv;
   });
 
   it('respects custom maxServices and maxEventsPerDay', () => {
@@ -356,7 +356,7 @@ describe('Helper Functions', () => {
 });
 
 describe('License File Discovery', () => {
-  const testLicensePath = '.paradox-license.json';
+  const testLicensePath = '.ergenekon-license.json';
 
   afterEach(() => {
     // Clean up test license file
@@ -364,8 +364,8 @@ describe('License File Discovery', () => {
       if (existsSync(testLicensePath)) unlinkSync(testLicensePath);
     } catch { /* ignore */ }
     // Clean up env vars
-    delete process.env.PARADOX_LICENSE_KEY;
-    delete process.env.PARADOX_LICENSE;
+    delete process.env.ERGENEKON_LICENSE_KEY;
+    delete process.env.ERGENEKON_LICENSE;
   });
 
   it('loadLicense returns community when no license file exists', () => {
@@ -375,16 +375,16 @@ describe('License File Discovery', () => {
     expect(result.error).toBeNull();
   });
 
-  it('loadLicense reads from PARADOX_LICENSE_KEY env var', () => {
+  it('loadLicense reads from ERGENEKON_LICENSE_KEY env var', () => {
     const signed = createValidProLicense();
-    process.env.PARADOX_LICENSE_KEY = JSON.stringify(signed);
+    process.env.ERGENEKON_LICENSE_KEY = JSON.stringify(signed);
 
     const result = loadLicense();
     expect(result.valid).toBe(true);
     expect(result.tier).toBe('pro');
   });
 
-  it('loadLicense reads from .paradox-license.json file', () => {
+  it('loadLicense reads from .ergenekon-license.json file', () => {
     const signed = createValidProLicense();
     writeFileSync(testLicensePath, JSON.stringify(signed, null, 2));
 
@@ -393,14 +393,14 @@ describe('License File Discovery', () => {
     expect(result.tier).toBe('pro');
   });
 
-  it('PARADOX_LICENSE_KEY env var takes priority over file', () => {
+  it('ERGENEKON_LICENSE_KEY env var takes priority over file', () => {
     // Write a pro license to file
     const proSigned = createValidProLicense();
     writeFileSync(testLicensePath, JSON.stringify(proSigned, null, 2));
 
     // Set enterprise license in env var
     const entSigned = createValidEnterpriseLicense();
-    process.env.PARADOX_LICENSE_KEY = JSON.stringify(entSigned);
+    process.env.ERGENEKON_LICENSE_KEY = JSON.stringify(entSigned);
 
     const result = loadLicense();
     expect(result.tier).toBe('enterprise'); // env var wins

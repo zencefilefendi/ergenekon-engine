@@ -1,22 +1,22 @@
-# @paradox/replay
+# @ergenekon/replay
 
 > Deterministic replay engine — reproduce any production bug on your laptop, byte-for-byte identical
 
-[![npm](https://img.shields.io/npm/v/@paradox/replay)](https://www.npmjs.com/package/@paradox/replay)
+[![npm](https://img.shields.io/npm/v/@ergenekon/replay)](https://www.npmjs.com/package/@ergenekon/replay)
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 
-Takes a recording from `@paradox/collector` and re-executes it with all I/O mocked to return the exact same values as production. Every `Date.now()`, `Math.random()`, database result, and HTTP response is replayed in sequence — guaranteed byte-for-byte identical output.
+Takes a recording from `@ergenekon/collector` and re-executes it with all I/O mocked to return the exact same values as production. Every `Date.now()`, `Math.random()`, database result, and HTTP response is replayed in sequence — guaranteed byte-for-byte identical output.
 
 ## Install
 
 ```bash
-npm install @paradox/replay
+npm install @ergenekon/replay
 ```
 
 ## Replay a Recording
 
 ```typescript
-import { ReplayEngine } from '@paradox/replay';
+import { ReplayEngine } from '@ergenekon/replay';
 
 const engine = new ReplayEngine(session);
 
@@ -76,15 +76,15 @@ Node.js is single-threaded — no thread scheduling non-determinism. By capturin
 - HTTP responses — external services
 - Timer fire order — async scheduling
 
-## Part of PARADOX Engine
+## Part of ERGENEKON Engine
 
 | Package | Description |
 |---------|-------------|
-| `@paradox/core` | Shared types, HLC clock, ULID |
-| `@paradox/probe` | Express middleware — records every request |
-| `@paradox/collector` | Ingestion server — stores recordings |
-| **`@paradox/replay`** | ← You are here |
-| `@paradox/cli` | CLI — inspect, export, watch recordings |
+| `@ergenekon/core` | Shared types, HLC clock, ULID |
+| `@ergenekon/probe` | Express middleware — records every request |
+| `@ergenekon/collector` | Ingestion server — stores recordings |
+| **`@ergenekon/replay`** | ← You are here |
+| `@ergenekon/cli` | CLI — inspect, export, watch recordings |
 
 ## License
 

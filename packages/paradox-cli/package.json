@@ -1,8 +1,8 @@
 {
-  "name": "@paradox/cli",
+  "name": "@ergenekon/cli",
   "version": "0.4.0",
   "type": "module",
-  "description": "PARADOX CLI — inspect, export, and manage distributed system recordings",
+  "description": "ERGENEKON CLI — inspect, export, and manage distributed system recordings",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -16,7 +16,7 @@
     "src"
   ],
   "bin": {
-    "paradox": "./dist/index.js"
+    "ergenekon": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -24,25 +24,25 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@paradox/core": "0.4.0",
-    "@paradox/replay": "0.4.0"
+    "@ergenekon/core": "0.4.0",
+    "@ergenekon/replay": "0.4.0"
   },
   "license": "BUSL-1.1",
   "keywords": [
-    "paradox",
+    "ergenekon",
     "cli",
     "debugging",
     "time-travel",
     "distributed-systems"
   ],
-  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
     "directory": "packages/paradox-cli"
   },
   "bugs": {
-    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+    "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"
   },
   "devDependencies": {
     "@types/node": "^25.5.2"

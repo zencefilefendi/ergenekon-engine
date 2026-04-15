@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Diff Property Tests (fast-check)
+// ERGENEKON REPLAY — Diff Property Tests (fast-check)
 //
 // Property: For ANY JSON tree, key permutation produces zero diffs.
 // This is the mathematical invariant that Issue 6 fix enforces.

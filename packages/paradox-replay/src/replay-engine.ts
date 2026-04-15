@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Replay Engine
+// ERGENEKON REPLAY — Replay Engine
 //
 // Orchestrates the deterministic replay of a recorded session.
 //
@@ -16,7 +16,7 @@
 // ============================================================================
 
 import { readFile } from 'node:fs/promises';
-import type { RecordingSession, ParadoxEvent } from '@paradox/core';
+import type { RecordingSession, ErgenekonEvent } from '@ergenekon/core';
 import { MockLayer, ReplayDivergenceError } from './mock-layer.js';
 
 export interface ReplayResult {
@@ -69,7 +69,7 @@ export interface TimelineSnapshot {
 }
 
 /**
- * The PARADOX Replay Engine.
+ * The ERGENEKON Replay Engine.
  *
  * Can operate in two modes:
  * 1. Full replay: Sends the recorded request through the app and compares
@@ -129,8 +129,8 @@ export class ReplayEngine {
    * Returns all events up to that point.
    */
   getStateAt(sequence: number): {
-    events: ParadoxEvent[];
-    currentEvent: ParadoxEvent | null;
+    events: ErgenekonEvent[];
+    currentEvent: ErgenekonEvent | null;
     progress: number; // 0.0 to 1.0
   } {
     if (!this.session) throw new Error('No recording loaded');
@@ -151,7 +151,7 @@ export class ReplayEngine {
    * Get a diff between two points in the timeline.
    */
   getDiff(fromSequence: number, toSequence: number): {
-    added: ParadoxEvent[];
+    added: ErgenekonEvent[];
     range: [number, number];
   } {
     if (!this.session) throw new Error('No recording loaded');

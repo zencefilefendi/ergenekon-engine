@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================================
-// PARADOX CLI — Command-line interface for the PARADOX Engine
+// ERGENEKON CLI — Command-line interface for the ERGENEKON Engine
 //
 // Commands:
 //   paradox sessions                  — List all recorded sessions
@@ -25,12 +25,12 @@ import {
   exportSessionBinary,
   importSessionsJSON,
   importSessionBinary,
-} from '@paradox/core';
-import type { RecordingSession, ParadoxEvent } from '@paradox/core';
+} from '@ergenekon/core';
+import type { RecordingSession, ErgenekonEvent } from '@ergenekon/core';
 
 // ── Config ────────────────────────────────────────────────────────
 
-const COLLECTOR_URL = process.env['PARADOX_COLLECTOR_URL'] || 'http://localhost:4380';
+const COLLECTOR_URL = process.env['ERGENEKON_COLLECTOR_URL'] || 'http://localhost:4380';
 
 // ── Color helpers (ANSI) ──────────────────────────────────────────
 
@@ -321,7 +321,7 @@ interface DoctorCheck {
 
 async function cmdDoctor(): Promise<void> {
   console.log(`\n${c.bold}╔══════════════════════════════════════════╗`);
-  console.log(`║       PARADOX DOCTOR — System Check      ║`);
+  console.log(`║       ERGENEKON DOCTOR — System Check      ║`);
   console.log(`╚══════════════════════════════════════════╝${c.reset}\n`);
 
   const checks: DoctorCheck[] = [];
@@ -336,13 +336,13 @@ async function cmdDoctor(): Promise<void> {
     detail: major < 18 ? 'Recommended: Node.js >= 18.0.0 for full AsyncLocalStorage support' : undefined,
   });
 
-  // 2. PARADOX_STRICT env
-  const strict = process.env['PARADOX_STRICT'];
+  // 2. ERGENEKON_STRICT env
+  const strict = process.env['ERGENEKON_STRICT'];
   checks.push({
-    name: 'PARADOX_STRICT mode',
+    name: 'ERGENEKON_STRICT mode',
     status: strict === '1' ? 'pass' : 'warn',
     message: strict === '1' ? 'Enabled (strict error handling)' : 'Not set (errors may be silently handled)',
-    detail: strict !== '1' ? 'Set PARADOX_STRICT=1 in CI to catch errors early' : undefined,
+    detail: strict !== '1' ? 'Set ERGENEKON_STRICT=1 in CI to catch errors early' : undefined,
   });
 
   // 3. Collector reachability
@@ -423,7 +423,7 @@ async function cmdDoctor(): Promise<void> {
   });
 
   // 8. Package availability checks
-  const packages = ['@paradox/core', '@paradox/probe', '@paradox/replay', '@paradox/collector'];
+  const packages = ['@ergenekon/core', '@ergenekon/probe', '@ergenekon/replay', '@ergenekon/collector'];
   for (const pkg of packages) {
     try {
       await import(pkg);
@@ -463,7 +463,7 @@ async function cmdDoctor(): Promise<void> {
 function showHelp(): void {
   console.log(`
 ${c.bold}╔══════════════════════════════════════════╗
-║        PARADOX CLI — Time-Travel         ║
+║        ERGENEKON CLI — Time-Travel         ║
 ╚══════════════════════════════════════════╝${c.reset}
 
 ${c.bold}Usage:${c.reset}  paradox <command> [options]
@@ -481,7 +481,7 @@ ${c.bold}Commands:${c.reset}
   ${c.cyan}doctor${c.reset}                         Run diagnostic checks on the system
 
 ${c.bold}Environment:${c.reset}
-  PARADOX_COLLECTOR_URL   Collector address (default: http://localhost:4380)
+  ERGENEKON_COLLECTOR_URL   Collector address (default: http://localhost:4380)
 
 ${c.bold}Examples:${c.reset}
   ${c.dim}paradox sessions${c.reset}

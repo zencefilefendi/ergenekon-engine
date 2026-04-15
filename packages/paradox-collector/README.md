@@ -1,36 +1,36 @@
-# @paradox/collector
+# @ergenekon/collector
 
-> PARADOX recording collector — receives, orders, and stores distributed system recordings
+> ERGENEKON recording collector — receives, orders, and stores distributed system recordings
 
-[![npm](https://img.shields.io/npm/v/@paradox/collector)](https://www.npmjs.com/package/@paradox/collector)
+[![npm](https://img.shields.io/npm/v/@ergenekon/collector)](https://www.npmjs.com/package/@ergenekon/collector)
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 
-Lightweight HTTP server that receives recording sessions from `@paradox/probe` instances, assembles distributed traces using Hybrid Logical Clock ordering, and stores them for replay and inspection.
+Lightweight HTTP server that receives recording sessions from `@ergenekon/probe` instances, assembles distributed traces using Hybrid Logical Clock ordering, and stores them for replay and inspection.
 
 ## Install
 
 ```bash
-npm install @paradox/collector
+npm install @ergenekon/collector
 ```
 
 ## Start the Collector
 
 ```typescript
-import { CollectorServer } from '@paradox/collector';
+import { CollectorServer } from '@ergenekon/collector';
 
 const collector = new CollectorServer({
   port: 4380,
-  storageDir: './.paradox-recordings',
+  storageDir: './.ergenekon-recordings',
 });
 
 await collector.start();
-// [PARADOX COLLECTOR] Listening on port 4380
+// [ERGENEKON COLLECTOR] Listening on port 4380
 ```
 
 Or via CLI:
 
 ```bash
-npx paradox-collector --port 4380 --dir ./.paradox-recordings
+npx ergenekon-collector --port 4380 --dir ./.ergenekon-recordings
 ```
 
 ## REST API
@@ -49,22 +49,22 @@ npx paradox-collector --port 4380 --dir ./.paradox-recordings
 File-based JSON storage — one file per session. In-memory index for fast lookups. Rebuilt from disk on startup.
 
 ```
-.paradox-recordings/
+.ergenekon-recordings/
   sessions/
     01HWXYZ...json    ← each recording session
 ```
 
 Future: Content-Addressable Storage (CAS) with deduplication, delta compression, S3 backend.
 
-## Part of PARADOX Engine
+## Part of ERGENEKON Engine
 
 | Package | Description |
 |---------|-------------|
-| `@paradox/core` | Shared types, HLC clock, ULID |
-| `@paradox/probe` | Express middleware — records every request |
-| **`@paradox/collector`** | ← You are here |
-| `@paradox/replay` | Replay engine — deterministic re-execution |
-| `@paradox/cli` | CLI — inspect, export, watch recordings |
+| `@ergenekon/core` | Shared types, HLC clock, ULID |
+| `@ergenekon/probe` | Express middleware — records every request |
+| **`@ergenekon/collector`** | ← You are here |
+| `@ergenekon/replay` | Replay engine — deterministic re-execution |
+| `@ergenekon/cli` | CLI — inspect, export, watch recordings |
 
 ## License
 

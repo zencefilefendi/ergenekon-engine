@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — HTTP Server
+// ERGENEKON COLLECTOR — HTTP Server
 //
 // Receives recording sessions from probes and stores them.
 // Provides a REST API for querying and retrieving recordings.
@@ -14,10 +14,10 @@
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import type { RecordingSession, LicenseValidation } from '@paradox/core';
+import type { RecordingSession, LicenseValidation } from '@ergenekon/core';
 import { FileStorage } from './storage.js';
 import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
-import { loadLicense, getTierDisplay } from '@paradox/core';
+import { loadLicense, getTierDisplay } from '@ergenekon/core';
 import { RateLimiter } from './rate-limiter.js';
 
 /** Maximum number of events per session batch (prevents index explosion) */
@@ -53,7 +53,7 @@ export class CollectorServer {
 
     this.server = createServer((req, res) => {
       this.handleRequest(req, res).catch((err) => {
-        console.error('[PARADOX COLLECTOR] Unhandled error:', err);
+        console.error('[ERGENEKON COLLECTOR] Unhandled error:', err);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Internal server error' }));
       });
@@ -63,9 +63,9 @@ export class CollectorServer {
       this.server!.listen(this.config.port, () => {
         const tierDisplay = getTierDisplay(this.license.tier);
         console.log(
-          `[PARADOX COLLECTOR] Listening on port ${this.config.port}\n` +
-          `[PARADOX COLLECTOR] Storage: ${this.config.storageDir}\n` +
-          `[PARADOX COLLECTOR] License: ${tierDisplay}` +
+          `[ERGENEKON COLLECTOR] Listening on port ${this.config.port}\n` +
+          `[ERGENEKON COLLECTOR] Storage: ${this.config.storageDir}\n` +
+          `[ERGENEKON COLLECTOR] License: ${tierDisplay}` +
           (this.license.limits.maxSessions !== -1 ? ` | max sessions: ${this.license.limits.maxSessions}` : '') +
           (this.license.limits.maxRetentionHours !== -1 ? ` | retention: ${this.license.limits.maxRetentionHours}h` : ' | retention: unlimited')
         );

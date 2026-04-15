@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Safe Body Reader
+// ERGENEKON COLLECTOR — Safe Body Reader
 //
 // Replaces the unbounded readBody() that was vulnerable to OOM DoS.
 //

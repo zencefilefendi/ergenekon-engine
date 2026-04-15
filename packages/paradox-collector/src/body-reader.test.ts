@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Body Reader Tests
+// ERGENEKON COLLECTOR — Body Reader Tests
 //
 // Validates Issue 3 fix (JSON parse DoS):
 //   1. Content-Length pre-check rejects before reading a byte

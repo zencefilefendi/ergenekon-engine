@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Durable Writer
+// ERGENEKON COLLECTOR — Durable Writer
 //
 // Crash-safe file writes using the write-rename-fsync dance:
 //   1. Write to a temporary file

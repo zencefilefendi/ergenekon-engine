@@ -1,7 +1,7 @@
 export type {
   EventType,
   HLCTimestamp,
-  ParadoxEvent,
+  ErgenekonEvent,
   ErrorInfo,
   RecordingSession,
   SessionMetadata,

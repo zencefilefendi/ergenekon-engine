@@ -1,7 +1,7 @@
 // ============================================================================
-// PARADOX PROBE — Performance Benchmark
+// ERGENEKON PROBE — Performance Benchmark
 //
-// Measures the overhead of PARADOX instrumentation on real request processing.
+// Measures the overhead of ERGENEKON instrumentation on real request processing.
 //
 // Methodology:
 // 1. Run N requests WITHOUT the probe (baseline)
@@ -91,7 +91,7 @@ export function printBenchmarkComparison(
 
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
-║              PARADOX Performance Benchmark                     ║
+║              ERGENEKON Performance Benchmark                     ║
 ╠════════════════════════════════════════════════════════════════╣
 ║                                                                ║
 ║  Metric           Baseline        Instrumented    Overhead     ║
@@ -122,7 +122,7 @@ function formatBytes(bytes: number): string {
 // ── Self-contained benchmark runner ───────────────────────────────
 
 async function runSelfBenchmark(): Promise<void> {
-  console.log('\nPARADOX Probe Overhead Benchmark\n');
+  console.log('\nERGENEKON Probe Overhead Benchmark\n');
   console.log('Measuring Date.now() interception overhead...\n');
 
   // Store original

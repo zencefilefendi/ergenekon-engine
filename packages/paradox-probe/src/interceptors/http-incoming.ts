@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — HTTP Incoming Interceptor
+// ERGENEKON PROBE — HTTP Incoming Interceptor
 //
 // Express middleware that captures incoming requests and outgoing responses.
 // This is the "front door" — the first and last events in every recording.
@@ -9,8 +9,8 @@
 // ============================================================================
 
 import type { Request, Response, NextFunction } from 'express';
-import type { ProbeConfig } from '@paradox/core';
-import { HybridLogicalClock, ulid } from '@paradox/core';
+import type { ProbeConfig } from '@ergenekon/core';
+import { HybridLogicalClock, ulid } from '@ergenekon/core';
 import { RecordingSession, runWithSession } from '../recording-context.js';
 import { originalDateNow } from './globals.js';
 import type { SamplingEngine, SamplingDecision } from '../sampling.js';
@@ -18,7 +18,7 @@ import { redactDeep, redactHeaders } from '../redaction.js';
 
 // W3C Trace Context header names
 const TRACEPARENT_HEADER = 'traceparent';
-const PARADOX_HLC_HEADER = 'x-paradox-hlc';
+const ERGENEKON_HLC_HEADER = 'x-paradox-hlc';
 
 /**
  * Parse W3C traceparent header: "00-traceId-parentId-flags"
@@ -53,7 +53,7 @@ function generateTraceId(): string {
 }
 
 
-export type SessionCallback = (session: import('@paradox/core').RecordingSession) => void;
+export type SessionCallback = (session: import('@ergenekon/core').RecordingSession) => void;
 
 /**
  * Creates the Express middleware that records incoming HTTP requests.
@@ -100,7 +100,7 @@ export function createHttpIncomingMiddleware(
     const spanId = generateSpanId();
 
     // Receive remote HLC if present (distributed clock sync)
-    const remoteHlcHeader = req.headers[PARADOX_HLC_HEADER] as string | undefined;
+    const remoteHlcHeader = req.headers[ERGENEKON_HLC_HEADER] as string | undefined;
     if (remoteHlcHeader) {
       try {
         const remoteHlc = JSON.parse(remoteHlcHeader);

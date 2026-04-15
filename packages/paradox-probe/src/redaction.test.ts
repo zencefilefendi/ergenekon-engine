@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Redaction Engine Tests
+// ERGENEKON PROBE — Redaction Engine Tests
 //
 // Validates PII protection:
 //   1. Field name matching (case-insensitive)

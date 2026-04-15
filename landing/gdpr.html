@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GDPR Compliance — ERGENEKON Engine</title>
+  <meta name="description" content="ERGENEKON Engine GDPR Compliance — how we protect your data rights under the General Data Protection Regulation.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏪</text></svg>">
+  <style>
+    :root {
+      --bg: #08090d; --bg-card: #12121a; --border: rgba(255,255,255,0.06);
+      --text: #eaecf0; --text-sec: #9898ac; --text-muted: #65657a;
+      --accent: #8b5cf6; --accent-green: #10b981; --font: 'Inter', -apple-system, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.8; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 800px; margin: 0 auto; padding: 60px 24px 100px; }
+    nav { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+    nav a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 14px; }
+    nav a:hover { text-decoration: underline; }
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .updated { font-size: 13px; color: var(--text-muted); margin-bottom: 40px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 40px 0 12px; color: var(--text); }
+    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; color: var(--text-sec); }
+    p, li { font-size: 15px; color: var(--text-sec); margin-bottom: 12px; }
+    ul { padding-left: 24px; }
+    li { margin-bottom: 6px; }
+    strong { color: var(--text); }
+    a { color: var(--accent); }
+    .highlight { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+    .gdpr-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); border-radius: 8px; color: var(--accent-green); font-weight: 600; font-size: 14px; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    th { color: var(--text); font-weight: 600; }
+    td { color: var(--text-sec); }
+    .check { color: var(--accent-green); font-weight: 700; }
+    footer { padding: 24px; text-align: center; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; margin-top: 60px; }
+    footer a { color: var(--text-sec); text-decoration: none; margin: 0 8px; }
+  </style>
+</head>
+<body>
+<nav><a href="./index.html">← Back to ERGENEKON Engine</a></nav>
+<div class="container">
+
+<h1>GDPR Compliance</h1>
+<p class="updated">Last updated: April 15, 2026</p>
+<div class="gdpr-badge">🛡️ GDPR Compliant</div>
+
+<p>ERGENEKON Engine is committed to protecting your personal data and respecting your privacy rights under the <strong>General Data Protection Regulation (EU) 2016/679</strong> ("GDPR"), the <strong>UK GDPR</strong>, the <strong>California Consumer Privacy Act (CCPA)</strong>, and the <strong>Turkish Law on the Protection of Personal Data No. 6698 (KVKK)</strong>.</p>
+
+<h2>1. Our Role Under GDPR</h2>
+
+<div class="highlight">
+  <p><strong>As a Software Tool:</strong> ERGENEKON Engine runs entirely on your infrastructure. We are <strong>not</strong> a data processor or sub-processor for your application data. Your recordings, sessions, and debugging data never leave your servers.</p>
+  <p><strong>As a Website & License Provider:</strong> We act as a <strong>Data Controller</strong> for the personal data we collect when you purchase a license, contact support, or visit our website.</p>
+</div>
+
+<h2>2. GDPR Compliance Checklist</h2>
+
+<table>
+  <thead><tr><th>Requirement</th><th>Status</th><th>Implementation</th></tr></thead>
+  <tbody>
+    <tr><td>Lawful basis for processing</td><td class="check">✅</td><td>Contract, consent, and legitimate interest</td></tr>
+    <tr><td>Data minimization</td><td class="check">✅</td><td>We collect only what's necessary for license delivery</td></tr>
+    <tr><td>Purpose limitation</td><td class="check">✅</td><td>Data used only for stated purposes</td></tr>
+    <tr><td>Storage limitation</td><td class="check">✅</td><td>Defined retention periods for all data categories</td></tr>
+    <tr><td>Right to access (Art. 15)</td><td class="check">✅</td><td>Request via privacy@ergenekon.dev</td></tr>
+    <tr><td>Right to rectification (Art. 16)</td><td class="check">✅</td><td>Email us to update your information</td></tr>
+    <tr><td>Right to erasure (Art. 17)</td><td class="check">✅</td><td>"Right to be forgotten" — request deletion</td></tr>
+    <tr><td>Right to data portability (Art. 20)</td><td class="check">✅</td><td>Export your data in JSON format</td></tr>
+    <tr><td>Right to object (Art. 21)</td><td class="check">✅</td><td>Opt out of processing based on legitimate interest</td></tr>
+    <tr><td>Right to restrict processing (Art. 18)</td><td class="check">✅</td><td>Request limitation of processing</td></tr>
+    <tr><td>Data breach notification (Art. 33-34)</td><td class="check">✅</td><td>72-hour notification to authorities; immediate user notification</td></tr>
+    <tr><td>Privacy by design (Art. 25)</td><td class="check">✅</td><td>Minimal data collection, Ed25519 crypto, offline validation</td></tr>
+    <tr><td>Records of processing (Art. 30)</td><td class="check">✅</td><td>Maintained internally</td></tr>
+    <tr><td>Data Protection Impact Assessment</td><td class="check">✅</td><td>Completed — low risk profile</td></tr>
+    <tr><td>International transfers</td><td class="check">✅</td><td>Standard Contractual Clauses (SCCs) with sub-processors</td></tr>
+    <tr><td>Cookie consent</td><td class="check">✅</td><td>Minimal essential cookies only; no tracking cookies</td></tr>
+  </tbody>
+</table>
+
+<h2>3. Data We Process</h2>
+
+<h3>3.1 What We Collect</h3>
+<table>
+  <thead><tr><th>Data Category</th><th>Examples</th><th>Legal Basis</th><th>Retention</th></tr></thead>
+  <tbody>
+    <tr><td>Identity</td><td>Name, email</td><td>Contract</td><td>License term + 12 months</td></tr>
+    <tr><td>Financial</td><td>Payment info (via Stripe)</td><td>Contract</td><td>7 years (tax law)</td></tr>
+    <tr><td>Technical</td><td>IP address (anonymized), browser type</td><td>Legitimate interest</td><td>48 hours (IP), 30 days (logs)</td></tr>
+    <tr><td>Communications</td><td>Support emails</td><td>Legitimate interest</td><td>24 months after resolution</td></tr>
+    <tr><td>Marketing</td><td>Newsletter email</td><td>Consent</td><td>Until unsubscribe</td></tr>
+  </tbody>
+</table>
+
+<h3>3.2 What We Do NOT Collect</h3>
+<ul>
+  <li>Your application source code</li>
+  <li>Recording sessions or debugging data</li>
+  <li>Database contents, API payloads, or user data</li>
+  <li>Behavioral tracking profiles</li>
+  <li>Biometric or special category data</li>
+</ul>
+
+<h2>4. Sub-Processors</h2>
+<table>
+  <thead><tr><th>Sub-Processor</th><th>Purpose</th><th>Location</th><th>Safeguards</th></tr></thead>
+  <tbody>
+    <tr><td>Stripe, Inc.</td><td>Payment processing</td><td>USA</td><td>SCCs, SOC 2, PCI DSS Level 1</td></tr>
+    <tr><td>Resend (if used)</td><td>Transactional email</td><td>USA</td><td>SCCs, SOC 2</td></tr>
+    <tr><td>Plausible Analytics</td><td>Privacy-first analytics</td><td>EU</td><td>No personal data processed</td></tr>
+    <tr><td>GitHub (Microsoft)</td><td>Source code hosting</td><td>USA</td><td>SCCs, SOC 2, ISO 27001</td></tr>
+  </tbody>
+</table>
+
+<h2>5. Your GDPR Rights</h2>
+<p>As an EU/EEA resident, you have the following rights. All requests will be processed within <strong>30 days</strong>:</p>
+
+<ul>
+  <li><strong>Access:</strong> "What data do you have about me?" → We'll provide a complete export.</li>
+  <li><strong>Rectification:</strong> "My email changed." → We'll update it immediately.</li>
+  <li><strong>Erasure:</strong> "Delete everything." → We'll remove all personal data except what's legally required.</li>
+  <li><strong>Portability:</strong> "Give me my data." → Delivered in JSON format.</li>
+  <li><strong>Object:</strong> "Stop processing my data." → We'll cease non-essential processing.</li>
+  <li><strong>Restrict:</strong> "Limit how you use my data." → We'll restrict processing to storage only.</li>
+  <li><strong>Withdraw Consent:</strong> "I no longer agree." → We'll stop consent-based processing immediately.</li>
+</ul>
+
+<div class="highlight">
+  <p><strong>How to exercise your rights:</strong></p>
+  <p>Email <a href="mailto:privacy@ergenekon.dev">privacy@ergenekon.dev</a> with the subject line "GDPR Request: [Right Name]". Include your registered email address for identity verification. We will respond within 30 days.</p>
+</div>
+
+<h2>6. Data Breach Response</h2>
+<p>In the event of a personal data breach:</p>
+<ol>
+  <li><strong>Within 24 hours:</strong> Internal investigation and containment.</li>
+  <li><strong>Within 72 hours:</strong> Notification to the relevant supervisory authority (as required by Article 33).</li>
+  <li><strong>Without undue delay:</strong> Notification to affected individuals if the breach poses a high risk to their rights and freedoms (Article 34).</li>
+</ol>
+
+<h2>7. Privacy by Design</h2>
+<p>ERGENEKON Engine is architected with privacy at its core:</p>
+<ul>
+  <li><strong>On-premise first:</strong> All debugging data stays on your infrastructure.</li>
+  <li><strong>No telemetry:</strong> The SDK does not phone home or send analytics.</li>
+  <li><strong>Offline license validation:</strong> Ed25519 signatures — no internet required.</li>
+  <li><strong>Deep PII Redaction:</strong> Built-in automatic detection and masking of credit cards, SSNs, emails, phone numbers, and API keys before data is stored.</li>
+  <li><strong>Minimal data collection:</strong> We only collect what's strictly necessary for license delivery.</li>
+</ul>
+
+<h2>8. California Residents (CCPA)</h2>
+<p>Under the California Consumer Privacy Act:</p>
+<ul>
+  <li>We do <strong>not</strong> sell your personal information.</li>
+  <li>We do <strong>not</strong> share your data for cross-context behavioral advertising.</li>
+  <li>You have the right to know, delete, and opt out.</li>
+  <li>We will not discriminate against you for exercising your rights.</li>
+  <li>Contact: <a href="mailto:privacy@ergenekon.dev">privacy@ergenekon.dev</a></li>
+</ul>
+
+<h2>9. Turkish Data Protection (KVKK)</h2>
+<p>We comply with the Turkish Law on the Protection of Personal Data No. 6698 (KVKK). As the data controller:</p>
+<ul>
+  <li>Data is processed lawfully and in accordance with the principle of good faith.</li>
+  <li>Data is accurate and up to date.</li>
+  <li>Data is processed for specified, explicit, and legitimate purposes.</li>
+  <li>Data is adequate, relevant, and limited to what is necessary.</li>
+  <li>Data is retained only as long as necessary.</li>
+  <li>Data subjects can exercise their rights under Article 11 of KVKK.</li>
+</ul>
+
+<h2>10. Contact the Data Controller</h2>
+<div class="highlight">
+  <p><strong>Data Controller:</strong> İlhan Göktaş</p>
+  <p><strong>Email:</strong> <a href="mailto:privacy@ergenekon.dev">privacy@ergenekon.dev</a></p>
+  <p><strong>Website:</strong> <a href="https://ergenekon.dev">ergenekon.dev</a></p>
+</div>
+
+<p>If you believe we have not adequately addressed your concern, you have the right to lodge a complaint with your local supervisory authority:</p>
+<ul>
+  <li><strong>EU:</strong> Your local Data Protection Authority (DPA)</li>
+  <li><strong>UK:</strong> Information Commissioner's Office (ICO) — <a href="https://ico.org.uk" target="_blank">ico.org.uk</a></li>
+  <li><strong>Turkey:</strong> Kişisel Verileri Koruma Kurumu (KVKK) — <a href="https://kvkk.gov.tr" target="_blank">kvkk.gov.tr</a></li>
+</ul>
+
+</div>
+
+<footer>
+  <a href="./privacy.html">Privacy Policy</a> ·
+  <a href="./terms.html">Terms of Service</a> ·
+  <a href="./cookies.html">Cookie Policy</a> ·
+  <a href="./gdpr.html">GDPR</a> ·
+  © 2026 ERGENEKON Engine
+</footer>
+</body>
+</html>

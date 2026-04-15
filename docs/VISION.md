@@ -1,4 +1,4 @@
-# PARADOX Engine — Vizyon Belgesi
+# ERGENEKON Engine — Vizyon Belgesi
 
 ## Neden Varız?
 
@@ -11,7 +11,7 @@ Ama debugging araçları hâlâ 2005'te kaldı. `console.log` ve log aggregation
 
 **Bu kabul edilemez.**
 
-Bir uçak düşmeden önce kara kutusu kayıt yapar. Düşerse, mühendisler saniye saniye ne olduğunu geri sarabilir. Yazılım dünyasının kara kutusu yok. **PARADOX bu kara kutuyu inşa ediyor.**
+Bir uçak düşmeden önce kara kutusu kayıt yapar. Düşerse, mühendisler saniye saniye ne olduğunu geri sarabilir. Yazılım dünyasının kara kutusu yok. **ERGENEKON bu kara kutuyu inşa ediyor.**
 
 ---
 
@@ -39,7 +39,7 @@ Mühendis Datadog'a giriyor:
   → 3. servisi de bulmak 1 saat daha sürdü.
 
 5 saat, 3 mühendis, $50K işlem kaybı.
-PARADOX ile: 15 dakika, 1 mühendis.
+ERGENEKON ile: 15 dakika, 1 mühendis.
 ```
 
 ### Sektördeki Maliyet
@@ -47,7 +47,7 @@ PARADOX ile: 15 dakika, 1 mühendis.
 - Ortalama production incident: **4.5 saat** (Atlassian, 2023)
 - Senior mühendis saati: ~$150
 - 10 kişilik takım için yıllık incident maliyeti: **~$500K+**
-- PARADOX ile MTTR (Mean Time to Resolution) hedefi: **%80 azalma**
+- ERGENEKON ile MTTR (Mean Time to Resolution) hedefi: **%80 azalma**
 
 ---
 
@@ -78,7 +78,7 @@ PARADOX ile: 15 dakika, 1 mühendis.
 
 ### Mevcut Araçlar ve Eksiklikleri
 
-| Araç | Ne Yapıyor | PARADOX Farkı |
+| Araç | Ne Yapıyor | ERGENEKON Farkı |
 |------|-----------|---------------|
 | **Datadog** | Log/trace/metric gözlem | Replay yok — state görünmüyor |
 | **Jaeger/Zipkin** | Distributed timing | Timing var, veri yok |
@@ -88,7 +88,7 @@ PARADOX ile: 15 dakika, 1 mühendis.
 | **Lightrun** | Live debugging | Production'da breakpoint — overhead yüksek |
 | **Rookout** | Non-breaking breakpoints | Snapshot alır, replay yapamaz |
 
-### PARADOX'un Benzersiz Konumu
+### ERGENEKON'un Benzersiz Konumu
 
 ```
                     Record?   Replay?   Distributed?   Production-Safe?
@@ -96,10 +96,10 @@ Datadog               ✓         ✗            ✓               ✓
 Sentry                ✓         ✗            ✓               ✓
 rr                    ✓         ✓            ✗               ✗
 Replay.io             ✓         ✓            ✗               ✓
-PARADOX               ✓         ✓            ✓               ✓  ← Tek
+ERGENEKON               ✓         ✓            ✓               ✓  ← Tek
 ```
 
-**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. PARADOX bunu yapıyor.**
+**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. ERGENEKON bunu yapıyor.**
 
 ---
 

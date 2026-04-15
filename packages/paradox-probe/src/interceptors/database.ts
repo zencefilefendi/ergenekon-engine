@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — Database Interceptors
+// ERGENEKON PROBE — Database Interceptors
 //
 // Monkey-patches popular database drivers to capture queries and results.
 // Supports: pg (PostgreSQL), ioredis (Redis), mongoose (MongoDB)
@@ -165,7 +165,7 @@ export function installPgInterceptor(): boolean {
   };
 
   pgInstalled = true;
-  console.log('[PARADOX] PostgreSQL (pg) interceptor installed');
+  console.log('[ERGENEKON] PostgreSQL (pg) interceptor installed');
   return true;
 }
 
@@ -234,7 +234,7 @@ export function installRedisInterceptor(): boolean {
   };
 
   redisInstalled = true;
-  console.log('[PARADOX] Redis (ioredis) interceptor installed');
+  console.log('[ERGENEKON] Redis (ioredis) interceptor installed');
   return true;
 }
 
@@ -298,7 +298,7 @@ export function installMongoInterceptor(): boolean {
   }
 
   mongoInstalled = true;
-  console.log('[PARADOX] MongoDB (mongoose) interceptor installed');
+  console.log('[ERGENEKON] MongoDB (mongoose) interceptor installed');
   return true;
 }
 

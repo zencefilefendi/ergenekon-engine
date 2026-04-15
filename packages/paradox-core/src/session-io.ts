@@ -1,12 +1,12 @@
 // ============================================================================
-// PARADOX CORE — Session Import/Export
+// ERGENEKON CORE — Session Import/Export
 //
 // Supports two formats:
 //
 // 1. JSON (.paradox.json) — Human-readable, great for sharing & debugging
 // 2. Binary (.paradox.bin) — Compact, ~60% smaller, fast to parse
 //
-// Binary format (PARADOX Binary Session v1):
+// Binary format (ERGENEKON Binary Session v1):
 //   [4 bytes: magic "PRDX"]
 //   [2 bytes: version (1)]
 //   [4 bytes: metadata JSON length]
@@ -21,7 +21,7 @@
 // ============================================================================
 
 import { gzipSync, gunzipSync } from 'node:zlib';
-import type { RecordingSession, ParadoxEvent, SessionMetadata } from './types.js';
+import type { RecordingSession, ErgenekonEvent, SessionMetadata } from './types.js';
 
 // ── Constants ─────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ export function importSessionsJSON(json: string): RecordingSession[] {
     return parsed as RecordingSession[];
   }
 
-  throw new Error('Unknown PARADOX session format');
+  throw new Error('Unknown ERGENEKON session format');
 }
 
 // ── Binary Export/Import ──────────────────────────────────────────
@@ -164,14 +164,14 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
   // Verify magic
   const magic = buf.subarray(offset, offset + 4);
   if (!magic.equals(MAGIC)) {
-    throw new Error('Not a PARADOX binary session file (bad magic)');
+    throw new Error('Not a ERGENEKON binary session file (bad magic)');
   }
   offset += 4;
 
   // Version
   const version = buf.readUInt16BE(offset); offset += 2;
   if (version !== VERSION) {
-    throw new Error(`Unsupported PARADOX binary version: ${version}`);
+    throw new Error(`Unsupported ERGENEKON binary version: ${version}`);
   }
 
   // Metadata
@@ -187,13 +187,13 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
   const eventsLen = buf.readUInt32BE(offset); offset += 4;
   const eventsGzip = buf.subarray(offset, offset + eventsLen); offset += eventsLen;
   const eventsJson = gunzipSync(eventsGzip).toString('utf-8');
-  const events: ParadoxEvent[] = JSON.parse(eventsJson);
+  const events: ErgenekonEvent[] = JSON.parse(eventsJson);
 
   // Verify CRC32
   const storedChecksum = buf.readUInt32BE(offset);
   const computedChecksum = crc32(buf.subarray(0, offset));
   if (storedChecksum !== computedChecksum) {
-    throw new Error('PARADOX binary session file is corrupted (CRC32 mismatch)');
+    throw new Error('ERGENEKON binary session file is corrupted (CRC32 mismatch)');
   }
 
   if (events.length !== eventsCount) {

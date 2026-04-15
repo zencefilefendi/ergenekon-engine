@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — Minimal ULID Generator
+// ERGENEKON ENGINE — Minimal ULID Generator
 //
 // Universally Unique Lexicographically Sortable Identifier
 // Time-sortable, 128-bit, Crockford Base32 encoded

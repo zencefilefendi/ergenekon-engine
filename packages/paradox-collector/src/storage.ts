@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX COLLECTOR — Storage Engine (Phase 6 Hardened)
+// ERGENEKON COLLECTOR — Storage Engine (Phase 6 Hardened)
 //
 // File-based storage with crash-safe guarantees:
 //   - durableWrite: write → fsync → rename → dir-fsync
@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, rename as fsRename } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { RecordingSession } from '@paradox/core';
+import type { RecordingSession } from '@ergenekon/core';
 import { durableWrite } from './durable-writer.js';
 import { wrapWithChecksum, verifyAndUnwrap, ChecksumError } from './checksum.js';
 
@@ -171,7 +171,7 @@ export class FileStorage {
       const dst = join(this.corruptDir, `${Date.now()}-${filename}`);
       await fsRename(src, dst);
       this._corruptCount++;
-      console.error(`[PARADOX STORAGE] Quarantined corrupt file: ${filename} — ${reason}`);
+      console.error(`[ERGENEKON STORAGE] Quarantined corrupt file: ${filename} — ${reason}`);
     } catch {
       // Best effort — if we can't move it, at least we didn't serve it
       this._corruptCount++;

@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX ENGINE — License Validator
+// ERGENEKON ENGINE — License Validator
 //
 // Validates Ed25519-signed license tokens completely OFFLINE.
 // No network calls, no phone-home, no telemetry.
@@ -11,7 +11,7 @@
 //   - License payload is JSON — human-readable, auditable
 //
 // Usage:
-//   import { validateLicense, loadLicense } from '@paradox/core';
+//   import { validateLicense, loadLicense } from '@ergenekon/core';
 //   const result = loadLicense();
 //   if (result.valid) console.log(`Pro features unlocked!`);
 // ============================================================================
@@ -38,7 +38,7 @@ import {
 // ── Embedded Ed25519 Public Key ────────────────────────────────────
 // This is the PUBLIC key — safe to distribute in the npm package.
 // The corresponding PRIVATE key exists only on the license generation server.
-const PARADOX_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+const ERGENEKON_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEA19R1JXWK+QMczbg35nJ7InM8LYzSx5Vcfi6NkhhV3Ow=
 -----END PUBLIC KEY-----`;
 
@@ -69,7 +69,7 @@ function communityFallback(error: string | null = null): LicenseValidation {
  *   4. Expiration check
  *   5. Tier + feature resolution
  *
- * @param signedLicenseJson - The raw JSON string of the .paradox-license.json file
+ * @param signedLicenseJson - The raw JSON string of the .ergenekon-license.json file
  * @returns LicenseValidation — always returns a result, never throws
  */
 export function validateLicense(signedLicenseJson: string): LicenseValidation {
@@ -105,7 +105,7 @@ export function validateLicense(signedLicenseJson: string): LicenseValidation {
 
   // 6. Verify Ed25519 signature
   try {
-    const publicKey = createPublicKey(PARADOX_PUBLIC_KEY_PEM);
+    const publicKey = createPublicKey(ERGENEKON_PUBLIC_KEY_PEM);
     const payloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
     const signatureBytes = Buffer.from(signature, 'base64');
 
@@ -192,11 +192,11 @@ export function getTierDisplay(tier: LicenseTier): string {
  * Search for and load a license file from standard locations.
  *
  * Search order:
- *   1. PARADOX_LICENSE_KEY env var (inline JSON)
- *   2. PARADOX_LICENSE env var (file path)
- *   3. .paradox-license.json in current directory
+ *   1. ERGENEKON_LICENSE_KEY env var (inline JSON)
+ *   2. ERGENEKON_LICENSE env var (file path)
+ *   3. .ergenekon-license.json in current directory
  *   4. paradox-license.json in current directory
- *   5. ~/.paradox-license.json in home directory
+ *   5. ~/.ergenekon-license.json in home directory
  *
  * If no license is found, returns Community-tier validation (not an error).
  */
@@ -216,7 +216,7 @@ export function loadLicense(): LicenseValidation {
         const content = readFileSync(resolved, 'utf-8');
         return validateLicense(content);
       }
-      return communityFallback(`License file not found at PARADOX_LICENSE path: ${envPath}`);
+      return communityFallback(`License file not found at ERGENEKON_LICENSE path: ${envPath}`);
     } catch (err) {
       return communityFallback(`Error reading license file: ${err instanceof Error ? err.message : String(err)}`);
     }

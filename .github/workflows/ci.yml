@@ -41,4 +41,4 @@ jobs:
 
       - name: Verify CLI
         run: |
-          node packages/paradox-cli/dist/index.js help
+          node packages/ergenekon-cli/dist/index.js help

@@ -1,8 +1,8 @@
-# @paradox/probe
+# @ergenekon/probe
 
 > Zero-config Express middleware for recording production requests — time-travel debugging for distributed systems
 
-[![npm](https://img.shields.io/npm/v/@paradox/probe)](https://www.npmjs.com/package/@paradox/probe)
+[![npm](https://img.shields.io/npm/v/@ergenekon/probe)](https://www.npmjs.com/package/@ergenekon/probe)
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
 
 Drop-in Express middleware that records every request with full deterministic replay capability. Captures HTTP, database queries, Date.now(), Math.random(), timers, crypto — everything needed to reproduce any bug on your laptop.
@@ -10,17 +10,17 @@ Drop-in Express middleware that records every request with full deterministic re
 ## Install
 
 ```bash
-npm install @paradox/probe
+npm install @ergenekon/probe
 ```
 
 ## Quick Start
 
 ```typescript
 import express from 'express';
-import { ParadoxProbe } from '@paradox/probe';
+import { ErgenekonProbe } from '@ergenekon/probe';
 
 const app = express();
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'my-service',
   collectorUrl: 'http://localhost:4380',
 });
@@ -33,7 +33,7 @@ app.use(probe.middleware()); // That's it.
 Default config records errors always, new routes always, and 1% of everything else:
 
 ```typescript
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'my-service',
   collectorUrl: 'http://localhost:4380',
   sampling: {
@@ -49,14 +49,14 @@ const probe = new ParadoxProbe({
 
 ### Tail-Based Sampling
 
-PARADOX uses **tail-based** sampling — buffers events and decides at request END. This means errors are **never missed**, even if the HEAD decision said "don't record."
+ERGENEKON uses **tail-based** sampling — buffers events and decides at request END. This means errors are **never missed**, even if the HEAD decision said "don't record."
 
 ## Deep Redaction
 
 Sensitive fields are automatically redacted before recording:
 
 ```typescript
-const probe = new ParadoxProbe({
+const probe = new ErgenekonProbe({
   serviceName: 'my-service',
   collectorUrl: 'http://localhost:4380',
   redactHeaders: ['authorization', 'cookie', 'x-api-key'],
@@ -101,7 +101,7 @@ import mongoose from 'mongoose'; // MongoDB
 ## Local Mode (Development)
 
 ```typescript
-const probe = new ParadoxProbe({ serviceName: 'dev' })
+const probe = new ErgenekonProbe({ serviceName: 'dev' })
   .enableLocalMode(); // No collector needed
 
 // After requests:
@@ -120,17 +120,17 @@ await probe.shutdown();           // Flush and stop
 
 ## Distributed Tracing
 
-Automatically propagates W3C `traceparent` headers between services. Cross-service requests are linked by `traceId` — visible in the PARADOX UI as a distributed trace.
+Automatically propagates W3C `traceparent` headers between services. Cross-service requests are linked by `traceId` — visible in the ERGENEKON UI as a distributed trace.
 
-## Part of PARADOX Engine
+## Part of ERGENEKON Engine
 
 | Package | Description |
 |---------|-------------|
-| `@paradox/core` | Shared types, HLC clock, ULID |
-| **`@paradox/probe`** | ← You are here |
-| `@paradox/collector` | Ingestion server — stores recordings |
-| `@paradox/replay` | Replay engine — deterministic re-execution |
-| `@paradox/cli` | CLI — inspect, export, watch recordings |
+| `@ergenekon/core` | Shared types, HLC clock, ULID |
+| **`@ergenekon/probe`** | ← You are here |
+| `@ergenekon/collector` | Ingestion server — stores recordings |
+| `@ergenekon/replay` | Replay engine — deterministic re-execution |
+| `@ergenekon/cli` | CLI — inspect, export, watch recordings |
 
 ## License
 

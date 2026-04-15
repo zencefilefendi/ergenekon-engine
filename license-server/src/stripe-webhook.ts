@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX LICENSE SERVER — Stripe Webhook Handler
+// ERGENEKON LICENSE SERVER — Stripe Webhook Handler
 //
 // Processes Stripe webhook events:
 //   - checkout.session.completed → Generate license key

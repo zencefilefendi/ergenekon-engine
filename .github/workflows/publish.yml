@@ -34,33 +34,33 @@ jobs:
         run: npx tsx demo/replay-demo.ts
         timeout-minutes: 2
 
-      - name: Publish @paradox/core
-        run: npm publish --access public --workspace=packages/paradox-core --provenance
+      - name: Publish @ergenekon/core
+        run: npm publish --access public --workspace=packages/ergenekon-core --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @paradox/probe
-        run: npm publish --access public --workspace=packages/paradox-probe --provenance
+      - name: Publish @ergenekon/probe
+        run: npm publish --access public --workspace=packages/ergenekon-probe --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @paradox/collector
-        run: npm publish --access public --workspace=packages/paradox-collector --provenance
+      - name: Publish @ergenekon/collector
+        run: npm publish --access public --workspace=packages/ergenekon-collector --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @paradox/replay
-        run: npm publish --access public --workspace=packages/paradox-replay --provenance
+      - name: Publish @ergenekon/replay
+        run: npm publish --access public --workspace=packages/ergenekon-replay --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @paradox/cli
-        run: npm publish --access public --workspace=packages/paradox-cli --provenance
+      - name: Publish @ergenekon/cli
+        run: npm publish --access public --workspace=packages/ergenekon-cli --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @paradox/ui
-        run: npm publish --access public --workspace=packages/paradox-ui --provenance
+      - name: Publish @ergenekon/ui
+        run: npm publish --access public --workspace=packages/ergenekon-ui --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -69,20 +69,20 @@ jobs:
         with:
           generate_release_notes: true
           body: |
-            ## PARADOX Engine ${{ github.ref_name }}
+            ## ERGENEKON Engine ${{ github.ref_name }}
 
             Deterministic record & replay debugger for distributed systems.
 
             ### Install
             ```bash
-            npm install @paradox/probe @paradox/collector @paradox/replay
-            npm install -g @paradox/cli
+            npm install @ergenekon/probe @ergenekon/collector @ergenekon/replay
+            npm install -g @ergenekon/cli
             ```
 
             ### Packages Published
-            - [@paradox/core](https://npmjs.com/package/@paradox/core) — Types, HLC, ULID, session I/O
-            - [@paradox/probe](https://npmjs.com/package/@paradox/probe) — Node.js recording middleware
-            - [@paradox/collector](https://npmjs.com/package/@paradox/collector) — Event collection server
-            - [@paradox/replay](https://npmjs.com/package/@paradox/replay) — Deterministic replay engine
-            - [@paradox/cli](https://npmjs.com/package/@paradox/cli) — Time-travel CLI tool
-            - [@paradox/ui](https://npmjs.com/package/@paradox/ui) — Visual debugger web UI
+            - [@ergenekon/core](https://npmjs.com/package/@ergenekon/core) — Types, HLC, ULID, session I/O
+            - [@ergenekon/probe](https://npmjs.com/package/@ergenekon/probe) — Node.js recording middleware
+            - [@ergenekon/collector](https://npmjs.com/package/@ergenekon/collector) — Event collection server
+            - [@ergenekon/replay](https://npmjs.com/package/@ergenekon/replay) — Deterministic replay engine
+            - [@ergenekon/cli](https://npmjs.com/package/@ergenekon/cli) — Time-travel CLI tool
+            - [@ergenekon/ui](https://npmjs.com/package/@ergenekon/ui) — Visual debugger web UI

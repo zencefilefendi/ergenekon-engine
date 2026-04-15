@@ -1,6 +1,6 @@
 version: '3.9'
 
-# PARADOX Engine — Docker Compose
+# ERGENEKON Engine — Docker Compose
 # Usage:
 #   docker-compose up              # Start collector + UI
 #   docker-compose up -d           # Background mode
@@ -9,7 +9,7 @@ version: '3.9'
 
 services:
   # ─────────────────────────────────────────────
-  # PARADOX Collector — receives and stores events
+  # ERGENEKON Collector — receives and stores events
   # ─────────────────────────────────────────────
   collector:
     build:
@@ -32,7 +32,7 @@ services:
       start_period: 5s
 
   # ─────────────────────────────────────────────
-  # PARADOX UI — Time-Travel visual debugger
+  # ERGENEKON UI — Time-Travel visual debugger
   # ─────────────────────────────────────────────
   ui:
     build:
@@ -41,14 +41,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      PARADOX_COLLECTOR_URL: http://collector:4380
+      ERGENEKON_COLLECTOR_URL: http://collector:4380
     depends_on:
       collector:
         condition: service_healthy
     restart: unless-stopped
 
   # ─────────────────────────────────────────────
-  # Example App — your service with PARADOX probe
+  # Example App — your service with ERGENEKON probe
   # Comment out if you're attaching your own app
   # ─────────────────────────────────────────────
   demo-app:
@@ -58,9 +58,9 @@ services:
     ports:
       - "3001:3001"
     environment:
-      PARADOX_COLLECTOR_URL: http://collector:4380
-      PARADOX_SERVICE_NAME: demo-app
-      PARADOX_SAMPLE_RATE: "0.1"
+      ERGENEKON_COLLECTOR_URL: http://collector:4380
+      ERGENEKON_SERVICE_NAME: demo-app
+      ERGENEKON_SAMPLE_RATE: "0.1"
       PORT: 3001
     depends_on:
       collector:

@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX REPLAY — Canonical Deep Diff
+// ERGENEKON REPLAY — Canonical Deep Diff
 //
 // Structural deep equality that ignores JSON key ordering.
 // Replaces the broken JSON.stringify comparison (Issue 6).

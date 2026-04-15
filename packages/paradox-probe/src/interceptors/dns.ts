@@ -1,5 +1,5 @@
 // ============================================================================
-// PARADOX PROBE — DNS Interceptor
+// ERGENEKON PROBE — DNS Interceptor
 //
 // Captures dns.lookup calls for deterministic replay.
 // Flaky DNS is a real incident cause in fintech — stale DNS caches,

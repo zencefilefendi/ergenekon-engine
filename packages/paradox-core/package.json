@@ -1,8 +1,8 @@
 {
-  "name": "@paradox/core",
+  "name": "@ergenekon/core",
   "version": "0.4.0",
   "type": "module",
-  "description": "Shared types, HLC clock, ULID, and session I/O for PARADOX Engine",
+  "description": "Shared types, HLC clock, ULID, and session I/O for ERGENEKON Engine",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -22,20 +22,20 @@
   },
   "license": "BUSL-1.1",
   "keywords": [
-    "paradox",
+    "ergenekon",
     "debugging",
     "time-travel",
     "distributed-systems",
     "record-replay"
   ],
-  "homepage": "https://github.com/zencefilefendi/paradox-engine",
+  "homepage": "https://github.com/zencefilefendi/ergenekon-engine",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zencefilefendi/paradox-engine.git",
+    "url": "https://github.com/zencefilefendi/ergenekon-engine.git",
     "directory": "packages/paradox-core"
   },
   "bugs": {
-    "url": "https://github.com/zencefilefendi/paradox-engine/issues"
+    "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"
   },
   "devDependencies": {
     "@types/node": "^25.5.2"
