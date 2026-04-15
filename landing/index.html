@@ -104,31 +104,18 @@
       100% { background-position: 300% 50%; }
     }
     .logo-icon-cyber {
-      width: 32px; height: 32px;
-      border: 2px solid #00fff7;
-      border-radius: 6px;
+      width: 34px; height: 34px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px;
-      box-shadow: 0 0 12px rgba(0,255,247,0.4), inset 0 0 8px rgba(0,255,247,0.1);
-      animation: iconPulse 2s ease-in-out infinite;
+      font-size: 22px;
+      filter: drop-shadow(0 0 6px rgba(0,200,200,0.9));
+      animation: wolfBlink 2.4s ease-in-out infinite;
       position: relative;
-      overflow: hidden;
     }
-    .logo-icon-cyber::after {
-      content: '';
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: linear-gradient(45deg, transparent, rgba(0,255,247,0.15), transparent);
-      animation: iconSweep 3s linear infinite;
-    }
-    @keyframes iconPulse {
-      0%,100% { box-shadow: 0 0 8px rgba(0,255,247,0.3), inset 0 0 4px rgba(0,255,247,0.1); }
-      50% { box-shadow: 0 0 20px rgba(0,255,247,0.7), inset 0 0 12px rgba(0,255,247,0.2); }
-    }
-    @keyframes iconSweep {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    @keyframes wolfBlink {
+      0%,100% { filter: drop-shadow(0 0 4px rgba(0,220,210,0.5)); opacity: 1; }
+      40%     { filter: drop-shadow(0 0 14px rgba(0,255,247,1)) drop-shadow(0 0 28px rgba(0,200,180,0.7)); opacity: 1; }
+      50%     { filter: drop-shadow(0 0 2px rgba(0,180,170,0.3)); opacity: 0.75; }
+      60%     { filter: drop-shadow(0 0 14px rgba(0,255,247,1)) drop-shadow(0 0 28px rgba(0,200,180,0.7)); opacity: 1; }
     }
 
     /* ── UTILITY ───────────────────────────────────────────── */
@@ -698,7 +685,7 @@
 <nav>
   <div class="container">
     <a href="#" class="logo" style="gap:10px;">
-      <div class="logo-icon-cyber">⟳</div>
+      <div class="logo-icon-cyber">🐺</div>
       <span class="logo-text">ERGENEKON</span>
     </a>
     <ul class="nav-links">
@@ -958,8 +945,12 @@
       <!-- Pro -->
       <div class="pricing-card featured">
         <div class="plan-name">Pro</div>
-        <div class="price" id="pro-price">Free</div>
-        <div class="price-detail" id="pro-detail">Pricing coming soon — use it free now</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+          <div class="price" id="pro-price" style="color:#10b981;">Free</div>
+          <div style="font-size:22px;color:var(--text-muted);text-decoration:line-through;font-weight:700;">$49</div>
+        </div>
+        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 LIMITED TIME — LAUNCH OFFER</div>
+        <div class="price-detail" id="pro-detail" style="color:var(--text-muted);">Normally $49/dev/mo · Free while we launch</div>
         <ul>
           <li>Unlimited services</li>
           <li>30-day retention</li>
@@ -975,8 +966,12 @@
       <!-- Enterprise -->
       <div class="pricing-card">
         <div class="plan-name">Enterprise</div>
-        <div class="price" id="ent-price">Free</div>
-        <div class="price-detail" id="ent-detail">Pricing coming soon — use it free now</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
+          <div class="price" id="ent-price" style="color:#10b981;">Free</div>
+          <div style="font-size:22px;color:var(--text-muted);text-decoration:line-through;font-weight:700;">$199</div>
+        </div>
+        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 LIMITED TIME — LAUNCH OFFER</div>
+        <div class="price-detail" id="ent-detail" style="color:var(--text-muted);">Normally $199/dev/mo · Free while we launch</div>
         <ul>
           <li>Everything in Pro</li>
           <li>Unlimited retention</li>
