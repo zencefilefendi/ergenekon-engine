@@ -877,11 +877,11 @@
 <!-- ═══ PRICING ═════════════════════════════════════════ -->
 <section id="pricing">
   <div class="container">
-    <div class="section-label">Pricing</div>
-    <h2 class="section-title">Start free. Scale when ready.</h2>
-    <p class="section-subtitle">
-      Open-source core. No credit card. No vendor lock-in.
-    </p>
+     <div class="section-label">Pricing</div>
+     <h2 class="section-title">Free during launch. Forever transparent.</h2>
+     <p class="section-subtitle">
+       Full access, no credit card, no limits — all tiers are free while we launch.
+     </p>
 
     <div class="pricing-grid">
       <!-- Community -->
@@ -902,8 +902,8 @@
       <!-- Pro -->
       <div class="pricing-card featured">
         <div class="plan-name">Pro</div>
-        <div class="price">$49</div>
-        <div class="price-detail">per developer / month</div>
+        <div class="price" id="pro-price">Free</div>
+        <div class="price-detail" id="pro-detail">Pricing coming soon — use it free now</div>
         <ul>
           <li>Unlimited services</li>
           <li>30-day retention</li>
@@ -913,14 +913,14 @@
           <li>Binary PRDX export</li>
           <li>Priority email support</li>
         </ul>
-        <a href="#cta" class="btn-plan primary">Start Free Trial</a>
+        <a href="#cta" class="btn-plan primary">Get Started Free</a>
       </div>
 
       <!-- Enterprise -->
       <div class="pricing-card">
         <div class="plan-name">Enterprise</div>
-        <div class="price">$199</div>
-        <div class="price-detail">per developer / month</div>
+        <div class="price" id="ent-price">Free</div>
+        <div class="price-detail" id="ent-detail">Pricing coming soon — use it free now</div>
         <ul>
           <li>Everything in Pro</li>
           <li>Unlimited retention</li>
@@ -930,7 +930,7 @@
           <li>SLA 99.9%</li>
           <li>Dedicated support</li>
         </ul>
-        <a href="mailto:hello@ergenekon.dev" class="btn-plan outline">Contact Sales</a>
+        <a href="mailto:hello@ergenekon.dev" class="btn-plan outline">Contact Us</a>
       </div>
     </div>
   </div>
@@ -1122,22 +1122,8 @@
   }
 
   // ── Pricing Toggle ─────────────────────────────────────
-  let isAnnual = false;
-  function toggleBilling() {
-    isAnnual = !isAnnual;
-    const toggle = document.getElementById('billing-toggle');
-    const monthly = document.getElementById('toggle-monthly');
-    const annual = document.getElementById('toggle-annual');
-
-    toggle.classList.toggle('active', isAnnual);
-    monthly.classList.toggle('active', !isAnnual);
-    annual.classList.toggle('active', isAnnual);
-
-    document.getElementById('pro-price').textContent = isAnnual ? '$39' : '$49';
-    document.getElementById('pro-detail').textContent = isAnnual ? 'per developer / month (billed annually)' : 'per developer / month';
-    document.getElementById('ent-price').textContent = isAnnual ? '$159' : '$199';
-    document.getElementById('ent-detail').textContent = isAnnual ? 'per developer / month (billed annually)' : 'per developer / month';
-  }
+  // Pricing toggle disabled — all plans are free during launch
+  function toggleBilling() { /* coming soon */ }
 </script>
 
 </body>
