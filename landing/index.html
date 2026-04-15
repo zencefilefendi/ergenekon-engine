@@ -575,35 +575,126 @@
     }
     @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-    /* ── ARCHITECTURE DIAGRAM ──────────────────────────────── */
-    .arch-section { padding: 100px 0; }
-    .arch-flow {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0; flex-wrap: wrap; margin-top: 48px;
+    /* ── ARCHITECTURE DIAGRAM ─────────────────────────────── */
+    .arch-section { padding: 100px 0; background: var(--bg-secondary); }
+    .arch-canvas-wrap {
+      position: relative; margin-top: 56px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
     }
+
+    /* Pipeline row */
+    .arch-pipeline {
+      display: flex; align-items: stretch; justify-content: center;
+      gap: 0; width: 100%; max-width: 1100px;
+    }
+
+    /* Individual node */
     .arch-node {
-      padding: 20px 28px; border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle); background: var(--bg-card);
-      text-align: center; min-width: 140px;
-      transition: all 0.3s; position: relative;
+      flex: 1; min-width: 160px; max-width: 200px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px 20px 22px;
+      text-align: center;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      cursor: default;
+      overflow: hidden;
+    }
+    .arch-node::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--node-grad, none);
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: inherit;
     }
     .arch-node:hover {
-      border-color: var(--accent-violet); transform: translateY(-4px);
-      box-shadow: var(--shadow-glow);
+      transform: translateY(-8px) scale(1.03);
+      border-color: var(--node-color, var(--accent-violet));
+      box-shadow: 0 0 0 1px var(--node-color, var(--accent-violet)),
+                  0 16px 48px rgba(0,0,0,0.6),
+                  0 0 32px var(--node-glow, rgba(139,92,246,0.2));
+      z-index: 2;
     }
-    .arch-node .arch-icon { font-size: 28px; margin-bottom: 8px; }
-    .arch-node .arch-label { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-    .arch-node .arch-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-    .arch-arrow {
-      font-size: 24px; color: var(--accent-violet); padding: 0 12px;
-      animation: arrowPulse 2s ease-in-out infinite;
+    .arch-node:hover::before { opacity: 1; }
+
+    .arch-node .node-badge {
+      position: absolute; top: 10px; right: 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      padding: 2px 7px; border-radius: 100px;
+      background: var(--node-badge-bg, rgba(139,92,246,0.15));
+      color: var(--node-color, var(--accent-violet));
+      border: 1px solid var(--node-color, var(--accent-violet));
+      opacity: 0.8;
     }
-    .arch-arrow:nth-child(4) { animation-delay: 0.3s; }
-    .arch-arrow:nth-child(6) { animation-delay: 0.6s; }
-    .arch-arrow:nth-child(8) { animation-delay: 0.9s; }
-    @keyframes arrowPulse {
-      0%,100% { opacity: 0.4; transform: translateX(0); }
-      50% { opacity: 1; transform: translateX(4px); }
+    .arch-node .node-icon {
+      font-size: 36px; margin-bottom: 12px; display: block;
+      filter: drop-shadow(0 0 8px var(--node-glow, rgba(139,92,246,0.5)));
+      animation: nodeFloat 3s ease-in-out infinite;
+      animation-delay: var(--float-delay, 0s);
+    }
+    @keyframes nodeFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+    .arch-node .node-label {
+      font-size: 14px; font-weight: 800; letter-spacing: 1px;
+      color: var(--text-primary); margin-bottom: 6px;
+    }
+    .arch-node .node-pkg {
+      font-size: 10px; font-family: var(--font-mono);
+      color: var(--node-color, var(--accent-violet));
+      margin-bottom: 10px; display: block;
+    }
+    .arch-node .node-desc {
+      font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    }
+
+    /* Connector arrow */
+    .arch-connector {
+      display: flex; align-items: center; justify-content: center;
+      width: 52px; flex-shrink: 0; position: relative;
+    }
+    .arch-connector svg {
+      width: 52px; overflow: visible;
+    }
+    .flow-line {
+      stroke-dasharray: 6 4;
+      animation: flowDash 1.4s linear infinite;
+    }
+    .flow-line:nth-child(2) { animation-delay: -0.7s; }
+    @keyframes flowDash {
+      to { stroke-dashoffset: -20; }
+    }
+
+    /* Bottom detail row */
+    .arch-detail-row {
+      display: flex; gap: 16px; margin-top: 28px;
+      width: 100%; max-width: 1100px; flex-wrap: wrap;
+    }
+    .arch-detail-card {
+      flex: 1; min-width: 220px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      transition: border-color 0.3s;
+    }
+    .arch-detail-card:hover { border-color: rgba(255,255,255,0.12); }
+    .arch-detail-card h4 {
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase;
+    }
+    .arch-detail-card ul {
+      list-style: none; padding: 0;
+    }
+    .arch-detail-card li {
+      font-size: 12px; color: var(--text-muted); padding: 3px 0;
+      font-family: var(--font-mono);
+    }
+    .arch-detail-card li::before {
+      content: '› '; color: var(--accent-violet); font-weight: 700;
     }
 
     /* ── FAQ ACCORDION ─────────────────────────────────────── */
@@ -890,6 +981,169 @@
         </tr>
       </tbody>
     </table>
+  </div>
+</section>
+
+<!-- ═══ ARCHITECTURE ═════════════════════════════════════ -->
+<section class="arch-section" id="architecture">
+  <div class="container">
+    <div class="section-label">Architecture</div>
+    <h2 class="section-title">One pipeline.<br><span class="text-gradient">End-to-end determinism.</span></h2>
+    <p class="section-subtitle">
+      From production HTTP request to byte-perfect local replay —<br>
+      five decoupled packages, zero shared state.
+    </p>
+
+    <div class="arch-canvas-wrap">
+      <!-- Pipeline row -->
+      <div class="arch-pipeline">
+
+        <!-- Probe -->
+        <div class="arch-node" style="
+          --node-color:#06b6d4; --node-glow:rgba(6,182,212,0.25);
+          --node-grad:linear-gradient(135deg,rgba(6,182,212,0.06),transparent);
+          --float-delay:0s;">
+          <span class="node-badge">npm</span>
+          <span class="node-icon">🔬</span>
+          <div class="node-label">PROBE</div>
+          <span class="node-pkg">@ergenekon/probe</span>
+          <div class="node-desc">Express middleware — intercepts HTTP, DB, DNS, FS, timers, globals at I/O boundaries</div>
+        </div>
+
+        <!-- Arrow 1 -->
+        <div class="arch-connector">
+          <svg height="80" viewBox="0 0 52 80" fill="none">
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#06b6d4" stroke-width="1.5" class="flow-line"/>
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#06b6d4" stroke-width="1.5" class="flow-line" style="animation-delay:-0.7s;opacity:0.4"/>
+            <polyline points="38,33 48,40 38,47" stroke="#06b6d4" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+
+        <!-- Collector -->
+        <div class="arch-node" style="
+          --node-color:#8b5cf6; --node-glow:rgba(139,92,246,0.25);
+          --node-grad:linear-gradient(135deg,rgba(139,92,246,0.06),transparent);
+          --float-delay:0.4s;">
+          <span class="node-badge">server</span>
+          <span class="node-icon">📦</span>
+          <div class="node-label">COLLECTOR</div>
+          <span class="node-pkg">@ergenekon/collector</span>
+          <div class="node-desc">Ingest server — rate-limited, checksummed, durable writes to disk in NDJSON + binary</div>
+        </div>
+
+        <!-- Arrow 2 -->
+        <div class="arch-connector">
+          <svg height="80" viewBox="0 0 52 80" fill="none">
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#8b5cf6" stroke-width="1.5" class="flow-line" style="animation-delay:-0.35s"/>
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#8b5cf6" stroke-width="1.5" class="flow-line" style="animation-delay:-1.05s;opacity:0.4"/>
+            <polyline points="38,33 48,40 38,47" stroke="#8b5cf6" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+
+        <!-- Core -->
+        <div class="arch-node" style="
+          --node-color:#f59e0b; --node-glow:rgba(245,158,11,0.25);
+          --node-grad:linear-gradient(135deg,rgba(245,158,11,0.06),transparent);
+          --float-delay:0.8s;">
+          <span class="node-badge">shared</span>
+          <span class="node-icon">⚛️</span>
+          <div class="node-label">CORE</div>
+          <span class="node-pkg">@ergenekon/core</span>
+          <div class="node-desc">HLC clock · ULID IDs · Ed25519 licenses · shared types — zero runtime deps</div>
+        </div>
+
+        <!-- Arrow 3 -->
+        <div class="arch-connector">
+          <svg height="80" viewBox="0 0 52 80" fill="none">
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#f59e0b" stroke-width="1.5" class="flow-line" style="animation-delay:-0.7s"/>
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#f59e0b" stroke-width="1.5" class="flow-line" style="animation-delay:-1.4s;opacity:0.4"/>
+            <polyline points="38,33 48,40 38,47" stroke="#f59e0b" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+
+        <!-- Replay -->
+        <div class="arch-node" style="
+          --node-color:#10b981; --node-glow:rgba(16,185,129,0.25);
+          --node-grad:linear-gradient(135deg,rgba(16,185,129,0.06),transparent);
+          --float-delay:1.2s;">
+          <span class="node-badge">engine</span>
+          <span class="node-icon">⏪</span>
+          <div class="node-label">REPLAY</div>
+          <span class="node-pkg">@ergenekon/replay</span>
+          <div class="node-desc">Deterministic re-execution — mocks all I/O with recorded values, byte-for-byte identical</div>
+        </div>
+
+        <!-- Arrow 4 -->
+        <div class="arch-connector">
+          <svg height="80" viewBox="0 0 52 80" fill="none">
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#10b981" stroke-width="1.5" class="flow-line" style="animation-delay:-1.05s"/>
+            <line x1="4" y1="40" x2="44" y2="40" stroke="#10b981" stroke-width="1.5" class="flow-line" style="animation-delay:-1.75s;opacity:0.4"/>
+            <polyline points="38,33 48,40 38,47" stroke="#10b981" stroke-width="1.5" fill="none"/>
+          </svg>
+        </div>
+
+        <!-- UI -->
+        <div class="arch-node" style="
+          --node-color:#f43f5e; --node-glow:rgba(244,63,94,0.25);
+          --node-grad:linear-gradient(135deg,rgba(244,63,94,0.06),transparent);
+          --float-delay:1.6s;">
+          <span class="node-badge">UI</span>
+          <span class="node-icon">🖥️</span>
+          <div class="node-label">DASHBOARD</div>
+          <span class="node-pkg">@ergenekon/ui</span>
+          <div class="node-desc">Time-travel debugger — session list, timeline scrubber, service flow, diff view</div>
+        </div>
+
+      </div><!-- /arch-pipeline -->
+
+      <!-- Detail cards -->
+      <div class="arch-detail-row">
+        <div class="arch-detail-card">
+          <h4>🔬 Probe intercepts</h4>
+          <ul>
+            <li>HTTP incoming / outgoing</li>
+            <li>Node:fs — read/write/stat</li>
+            <li>Node:dns — lookup/resolve</li>
+            <li>Database queries (pg, mysql2)</li>
+            <li>Date.now() · Math.random()</li>
+            <li>setTimeout / setInterval</li>
+          </ul>
+        </div>
+        <div class="arch-detail-card">
+          <h4>📦 Collector guarantees</h4>
+          <ul>
+            <li>Token bucket: 100 req/min/IP</li>
+            <li>SHA-256 checksum per session</li>
+            <li>Durable write: fsync before ACK</li>
+            <li>NDJSON + binary .prdx format</li>
+            <li>HLC timestamp ordering</li>
+            <li>Spill buffer on disconnect</li>
+          </ul>
+        </div>
+        <div class="arch-detail-card">
+          <h4>⚛️ Core guarantees</h4>
+          <ul>
+            <li>Hybrid Logical Clock (HLC)</li>
+            <li>ULID — monotonic, sortable IDs</li>
+            <li>Ed25519 license signing</li>
+            <li>Zero external dependencies</li>
+            <li>Strict TypeScript types</li>
+            <li>213 tests, 0 flaky</li>
+          </ul>
+        </div>
+        <div class="arch-detail-card">
+          <h4>⏪ Replay guarantees</h4>
+          <ul>
+            <li>Byte-for-byte identical output</li>
+            <li>All I/O mocked from recording</li>
+            <li>Deep diff on response body</li>
+            <li>Multi-service trace alignment</li>
+            <li>Property-based tested</li>
+            <li>No network in replay mode</li>
+          </ul>
+        </div>
+      </div>
+    </div><!-- /arch-canvas-wrap -->
   </div>
 </section>
 
