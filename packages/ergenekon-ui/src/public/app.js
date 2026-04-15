@@ -1,6 +1,6 @@
 // ============================================================================
 // ERGENEKON UI — Time-Travel Debugger Application Logic
-// Premium Dashboard — Metrics, License Tier, Keyboard Shortcuts
+// Premium Dashboard — Phase 1 Upgrade
 // ============================================================================
 
 let sessions = [];
@@ -10,6 +10,7 @@ let currentCursor = 0;
 let currentFilter = 'all';
 let playInterval = null;
 let currentTier = 'community';
+let currentEventRef = null; // for copy
 
 // ── API Calls ────────────────────────────────────────────────────
 
@@ -59,22 +60,53 @@ function renderSessionList(list) {
   }
 
   container.innerHTML = list.map(s => {
-    const time = new Date(s.startedAt).toLocaleTimeString();
-    const duration = s.endedAt ? `${s.endedAt - s.startedAt}ms` : 'ongoing';
     const active = currentSession?.id === s.id ? 'active' : '';
     const errorDot = s.hasError ? '<span class="error-dot">&#9679;</span>' : '';
 
+    // Extract method and path from first event or session metadata
+    const method = s.method || s.httpMethod || 'GET';
+    const path = s.path || s.url || s.id.slice(0, 12);
+    const statusCode = s.statusCode || s.httpStatus || null;
+    const methodLower = method.toLowerCase();
+    const statusClass = getStatusClass(statusCode);
+
     return `
       <div class="session-item ${active}" onclick="selectSession('${s.id}')">
-        <div class="session-item-title">${s.serviceName}</div>
+        <div class="session-item-top">
+          <span class="session-method m-${methodLower}">${method}</span>
+          <span class="session-path">${path}</span>
+          ${statusCode ? `<span class="session-status-code ${statusClass}">${statusCode}</span>` : ''}
+        </div>
         <div class="session-item-meta">
-          <span>${time}</span>
+          <span class="session-service-name">${s.serviceName}</span>
+          <span>${relativeTime(s.startedAt)}</span>
           <span>${s.eventCount} events</span>
-          <span>${duration}</span>
           ${errorDot}
         </div>
       </div>`;
   }).join('');
+}
+
+function getStatusClass(code) {
+  if (!code) return '';
+  if (code >= 500) return 'sc-5xx';
+  if (code >= 400) return 'sc-4xx';
+  if (code >= 300) return 'sc-3xx';
+  return 'sc-2xx';
+}
+
+function relativeTime(ts) {
+  if (!ts) return '';
+  const diff = Date.now() - new Date(ts).getTime();
+  const s = Math.floor(diff / 1000);
+  if (s < 5) return 'just now';
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
 }
 
 function filterSessions() {
@@ -82,7 +114,9 @@ function filterSessions() {
   const filtered = sessions.filter(s =>
     s.serviceName.toLowerCase().includes(query) ||
     s.traceId?.toLowerCase().includes(query) ||
-    s.id.toLowerCase().includes(query)
+    s.id.toLowerCase().includes(query) ||
+    (s.path || '').toLowerCase().includes(query) ||
+    (s.method || '').toLowerCase().includes(query)
   );
   renderSessionList(filtered);
 }
@@ -101,15 +135,39 @@ async function selectSession(sessionId) {
   document.getElementById('empty-main').style.display = 'none';
   document.getElementById('session-detail').style.display = 'flex';
 
-  // Header
+  // Header — extract method/path from first event
   const firstEvent = currentEvents[0];
   const lastEvent = currentEvents[currentEvents.length - 1];
-  const method = firstEvent?.data?.method || '';
-  const path = firstEvent?.data?.path || firstEvent?.data?.url || '';
+  const method = firstEvent?.data?.method || data.method || 'GET';
+  const path = firstEvent?.data?.path || firstEvent?.data?.url || data.path || '/';
 
-  document.getElementById('session-title').textContent = `${method} ${path}`;
+  // Status code from last response event
+  let statusCode = null;
+  for (let i = currentEvents.length - 1; i >= 0; i--) {
+    if (currentEvents[i].type === 'http_response_out' && currentEvents[i].data?.statusCode) {
+      statusCode = currentEvents[i].data.statusCode;
+      break;
+    }
+  }
+
+  document.getElementById('session-title').textContent = path;
+  const methodBadge = document.getElementById('session-method');
+  methodBadge.textContent = method;
+  methodBadge.className = `method-badge method-${method.toLowerCase()}`;
+
   document.getElementById('session-service').textContent = data.serviceName;
-  document.getElementById('session-trace').textContent = `trace: ${data.traceId?.slice(0, 8)}...`;
+
+  // Status tag
+  const statusTag = document.getElementById('session-status');
+  if (statusCode) {
+    statusTag.textContent = `${statusCode}`;
+    statusTag.className = `tag tag-status s-${statusCode >= 500 ? '5xx' : statusCode >= 400 ? '4xx' : '2xx'}`;
+    statusTag.style.display = '';
+  } else {
+    statusTag.style.display = 'none';
+  }
+
+  document.getElementById('session-trace').textContent = `trace: ${data.traceId?.slice(0, 8)}…`;
   document.getElementById('session-duration').textContent = `${data.metadata?.totalDurationMs || 0}ms`;
   document.getElementById('session-event-count').textContent = `${currentEvents.length} events`;
 
@@ -122,6 +180,9 @@ async function selectSession(sessionId) {
   // Events
   renderEventList();
   updateCursor();
+
+  // Event type breakdown
+  renderEventBreakdown();
 
   // Highlight in session list
   renderSessionList(sessions);
@@ -142,10 +203,16 @@ function renderTimeline() {
   currentEvents.forEach((event, idx) => {
     const marker = document.createElement('div');
     const pct = ((event.wallClock - startTime) / totalDuration) * 100;
-    marker.className = `timeline-marker type-${getMarkerType(event.type)}`;
+    const mType = getMarkerType(event.type);
+    marker.className = `timeline-marker type-${mType}`;
     marker.style.left = `${pct}%`;
     marker.title = `#${event.sequence} ${event.type}: ${event.operationName}`;
     marker.onclick = (e) => { e.stopPropagation(); seekTo(idx); };
+
+    // Tooltip on hover
+    marker.onmouseenter = (e) => showTooltip(e, `#${event.sequence} ${event.type}\n${event.operationName}`);
+    marker.onmouseleave = hideTooltip;
+
     track.appendChild(marker);
   });
 
@@ -160,6 +227,8 @@ function getMarkerType(type) {
   if (type === 'error') return 'error';
   if (type === 'random' || type === 'timestamp' || type === 'uuid') return 'random';
   if (type.startsWith('timer')) return 'timer';
+  if (type.startsWith('fs')) return 'fs';
+  if (type.startsWith('dns')) return 'dns';
   return 'other';
 }
 
@@ -223,28 +292,56 @@ function togglePlay() {
   }, 200);
 }
 
-// ── Flow Graph ───────────────────────────────────────────────────
+// ── Flow Graph (SVG Upgrade) ─────────────────────────────────────
 
 function renderFlowGraph() {
   const container = document.getElementById('flow-graph');
 
-  // Find cross-service calls
-  const crossCalls = [];
+  // Count events from this service
+  const thisServiceCount = currentEvents.length;
+
+  // Find cross-service calls and their event counts
+  const targets = new Map();
   currentEvents.forEach(event => {
     if (event.type === 'http_request_out') {
       const url = event.data?.url || '';
-      crossCalls.push({ from: currentSession.serviceName, url });
+      const target = extractServiceFromUrl(url);
+      targets.set(target, (targets.get(target) || 0) + 1);
     }
   });
 
-  // Build flow
-  let html = `<div class="flow-node active">${currentSession.serviceName}</div>`;
+  // Build flow with SVG connectors
+  let html = `<div class="flow-node active">
+    ${currentSession.serviceName}
+    <span class="flow-node-count">${thisServiceCount} events</span>
+  </div>`;
 
-  crossCalls.forEach(call => {
-    const target = extractServiceFromUrl(call.url);
-    html += `<span class="flow-arrow">&#8594;</span>`;
-    html += `<div class="flow-node">${target}</div>`;
+  targets.forEach((count, target) => {
+    html += `
+      <div class="flow-connector">
+        <svg viewBox="0 0 40 20">
+          <line x1="0" y1="10" x2="32" y2="10" stroke="#505872" stroke-width="1.5" class="flow-dash"/>
+          <polygon points="32,6 40,10 32,14" fill="#505872"/>
+        </svg>
+      </div>
+      <div class="flow-node">
+        ${target}
+        <span class="flow-node-count">${count} calls</span>
+      </div>`;
   });
+
+  if (targets.size === 0) {
+    html += `
+      <div class="flow-connector">
+        <svg viewBox="0 0 40 20">
+          <line x1="0" y1="10" x2="32" y2="10" stroke="#505872" stroke-width="1.5" stroke-dasharray="2 3"/>
+          <polygon points="32,6 40,10 32,14" fill="#2a2e3e"/>
+        </svg>
+      </div>
+      <div class="flow-node" style="opacity:0.4;border-style:dashed">
+        No outbound calls
+      </div>`;
+  }
 
   container.innerHTML = html;
 }
@@ -252,7 +349,7 @@ function renderFlowGraph() {
 function extractServiceFromUrl(url) {
   try {
     const u = new URL(url);
-    return u.hostname + ':' + u.port;
+    return u.hostname + (u.port ? ':' + u.port : '');
   } catch {
     return url.split('/')[2] || 'external';
   }
@@ -286,6 +383,8 @@ function filterEventList(events, filter) {
   if (filter === 'all') return events;
   if (filter === 'http') return events.filter(e => e.type.startsWith('http'));
   if (filter === 'db') return events.filter(e => e.type.startsWith('db') || e.type.startsWith('cache'));
+  if (filter === 'fs') return events.filter(e => e.type.startsWith('fs'));
+  if (filter === 'dns') return events.filter(e => e.type.startsWith('dns'));
   if (filter === 'random') return events.filter(e => ['random', 'timestamp', 'uuid'].includes(e.type));
   if (filter === 'error') return events.filter(e => e.type === 'error' || e.error);
   return events;
@@ -299,10 +398,11 @@ function filterEvents(type) {
   renderEventList();
 }
 
-// ── Event Detail ─────────────────────────────────────────────────
+// ── Event Detail (Tabbed) ────────────────────────────────────────
 
 function showEventDetail(event) {
   if (!event) return;
+  currentEventRef = event;
 
   document.getElementById('event-detail-empty').style.display = 'none';
   document.getElementById('event-detail').style.display = 'block';
@@ -317,13 +417,17 @@ function showEventDetail(event) {
 
   document.getElementById('detail-data').innerHTML = syntaxHighlight(event.data);
 
-  // Error section
-  const errorSection = document.getElementById('detail-error-section');
+  // Error tab
+  const errorBtn = document.getElementById('tab-error-btn');
   if (event.error) {
-    errorSection.style.display = 'block';
+    errorBtn.style.display = '';
     document.getElementById('detail-error').innerHTML = syntaxHighlight(event.error);
   } else {
-    errorSection.style.display = 'none';
+    errorBtn.style.display = 'none';
+    // If error tab was active, switch to data
+    if (document.getElementById('tab-error').style.display !== 'none') {
+      switchTab('data');
+    }
   }
 
   // Metadata
@@ -337,13 +441,64 @@ function showEventDetail(event) {
   });
 }
 
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.detail-tab-content').forEach(el => el.style.display = 'none');
+
+  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).style.display = '';
+}
+
+function copyEventJSON() {
+  if (!currentEventRef) return;
+  const json = JSON.stringify(currentEventRef, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    const original = btn.textContent;
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+  });
+}
+
+// ── Event Breakdown ──────────────────────────────────────────────
+
+function renderEventBreakdown() {
+  const container = document.getElementById('event-breakdown');
+  if (!currentEvents.length) {
+    container.innerHTML = '<span class="breakdown-empty">No events</span>';
+    return;
+  }
+
+  const counts = {};
+  const colorMap = {
+    http: '#6366f1', db: '#22c55e', cache: '#ec4899',
+    timestamp: '#f59e0b', random: '#22d3ee', uuid: '#ec4899',
+    timer: '#a78bfa', error: '#ef4444', fs: '#f59e0b', dns: '#22d3ee',
+  };
+
+  currentEvents.forEach(e => {
+    const group = getMarkerType(e.type);
+    counts[group] = (counts[group] || 0) + 1;
+  });
+
+  container.innerHTML = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => `
+      <div class="breakdown-row">
+        <span class="breakdown-dot" style="background:${colorMap[type] || '#505872'}"></span>
+        <span>${type}</span>
+        <span class="breakdown-count">${count}</span>
+      </div>
+    `).join('');
+}
+
 // ── JSON Syntax Highlighting ─────────────────────────────────────
 
 function syntaxHighlight(obj) {
   const json = JSON.stringify(obj, null, 2);
   if (!json) return '';
 
-  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
     let cls = 'json-number';
     if (/^"/.test(match)) {
       if (/:$/.test(match)) {
@@ -359,6 +514,20 @@ function syntaxHighlight(obj) {
     }
     return `<span class="${cls}">${match}</span>`;
   });
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────
+
+function showTooltip(e, text) {
+  const tip = document.getElementById('tooltip');
+  tip.textContent = text;
+  tip.style.display = 'block';
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top = (e.clientY - 8) + 'px';
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
 }
 
 // ── Status ───────────────────────────────────────────────────────
@@ -377,6 +546,7 @@ function setStatus(state) {
     livePulse.style.borderColor = 'rgba(34, 197, 94, 0.15)';
     livePulse.style.background = 'rgba(34, 197, 94, 0.08)';
     liveLabel.style.color = '#22c55e';
+    liveLabel.textContent = 'LIVE';
   } else {
     livePulse.style.borderColor = 'rgba(239, 68, 68, 0.15)';
     livePulse.style.background = 'rgba(239, 68, 68, 0.08)';
@@ -467,6 +637,14 @@ function toggleKeyboardHelp() {
 }
 
 document.addEventListener('keydown', (e) => {
+  // Don't intercept if typing in input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    if (e.key === 'Escape') {
+      e.target.blur();
+    }
+    return;
+  }
+
   // Keyboard overlay
   if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
@@ -475,6 +653,11 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     document.getElementById('keyboard-overlay').style.display = 'none';
+    return;
+  }
+  if (e.key === '/') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
     return;
   }
   if (e.key === 'r' || e.key === 'R') {

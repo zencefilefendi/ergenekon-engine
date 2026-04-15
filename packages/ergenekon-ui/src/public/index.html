@@ -7,8 +7,8 @@
   <meta name="description" content="ERGENEKON Engine Time-Travel Debugger — visualize, inspect, and replay recorded sessions from your distributed system.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏪</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
       <div class="header-left">
         <div class="logo">
           <div class="logo-glow"></div>
-          <span class="logo-icon">⏪</span>
+          <span class="logo-wolf">🐺</span>
           <span class="logo-text">ERGENEKON</span>
         </div>
         <span class="header-badge">Time-Travel Debugger</span>
@@ -42,7 +42,7 @@
       <span class="upgrade-text">
         <strong>ERGENEKON Community</strong> — upgrade to <strong>Pro</strong> for distributed replay, smart sampling, deep redaction, and more.
       </span>
-      <a href="https://ergenekon.dev/pricing" target="_blank" class="upgrade-btn">Upgrade to Pro →</a>
+      <a href="https://ergenekon.dev/#pricing" target="_blank" class="upgrade-btn">Upgrade to Pro →</a>
       <button class="upgrade-close" onclick="dismissUpgrade()">×</button>
     </div>
 
@@ -76,7 +76,7 @@
         <div id="empty-main" class="empty-main">
           <div class="empty-hero">
             <div class="empty-icon-ring">
-              <div class="empty-icon">⏪</div>
+              <div class="empty-icon">🐺</div>
             </div>
             <h2>Select a Recording</h2>
             <p>Choose a recording from the left panel to inspect its timeline.</p>
@@ -94,9 +94,13 @@
           <!-- Session Header -->
           <div class="session-header">
             <div class="session-info">
-              <h2 id="session-title"></h2>
+              <div class="session-title-row">
+                <span id="session-method" class="method-badge method-get">GET</span>
+                <h2 id="session-title"></h2>
+              </div>
               <div class="session-meta">
                 <span id="session-service" class="tag tag-service"></span>
+                <span id="session-status" class="tag tag-status"></span>
                 <span id="session-trace" class="tag tag-trace"></span>
                 <span id="session-duration" class="tag tag-duration"></span>
                 <span id="session-event-count" class="tag tag-events"></span>
@@ -113,6 +117,13 @@
               <button class="btn btn-icon" onclick="seekNext()" title="Next (→)">▶</button>
               <button class="btn btn-icon" onclick="seekLast()" title="Last event (End)">⏭</button>
               <span id="timeline-position" class="timeline-pos">0 / 0</span>
+              <div class="timeline-legend">
+                <span class="legend-dot" style="background:var(--accent)"></span>HTTP
+                <span class="legend-dot" style="background:var(--accent-green)"></span>DB
+                <span class="legend-dot" style="background:var(--accent-orange)"></span>Non-det
+                <span class="legend-dot" style="background:var(--accent-red)"></span>Error
+                <span class="legend-dot" style="background:var(--accent-purple)"></span>Timer
+              </div>
             </div>
             <div class="timeline-track" id="timeline-track" onclick="onTimelineClick(event)">
               <div class="timeline-progress" id="timeline-progress"></div>
@@ -139,7 +150,9 @@
                 <button class="filter-btn active" data-type="all" onclick="filterEvents('all')">All</button>
                 <button class="filter-btn" data-type="http" onclick="filterEvents('http')">HTTP</button>
                 <button class="filter-btn" data-type="db" onclick="filterEvents('db')">DB</button>
-                <button class="filter-btn" data-type="random" onclick="filterEvents('random')">Random</button>
+                <button class="filter-btn" data-type="fs" onclick="filterEvents('fs')">FS</button>
+                <button class="filter-btn" data-type="dns" onclick="filterEvents('dns')">DNS</button>
+                <button class="filter-btn" data-type="random" onclick="filterEvents('random')">Non-det</button>
                 <button class="filter-btn" data-type="error" onclick="filterEvents('error')">Errors</button>
               </div>
               <div id="event-list" class="event-list"></div>
@@ -154,23 +167,26 @@
                 <div class="detail-header">
                   <span id="detail-type" class="event-type-badge"></span>
                   <span id="detail-operation" class="detail-op"></span>
+                  <button class="btn btn-ghost btn-copy" onclick="copyEventJSON()" title="Copy JSON">📋</button>
                 </div>
                 <div class="detail-timing">
                   <span id="detail-sequence"></span>
                   <span id="detail-wallclock"></span>
                   <span id="detail-duration"></span>
                 </div>
-                <div class="detail-section">
-                  <h4>Data</h4>
+                <div class="detail-tabs">
+                  <button class="tab-btn active" onclick="switchTab('data')">Data</button>
+                  <button class="tab-btn" onclick="switchTab('meta')">Metadata</button>
+                  <button class="tab-btn" id="tab-error-btn" style="display:none" onclick="switchTab('error')">Error</button>
+                </div>
+                <div class="detail-tab-content" id="tab-data">
                   <pre id="detail-data" class="json-view"></pre>
                 </div>
-                <div class="detail-section" id="detail-error-section" style="display:none">
-                  <h4>Error</h4>
-                  <pre id="detail-error" class="json-view json-error"></pre>
-                </div>
-                <div class="detail-section">
-                  <h4>Metadata</h4>
+                <div class="detail-tab-content" id="tab-meta" style="display:none">
                   <pre id="detail-meta" class="json-view json-meta"></pre>
+                </div>
+                <div class="detail-tab-content" id="tab-error" style="display:none">
+                  <pre id="detail-error" class="json-view json-error"></pre>
                 </div>
               </div>
             </div>
@@ -215,6 +231,14 @@
               <span class="metric-dot metric-dot-ok"></span> Healthy
             </div>
           </div>
+          <div class="metrics-divider"></div>
+          <!-- Event Type Breakdown -->
+          <div class="metric-card metric-breakdown">
+            <div class="metric-label">Event Types</div>
+            <div id="event-breakdown" class="breakdown-list">
+              <span class="breakdown-empty">Select a session</span>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -239,11 +263,15 @@
             <div class="kb-row"><kbd>Space</kbd> <span>Play / Pause</span></div>
             <div class="kb-row"><kbd>?</kbd> <span>Toggle this help</span></div>
             <div class="kb-row"><kbd>R</kbd> <span>Refresh sessions</span></div>
+            <div class="kb-row"><kbd>/</kbd> <span>Search sessions</span></div>
             <div class="kb-row"><kbd>Esc</kbd> <span>Close overlay</span></div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip" style="display:none"></div>
   </div>
 
   <script src="/app.js"></script>
