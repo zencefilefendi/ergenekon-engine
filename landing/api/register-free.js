@@ -15,14 +15,50 @@ const ENTERPRISE_FEATURES = [
   'on_premise', 'audit_log', 'custom_integrations', 'sla_guarantee',
 ];
 
+// ── Security Constants ─────────────────────────────────────
+const MAX_PER_EMAIL = 3;
+const MAX_BODY_SIZE = 2048; // 2KB max request body
+const ALLOWED_ORIGINS = [
+  'https://ergenekon.dev',
+  'https://www.ergenekon.dev',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
 // ── Rate Limiting (in-memory, resets on cold start) ────────
 const registrations = new Map();
-const MAX_PER_EMAIL = 3;
+// Global rate limit: max 30 requests per minute across all IPs
+let globalRequestCount = 0;
+let globalResetTime = Date.now() + 60000;
+const MAX_GLOBAL_RPM = 30;
+
+// ── Input Sanitization ─────────────────────────────────────
+function sanitizeEmail(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const email = raw.trim().toLowerCase().slice(0, 254); // RFC 5321 max
+
+  // Strict email validation
+  const emailRegex = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
+  if (!emailRegex.test(email)) return null;
+
+  // Block disposable email providers
+  const disposable = ['tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator', 'trashmail', 'fakeinbox'];
+  const domain = email.split('@')[1];
+  if (disposable.some(d => domain.includes(d))) return null;
+
+  return email;
+}
+
+function sanitizeName(raw) {
+  if (!raw || typeof raw !== 'string') return 'User';
+  // Strip HTML/script tags and limit to 100 chars
+  return raw.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}\s._\-]/gu, '').trim().slice(0, 100) || 'User';
+}
 
 // ── License Generator ──────────────────────────────────────
 function generateLicense(email, name, tier) {
   const privateKeyPem = process.env.ERGENEKON_SIGNING_KEY;
-  if (!privateKeyPem) throw new Error('ERGENEKON_SIGNING_KEY not configured');
+  if (!privateKeyPem) throw new Error('Signing key not configured');
 
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
@@ -51,39 +87,69 @@ function generateLicense(email, name, tier) {
 
 // ── API Handler ────────────────────────────────────────────
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // ── CORS (restricted to our domains) ─────────────────────
+  const origin = req.headers?.origin || '';
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Vary', 'Origin');
+
+  // ── Security Headers ─────────────────────────────────────
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { email, name } = req.body || {};
-    const cleanEmail = email?.trim().toLowerCase();
-    const cleanName = name?.trim() || cleanEmail?.split('@')[0] || 'User';
+    // ── Body size check ──────────────────────────────────────
+    const bodyStr = JSON.stringify(req.body || {});
+    if (bodyStr.length > MAX_BODY_SIZE) {
+      return res.status(413).json({ error: 'Request too large' });
+    }
 
-    // Validate
-    if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+    // ── Global rate limit ────────────────────────────────────
+    if (Date.now() > globalResetTime) {
+      globalRequestCount = 0;
+      globalResetTime = Date.now() + 60000;
+    }
+    globalRequestCount++;
+    if (globalRequestCount > MAX_GLOBAL_RPM) {
+      return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
+
+    // ── Input validation ─────────────────────────────────────
+    const { email, name } = req.body || {};
+    const cleanEmail = sanitizeEmail(email);
+    if (!cleanEmail) {
       return res.status(400).json({ error: 'Valid email address is required' });
     }
+    const cleanName = sanitizeName(name || cleanEmail.split('@')[0]);
 
-    // Rate limit
+    // ── Per-email rate limit ─────────────────────────────────
     const reg = registrations.get(cleanEmail);
     if (reg && reg.count >= MAX_PER_EMAIL) {
-      return res.status(429).json({ error: 'License already sent to this email. Check your inbox (and spam folder).' });
+      // Don't reveal if email exists (timing-safe)
+      return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
     }
 
-    // Generate license
-    const tier = req.body?.tier === 'enterprise' ? 'enterprise' : 'pro';
+    // ── Tier validation (only allow pro/enterprise) ──────────
+    const requestedTier = req.body?.tier;
+    const tier = requestedTier === 'enterprise' ? 'enterprise' : 'pro';
+
+    // ── Generate license ─────────────────────────────────────
     const license = generateLicense(cleanEmail, cleanName, tier);
 
-    // Track
+    // ── Track registration ───────────────────────────────────
     const existing = registrations.get(cleanEmail) || { count: 0 };
     registrations.set(cleanEmail, { count: existing.count + 1, lastAt: Date.now() });
 
-    console.log(`[FREE] ✅ License: ${license.payload.licenseId} → ${cleanEmail} (${tier})`);
+    // ── Log (no PII in production logs) ──────────────────────
+    console.log(`[REGISTER] ${license.payload.licenseId} tier=${tier}`);
 
     return res.status(200).json({
       success: true,
@@ -94,7 +160,8 @@ export default async function handler(req, res) {
       license,
     });
   } catch (err) {
-    console.error('[FREE] Error:', err);
-    return res.status(500).json({ error: 'Failed to generate license. Please try again.' });
+    console.error('[REGISTER] Error:', err.message);
+    // Never expose internal error details to client
+    return res.status(500).json({ error: 'Internal server error. Please try again.' });
   }
 }
