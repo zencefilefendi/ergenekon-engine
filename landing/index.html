@@ -1600,7 +1600,7 @@
   // Pricing toggle disabled — all plans are free during launch
   function toggleBilling() { /* coming soon */ }
   // ── Free License Registration ──────────────────────────────
-  const LICENSE_SERVER = 'https://license.ergenekon.dev';
+  const LICENSE_SERVER = ''; // same domain — Vercel serverless API
 
   async function registerFree(tier) {
     const prefix = tier === 'enterprise' ? 'ent' : tier === 'cta' ? 'cta' : 'pro';
