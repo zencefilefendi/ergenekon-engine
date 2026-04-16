@@ -1195,9 +1195,9 @@
 <section id="pricing">
   <div class="container">
      <div class="section-label">Pricing</div>
-     <h2 class="section-title">Free during launch. Forever transparent.</h2>
+     <h2 class="section-title">3 months free. Then you decide.</h2>
      <p class="section-subtitle">
-       Full access, no credit card, no limits — all tiers are free while we launch.
+       Full Pro access for 90 days — no credit card required. After trial, choose the plan that fits.
      </p>
 
     <div class="pricing-grid">
@@ -1219,12 +1219,12 @@
       <!-- Pro -->
       <div class="pricing-card featured">
         <div class="plan-name">Pro</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-          <div class="price" id="pro-price" style="color:#10b981;">Free</div>
-          <div style="font-size:22px;color:var(--text-muted);text-decoration:line-through;font-weight:700;">$49</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px;">
+          <div class="price" id="pro-price">$49</div>
+          <div style="font-size:14px;color:var(--text-muted);font-weight:500;">/dev/month</div>
         </div>
-        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 LIMITED TIME — LAUNCH OFFER</div>
-        <div class="price-detail" id="pro-detail" style="color:var(--text-muted);">Normally $49/dev/mo · Free while we launch</div>
+        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 3 MONTHS FREE — NO CREDIT CARD</div>
+        <div class="price-detail" id="pro-detail" style="color:var(--text-muted);">Full Pro access for 90 days · Then $49/dev/mo</div>
         <ul>
           <li>Unlimited services</li>
           <li>30-day retention</li>
@@ -1237,7 +1237,7 @@
         <div class="free-register-form" id="pro-register-form">
           <input type="email" id="pro-email" placeholder="you@company.com" class="register-email" />
           <button class="btn-plan primary" onclick="registerFree('pro')">
-            🐺 Get Free License
+            🐺 Start Free Trial
           </button>
           <div id="pro-register-msg" class="register-msg"></div>
         </div>
@@ -1246,12 +1246,12 @@
       <!-- Enterprise -->
       <div class="pricing-card">
         <div class="plan-name">Enterprise</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px;">
-          <div class="price" id="ent-price" style="color:#10b981;">Free</div>
-          <div style="font-size:22px;color:var(--text-muted);text-decoration:line-through;font-weight:700;">$199</div>
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:2px;">
+          <div class="price" id="ent-price">$199</div>
+          <div style="font-size:14px;color:var(--text-muted);font-weight:500;">/dev/month</div>
         </div>
-        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 LIMITED TIME — LAUNCH OFFER</div>
-        <div class="price-detail" id="ent-detail" style="color:var(--text-muted);">Normally $199/dev/mo · Free while we launch</div>
+        <div style="display:inline-block;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10b981;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;margin-bottom:6px;letter-spacing:0.5px;">🎁 3 MONTHS FREE — NO CREDIT CARD</div>
+        <div class="price-detail" id="ent-detail" style="color:var(--text-muted);">Full Enterprise access for 90 days · Then $199/dev/mo</div>
         <ul>
           <li>Everything in Pro</li>
           <li>Unlimited retention</li>
@@ -1264,7 +1264,7 @@
         <div class="free-register-form" id="ent-register-form">
           <input type="email" id="ent-email" placeholder="you@company.com" class="register-email" />
           <button class="btn-plan outline" onclick="registerFree('enterprise')">
-            🐺 Get Free License
+            🐺 Start Free Trial
           </button>
           <div id="ent-register-msg" class="register-msg"></div>
         </div>
@@ -1289,7 +1289,7 @@
       <div class="free-register-form" id="cta-register-form" style="max-width:380px;margin:0 auto;">
         <input type="email" id="cta-email" placeholder="you@company.com" class="register-email" />
         <button class="btn-plan primary" style="width:100%;padding:14px;font-size:15px;" onclick="registerFree('cta')">
-          🐺 Get Free Pro License
+          🐺 Start 90-Day Free Trial
         </button>
         <div id="cta-register-msg" class="register-msg"></div>
       </div>
@@ -1632,7 +1632,7 @@
       const response = await fetch(`${LICENSE_SERVER}/api/register-free`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name: email.split('@')[0] }),
+        body: JSON.stringify({ email, name: email.split('@')[0], website: '' }),
       });
 
       const data = await response.json();
@@ -1659,7 +1659,8 @@
         a.click();
         URL.revokeObjectURL(url);
 
-        msgEl.innerHTML = `✅ License downloaded! Now install:
+        const trialEnd = new Date(data.expiresAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+        msgEl.innerHTML = `✅ License downloaded! Trial valid until <strong>${trialEnd}</strong>. Install now:
           <pre style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;margin-top:10px;font-size:13px;overflow-x:auto;text-align:left;color:#e2e8f0">
 <span style="color:#10b981">$</span> npm install @ergenekon/probe @ergenekon/collector
 <span style="color:#10b981">$</span> mv ~/Downloads/.ergenekon-license.json ./
@@ -1669,7 +1670,7 @@
       console.error('Registration error:', err);
       msgEl.className = 'register-msg error';
       msgEl.textContent = err.message || 'Something went wrong. Please try again.';
-      btn.textContent = '🐺 Get Free License';
+      btn.textContent = '🐺 Start Free Trial';
       btn.disabled = false;
     }
   }

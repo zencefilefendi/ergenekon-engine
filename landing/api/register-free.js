@@ -61,7 +61,7 @@ function generateLicense(email, name, tier) {
   if (!privateKeyPem) throw new Error('Signing key not configured');
 
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 3 months free trial
   const features = tier === 'enterprise' ? ENTERPRISE_FEATURES : PRO_FEATURES;
 
   const payload = {
@@ -76,6 +76,9 @@ function generateLicense(email, name, tier) {
     features,
     issuedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
+    // Canary: unique fingerprint derived from registration context
+    // If this license appears on a forum/Pastebin, we can trace it back
+    _fp: Buffer.from(`${email}:${now.getTime()}:${Math.random()}`).toString('base64url').slice(0, 16),
   };
 
   const privateKey = createPrivateKey(privateKeyPem);
@@ -120,6 +123,22 @@ export default async function handler(req, res) {
     globalRequestCount++;
     if (globalRequestCount > MAX_GLOBAL_RPM) {
       return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    }
+
+    // ── Honeypot bot trap ────────────────────────────────────
+    // The 'website' field is hidden in the form — real users send ''
+    // Bots auto-fill it → instant reject (silent, returns success to confuse bot)
+    if (req.body?.website) {
+      console.warn(JSON.stringify({ event: 'honeypot_triggered', requestId }));
+      await timingSafeDelay(requestStart, 300);
+      return res.status(200).json({
+        success: true,
+        message: 'License generated!',
+        licenseId: 'lic_' + Date.now().toString(36),
+        tier: 'pro',
+        expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+        license: { payload: {}, signature: '' },
+      });
     }
 
     // ── Input validation ─────────────────────────────────────
