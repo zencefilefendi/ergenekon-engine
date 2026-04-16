@@ -32,7 +32,7 @@ export function installTimerInterceptors(): void {
 
   // ── setTimeout ──────────────────────────────────────────────────
 
-  globalThis.setTimeout = function paradoxSetTimeout(
+  globalThis.setTimeout = function ergenekonSetTimeout(
     callback: (...args: unknown[]) => void,
     ms?: number,
     ...args: unknown[]
@@ -67,7 +67,7 @@ export function installTimerInterceptors(): void {
 
   // ── setInterval ─────────────────────────────────────────────────
 
-  globalThis.setInterval = function paradoxSetInterval(
+  globalThis.setInterval = function ergenekonSetInterval(
     callback: (...args: unknown[]) => void,
     ms?: number,
     ...args: unknown[]
@@ -109,7 +109,7 @@ export function installTimerInterceptors(): void {
     if (typeof crypto.randomUUID === 'function') {
       _originalRandomUUID = crypto.randomUUID.bind(crypto);
 
-      crypto.randomUUID = function paradoxRandomUUID(): string {
+      crypto.randomUUID = function ergenekonRandomUUID(): string {
         const value = _originalRandomUUID!();
         const session = getActiveSession();
         if (session) {

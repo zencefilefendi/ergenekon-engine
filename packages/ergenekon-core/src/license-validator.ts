@@ -195,7 +195,7 @@ export function getTierDisplay(tier: LicenseTier): string {
  *   1. ERGENEKON_LICENSE_KEY env var (inline JSON)
  *   2. ERGENEKON_LICENSE env var (file path)
  *   3. .ergenekon-license.json in current directory
- *   4. paradox-license.json in current directory
+ *   4. ergenekon-license.json in current directory
  *   5. ~/.ergenekon-license.json in home directory
  *
  * If no license is found, returns Community-tier validation (not an error).

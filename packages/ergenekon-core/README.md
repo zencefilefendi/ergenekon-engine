@@ -85,4 +85,4 @@ const restored = importSessionBinary(buf);
 ## License
 
 Business Source License 1.1 — free for non-production use.
-Commercial license available at [paradox.dev](https://paradox.dev).
+Commercial license available at [ergenekon.dev](https://ergenekon.dev).

@@ -1,4 +1,4 @@
-# ERGENEKON Engine — Teknik Mimari
+# ERGENEKON Engine — Architecture
 
 Bu belge ERGENEKON Engine'in tüm paketlerini, iç tasarım kararlarını, kritik algoritmaları ve bileşenler arası bağımlılıkları açıklar.
 

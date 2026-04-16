@@ -1,0 +1,18 @@
+apiVersion: v2
+name: ergenekon
+description: ERGENEKON Engine — Deterministic record & replay debugger for distributed systems
+type: application
+version: 0.5.0
+appVersion: "0.4.1"
+home: https://github.com/zencefilefendi/ergenekon-engine
+sources:
+  - https://github.com/zencefilefendi/ergenekon-engine
+keywords:
+  - debugging
+  - observability
+  - record-replay
+  - distributed-tracing
+  - time-travel
+maintainers:
+  - name: ERGENEKON Team
+    url: https://github.com/zencefilefendi/ergenekon-engine

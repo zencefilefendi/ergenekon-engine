@@ -40,7 +40,7 @@ export function installDnsInterceptor(): void {
   origLookup = dns.lookup;
   const savedLookup = origLookup;
 
-  (dns as any).lookup = function paradoxDnsLookup(
+  (dns as any).lookup = function ergenekonDnsLookup(
     hostname: string,
     optionsOrCallback: any,
     maybeCallback?: any,
@@ -108,7 +108,7 @@ export function installDnsInterceptor(): void {
   origResolve = dnsPromises.resolve;
   const savedResolve = origResolve;
 
-  (dnsPromises as any).resolve = async function paradoxDnsResolve(
+  (dnsPromises as any).resolve = async function ergenekonDnsResolve(
     hostname: string,
     rrtype?: string
   ): Promise<any> {

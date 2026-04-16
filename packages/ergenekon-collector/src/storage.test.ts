@@ -41,7 +41,7 @@ function makeSession(id: string): RecordingSession {
 }
 
 function makeTmpDir(): string {
-  return mkdtempSync(join(tmpdir(), 'paradox-storage-'));
+  return mkdtempSync(join(tmpdir(), 'ergenekon-storage-'));
 }
 
 // ─── Checksum unit tests ───

@@ -33,7 +33,7 @@ MCowBQYDK2VwAyEAyUUydeL+CP9O1NAKbEFqFuvDsSRUhzKkjdAuI7Y3V+M=
 function createValidProLicense(): SignedLicense {
   return generateLicense({
     customerId: 'cus_test_123',
-    customerEmail: 'test@paradox.dev',
+    customerEmail: 'test@ergenekon.dev',
     customerName: 'Test Corp',
     tier: 'pro',
     durationDays: 365,
@@ -71,7 +71,7 @@ describe('License Generator', () => {
     expect(signed.payload.version).toBe(1);
     expect(signed.payload.licenseId).toMatch(/^lic_/);
     expect(signed.payload.customerId).toBe('cus_test_123');
-    expect(signed.payload.customerEmail).toBe('test@paradox.dev');
+    expect(signed.payload.customerEmail).toBe('test@ergenekon.dev');
     expect(signed.payload.customerName).toBe('Test Corp');
     expect(signed.payload.tier).toBe('pro');
     expect(signed.payload.features).toEqual(TIER_FEATURES.pro);
@@ -149,7 +149,7 @@ describe('License Validator', () => {
       expect(result.valid).toBe(true);
       expect(result.tier).toBe('pro');
       expect(result.license).not.toBeNull();
-      expect(result.license!.customerEmail).toBe('test@paradox.dev');
+      expect(result.license!.customerEmail).toBe('test@ergenekon.dev');
       expect(result.error).toBeNull();
       expect(result.daysUntilExpiry).toBeGreaterThan(360);
     });

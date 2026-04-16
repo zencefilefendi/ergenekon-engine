@@ -1,239 +1,282 @@
-# ERGENEKON Engine
+<p align="center">
+  <strong>🐺 ERGENEKON</strong>
+</p>
 
-**Distributed Systems Time-Travel Debugger**
+<h3 align="center">The Black Box for Software</h3>
 
-> Production'daki her bug'ı birebir reproduce et. Zamanda geri git, olayı adım adım izle, kodu düzelt, aynı senaryoyu tekrar çalıştır — tüm bunları geliştirici makinesinde yap.
+<p align="center">
+  Record production requests. Replay them on your laptop. Byte-for-byte identical.
+</p>
 
-[![Phase](https://img.shields.io/badge/phase-5%20%E2%9C%93%20LAUNCHED-brightgreen)](https://ergenekon.dev)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-213%20passing-brightgreen)]()
-[![Node](https://img.shields.io/badge/node-%3E%3D20-blue)]()
-[![TypeScript](https://img.shields.io/badge/typescript-strict-blue)]()
-[![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
-[![npm](https://img.shields.io/npm/v/@ergenekon/core?label=%40ergenekon%2Fcore)](https://www.npmjs.com/package/@ergenekon/core)
-[![Website](https://img.shields.io/badge/website-ergenekon.dev-cyan)](https://ergenekon.dev)
+<p align="center">
+  <a href="https://ergenekon.dev"><img src="https://img.shields.io/badge/website-ergenekon.dev-6366f1" alt="Website"></a>
+  <a href="https://www.npmjs.com/package/@ergenekon/core"><img src="https://img.shields.io/npm/v/@ergenekon/core?label=%40ergenekon%2Fcore&color=10b981" alt="npm"></a>
+  <a href="#"><img src="https://img.shields.io/badge/tests-213%20passing-brightgreen" alt="Tests"></a>
+  <a href="#"><img src="https://img.shields.io/badge/node-%E2%89%A518-blue" alt="Node"></a>
+  <a href="#"><img src="https://img.shields.io/badge/typescript-strict-blue" alt="TypeScript"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSL%201.1-orange" alt="License"></a>
+</p>
 
----
-
-## Problem
-
-Modern yazılım dünyasının en büyük çözülmemiş problemi: **production debugging.**
-
-Bir request 10 microservice'den geçiyor. Bir yerde bir şey bozuluyor. Log'lara bakıyorsun — binlerce satır. Trace'lere bakıyorsun — timing bilgisi var ama state yok. Metric'lere bakıyorsun — ne olduğunu görüyorsun ama **neden** olduğunu göremiyorsun.
-
-Sonuç: Mühendisler saatlerce, bazen günlerce bug'ı reproduce etmeye çalışıyor. Çoğu zaman edemiyorlar bile.
-
-| Araç | Ne Yapıyor | Eksikliği |
-|------|-----------|-----------|
-| **Datadog** | Gözlem (log, trace, metric) | Replay yok — state görünmüyor |
-| **Sentry** | Hatayı yakala | Nasıl oraya gelindiği görünmüyor |
-| **Jaeger** | Distributed timing | Data yok — sadece süre |
-| **rr** | Process record/replay | Tek makine, distributed değil |
-| **Replay.io** | Browser record/replay | Sadece frontend |
-
-**Kimse production'daki bir distributed bug'ı birebir replay edemiyor. ERGENEKON bunu yapıyor.**
+<p align="center">
+  <a href="https://ergenekon.dev">Website</a> · 
+  <a href="https://ergenekon.dev/docs.html">Docs</a> · 
+  <a href="https://ergenekon-dashboard.vercel.app">Live Demo</a> ·
+  <a href="https://ergenekon.dev/#pricing">Get Free Trial</a>
+</p>
 
 ---
 
-## Çözüm
+## The Problem
 
-ERGENEKON, production ortamındaki her request'i deterministik olarak kaydeder ve geliştirici makinesinde birebir replay edebilir.
+Modern distributed systems are impossible to debug:
 
-```
-Production → [ERGENEKON PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REPLAY]
-                ↑                                        ↓
-         Her I/O yakalanır                   İstediğin anda, istediğin noktaya git
-```
+- A request touches **10+ microservices**. Something breaks. Where?
+- Logs give you millions of lines — no context, no state
+- Traces show timing — but **not data**
+- You spend hours reproducing. Most of the time, **you can't**
 
-### Temel Yetenekler
+| Tool | What it does | What it can't |
+|------|-------------|---------------|
+| Datadog | Observability (logs, traces) | No replay — no state |
+| Sentry | Catch errors | Can't show *how* you got there |
+| Jaeger | Distributed tracing | Timing only — no data |
+| rr | Process record/replay | Single machine only |
+| Replay.io | Browser record/replay | Frontend only |
 
-- **🔴 Deterministic Record** — HTTP, DB, Date.now(), Math.random(), UUID, timer — her şeyi yakala
-- **⏪ Time-Travel Replay** — Herhangi bir request'i yerelde birebir oynat
-- **🔍 Distributed Tracing+** — Sadece timing değil, her servisin tam STATE'ini gör
-- **🎯 Smart Sampling** — Hataları %100, yeni route'ları %100, geri kalanı %1 örnekle
-- **🔒 Deep Redaction** — JWT, kredi kartı, şifreler — production verisini güvenle kaydet
-- **📦 Binary Export** — Kayıtları paylaş, import et, arşivle
-
----
-
-## Kanıtlanmış: Çalışıyor
-
-```
-━━━ STEP 3: VERIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  ✅ PERFECT REPLAY — BYTE-FOR-BYTE IDENTICAL
-
-  Original requestId:  57wbkit6
-  Replayed requestId:  57wbkit6  ← TAM AYNI
-
-  Date.now()     → 1712345678901  ✓ deterministic
-  Math.random()  → 0.73421847     ✓ deterministic
-  Response body  → identical      ✓ byte-for-byte
-
-━━━ DISTRIBUTED TRACE (2 services, 98 events) ━━━━━━━━━━━━━━━━━━
-
-  order-service   ╠══════════════════════════╣  23ms  (59 events)
-  user-service       ╠══════════╣              8ms   (21 events)
-
-  Cross-service trace: abc123def456...
-  Total span: 23ms
-```
+**Nobody can replay a distributed production bug. ERGENEKON does.**
 
 ---
 
-## Mimari Özeti
+## How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    UYGULAMANIZ                              │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Service A   │  │  Service B   │  │  Service C   │     │
-│  │  [PROBE] ────┼──┼─► [PROBE] ──┼──┼─► [PROBE]    │     │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
-└─────────┼─────────────────┼─────────────────┼─────────────┘
-          │  W3C traceparent│  propagation     │
-          ▼                 ▼                  ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  ERGENEKON COLLECTOR :4380                    │
-│          HLC Ordering + File Storage + REST API             │
-└──────────┬──────────────────────┬──────────────────────────┘
-           │                      │
-           ▼                      ▼
-  ┌────────────────┐    ┌─────────────────────┐
-  │  TIME-TRAVEL   │    │   ERGENEKON CLI       │
-  │  UI :3000      │    │   ergenekon sessions  │
-  │  Dark theme    │    │   ergenekon timeline  │
-  │  Timeline      │    │   ergenekon watch     │
-  │  Scrubber      │    └─────────────────────┘
-  └────────────────┘
-           │
-           ▼
-  ┌────────────────┐
-  │  REPLAY ENGINE │
-  │  Mock I/O      │
-  │  Deterministic │
-  └────────────────┘
+Incoming Request
+     │
+     ▼
+┌─────────────────────────────────────────────────┐
+│  YOUR SERVICE + ERGENEKON PROBE                 │
+│                                                 │
+│  Records every I/O boundary:                    │
+│  • HTTP in/out  • Database queries  • Timers    │
+│  • Date.now()   • Math.random()     • UUIDs     │
+│  • File system  • DNS lookups       • Errors    │
+│                                                 │
+│  3 lines of code. Zero config.                  │
+└───────────────────────┬─────────────────────────┘
+                        │
+                        ▼
+              ┌──────────────────┐
+              │  COLLECTOR       │      ┌──────────────────┐
+              │  Stores sessions │ ───▶ │  TIME-TRAVEL UI  │
+              │  SHA-256 + fsync │      │  Visual debugger │
+              └───────┬──────────┘      └──────────────────┘
+                      │
+                      ▼
+              ┌──────────────────┐
+              │  REPLAY ENGINE   │
+              │                  │
+              │  Loads recording │
+              │  Mocks all I/O   │
+              │  Re-executes     │
+              │  Verifies output │
+              │                  │
+              │  ✅ IDENTICAL    │
+              └──────────────────┘
 ```
 
 ---
 
-## Paketler
+## Quick Start
 
-| Paket | Versiyon | Açıklama |
-|-------|----------|----------|
-| [`@ergenekon/core`](https://www.npmjs.com/package/@ergenekon/core) | v0.4.1 | Tipler, HLC clock, ULID, session import/export |
-| [`@ergenekon/probe`](https://www.npmjs.com/package/@ergenekon/probe) | v0.4.1 | Express middleware — 15+ interceptor, smart sampling, redaction |
-| [`@ergenekon/collector`](https://www.npmjs.com/package/@ergenekon/collector) | v0.4.1 | HTTP ingestion server, HLC ordering, file storage |
-| [`@ergenekon/replay`](https://www.npmjs.com/package/@ergenekon/replay) | v0.4.1 | Deterministik replay engine, time-travel inspection |
-| [`@ergenekon/ui`](https://www.npmjs.com/package/@ergenekon/ui) | v0.4.1 | Dark theme time-travel visual debugger |
-| [`@ergenekon/cli`](https://www.npmjs.com/package/@ergenekon/cli) | v0.4.1 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
-
----
-
-## Hızlı Başlangıç
+### 1. Install
 
 ```bash
-# 1. Kur
-git clone https://github.com/zencefilefendi/ergenekon-engine
-cd ergenekon-engine && npm install
-
-# 2. Full-stack demo başlat (Collector + 2 Servis + UI)
-npm run demo:fullstack
-
-# 3. UI'yi aç
-open http://localhost:3000
-
-# 4. Request üret
-curl -X POST http://localhost:3001/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{"userId":"2"}'
+npm install @ergenekon/probe @ergenekon/collector
 ```
 
-### Kendi Projenize Entegre (3 satır)
+### 2. Get a free license (90-day trial, no credit card)
+
+→ [ergenekon.dev/#pricing](https://ergenekon.dev/#pricing)
+
+```bash
+mv ~/Downloads/.ergenekon-license.json ./
+```
+
+### 3. Add 3 lines to your Express app
 
 ```typescript
 import { ErgenekonProbe } from '@ergenekon/probe';
 
 const probe = new ErgenekonProbe({
-  serviceName: 'my-service',
+  serviceName: 'checkout-service',
   collectorUrl: 'http://localhost:4380',
 });
 
-app.use(probe.middleware()); // Bitti.
+app.use(probe.middleware()); // Must be first middleware
 ```
 
-### CLI ile Kayıtları Yönet
+### 4. Start the collector and make a request
 
 ```bash
-npm run cli sessions           # Tüm kayıtları listele
-npm run cli inspect <id>       # Detaylı inceleme
-npm run cli timeline <id>      # ASCII event timeline
-npm run cli trace <traceId>    # Distributed trace görselleştir
-npm run cli export <id> r.bin  # Binary export (gzip + CRC32)
-npm run cli watch              # Canlı izleme modu
+npx ergenekon-collector              # Start collector
+curl http://localhost:3000/api/orders # This request is now recorded
+npx ergenekon replay <session-id>    # Replay it — byte-for-byte identical
 ```
 
 ---
 
-## Faz Durumu
+## Packages
 
-| Faz | Durum | Öne Çıkan |
-|-----|-------|-----------|
-| **Phase 0: Foundation** | ✅ Tamamlandı | 23 event, byte-for-byte replay kanıtı |
-| **Phase 1: Real I/O** | ✅ Tamamlandı | PG + Redis + MongoDB + timers, 98 event, 2 servis |
-| **Phase 2: Time-Travel UI** | ✅ Tamamlandı | Dark theme debugger, timeline scrubber, service flow |
-| **Phase 3: Production Hardening** | ✅ Tamamlandı | Smart sampling, deep redaction, binary export, CLI |
-| **Phase 4: Launch Ready** | ✅ Tamamlandı | TypeScript build pipeline, per-package README, npm hazır |
-| **Phase 5: LAUNCHED 🚀** | ✅ Tamamlandı | npm published, ergenekon.dev canlı, license API aktif |
-
----
-
-## Çözülen Mühendislik Zorlukları
-
-### 1. Re-Entrancy Sonsuz Döngü
-`session.record()` → `ulid()` → `Date.now()` → `session.record()` → sonsuz döngü.
-**Çözüm**: `_recording` boolean flag ile re-entrancy guard.
-
-### 2. Circular Import Dependency
-`globals.ts` ↔ `recording-context.ts` birbirini import ediyor.
-**Çözüm**: `internal-clock.ts` ile bağımlılık döngüsünü kırdık.
-
-### 3. HLC Clock Isolation
-HLC `Date.now()` çağırınca patched versiyonu görüyordu.
-**Çözüm**: `Date.now.bind(Date)` ile orijinal referansı module yükleme anında yakaladık.
-
-### 4. Distributed Replay Divergence
-Express v5 kendi içinde `Math.random()` çağırıyor — kayıtta var, replay'de yok.
-**Çözüm**: Response body'yi `http_response_out` event'inden direkt oku.
-
-### 5. Tail-Based Sampling
-HEAD'de "kaydetme" dersen, ama sonra hata çıkarsa ne yaparsın?
-**Çözüm**: Her request'i buffer'la, sonucu gördükten sonra karar ver.
+| Package | Version | Description |
+|---------|---------|-------------|
+| [`@ergenekon/core`](https://www.npmjs.com/package/@ergenekon/core) | v0.4.1 | Types, HLC clock, ULID, session I/O |
+| [`@ergenekon/probe`](https://www.npmjs.com/package/@ergenekon/probe) | v0.4.1 | Express middleware — 15 interceptors, sampling, redaction |
+| [`@ergenekon/collector`](https://www.npmjs.com/package/@ergenekon/collector) | v0.4.1 | HTTP ingestion server with durable storage |
+| [`@ergenekon/replay`](https://www.npmjs.com/package/@ergenekon/replay) | v0.4.1 | Deterministic replay engine |
+| [`@ergenekon/cli`](https://www.npmjs.com/package/@ergenekon/cli) | v0.4.1 | 10-command CLI: sessions, inspect, replay, export |
+| [`@ergenekon/ui`](https://www.npmjs.com/package/@ergenekon/ui) | v0.4.1 | Time-travel visual debugger |
 
 ---
 
-## Dokümantasyon
+## What Gets Captured
 
-| Dosya | İçerik |
-|-------|--------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Teknik mimari, paket detayları, veri akışı |
-| [docs/TOPOLOGY.md](docs/TOPOLOGY.md) | Sistem topolojisi, port haritası, deployment |
-| [docs/TECHNICAL_DEEP_DIVE.md](docs/TECHNICAL_DEEP_DIVE.md) | HLC algoritması, replay teorisi, CAS |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Faz bazlı geliştirme planı |
-| [docs/VISION.md](docs/VISION.md) | Neden varız, hedef kitle, rekabet analizi |
-| [docs/BUSINESS_MODEL.md](docs/BUSINESS_MODEL.md) | Fiyatlandırma, GTM, finansal projeksiyon |
-| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Katkı rehberi, geliştirme ortamı kurulumu |
+| Interceptor | What | Tier |
+|-------------|------|------|
+| `http_request_in` | Incoming HTTP requests | Community |
+| `http_request_out` | Outgoing fetch/HTTP calls | Community |
+| `timestamp` | `Date.now()`, `new Date()`, `performance.now()` | Community |
+| `random` | `Math.random()` | Community |
+| `timer` | `setTimeout` / `setInterval` | Community |
+| `error` | Uncaught exceptions | Community |
+| `db_query` | PostgreSQL, MySQL, MongoDB | Pro |
+| `fs_operation` | File system reads/writes | Pro |
+| `dns_lookup` | DNS resolution | Pro |
+| `uuid` | `crypto.randomUUID()` | Pro |
 
 ---
 
-## Lisans
+## CLI
 
-Business Source License 1.1 (BSL-1.1)
+```bash
+ergenekon sessions              # List all recorded sessions
+ergenekon inspect <id>          # Detailed session inspection
+ergenekon timeline <id>         # ASCII event timeline
+ergenekon trace <traceId>       # Distributed trace view
+ergenekon replay <id>           # Replay and verify
+ergenekon export <id> out.prdx  # Binary export (gzip + CRC32)
+ergenekon import data.prdx      # Import a session
+ergenekon watch                 # Live recording monitor
+ergenekon stats                 # Collector statistics
+ergenekon health                # Health check
+```
 
-Production kullanımı için ticari lisans gereklidir.
-Geliştirme ve test için ücretsizdir.
+---
 
-🐺 **[ergenekon.dev](https://ergenekon.dev)** — Ücretsiz Pro lisans al
+## Pricing
 
-&copy; 2026 ERGENEKON Engine Contributors
+| | Community | Pro | Enterprise |
+|--|-----------|-----|------------|
+| **Price** | Free forever | $49/dev/mo | $199/dev/mo |
+| **Trial** | — | 90 days free | 90 days free |
+| Services | 1 | Unlimited | Unlimited |
+| Retention | 24h | 30 days | Unlimited |
+| Replay | Single service | Distributed | Distributed |
+| Sampling | — | Smart sampling | Smart sampling |
+| Redaction | — | Deep PII redaction | Deep PII redaction |
+| Support | Community | Email | Dedicated + SLA |
+| SSO/RBAC | — | — | ✅ |
+
+→ **[Start your 90-day free trial](https://ergenekon.dev/#pricing)** — no credit card required.
+
+---
+
+## Architecture
+
+```
+packages/
+├── ergenekon-core/       # Shared types, HLC clock, ULID, license validation
+├── ergenekon-probe/      # Express middleware — 15 interceptors
+│   └── interceptors/     # HTTP, DB, fs, DNS, timers, crypto, globals
+├── ergenekon-collector/  # HTTP ingestion + file storage
+├── ergenekon-replay/     # Deterministic replay engine
+├── ergenekon-cli/        # Terminal tool (10 commands)
+└── ergenekon-ui/         # React time-travel visual debugger
+```
+
+### Key Design Decisions
+
+- **Monorepo** with npm workspaces
+- **ESM modules** (`"type": "module"`) — modern Node.js
+- **TypeScript strict mode** across all packages
+- **Zero dependencies** in core (only `@types/node`)
+- **Monkey-patching** for zero-config integration
+- **AsyncLocalStorage** for request context propagation
+- **HLC timestamps** for distributed event ordering
+- **Ed25519 signatures** for tamper-proof licenses
+
+---
+
+## Deployment
+
+### Docker
+
+```bash
+docker-compose up
+```
+
+### Kubernetes (Helm)
+
+```bash
+helm install ergenekon ./helm/ergenekon
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ERGENEKON_COLLECTOR_URL` | `http://localhost:4380` | Collector endpoint |
+| `ERGENEKON_LICENSE_KEY` | — | License JSON (inline) |
+| `ERGENEKON_LICENSE` | — | License file path |
+| `ERGENEKON_COLLECTOR_PORT` | `4380` | Collector listen port |
+| `ERGENEKON_DATA_DIR` | `./recordings` | Storage directory |
+
+---
+
+## Security
+
+We take security seriously. See [SECURITY.md](SECURITY.md) for our vulnerability disclosure policy.
+
+- **Ed25519** asymmetric license signatures
+- **HSTS** with preload on all endpoints
+- **Rate limiting** (global + per-IP + per-email)
+- **Input sanitization** on all API endpoints
+- **No secrets in git history** (audited + scrubbed)
+
+---
+
+## Contributing
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup and coding standards.
+
+```bash
+git clone https://github.com/zencefilefendi/ergenekon-engine.git
+cd ergenekon-engine
+npm install
+npm run build
+npm test        # 213 tests, 14 files — all passing
+```
+
+---
+
+## License
+
+[Business Source License 1.1](LICENSE) — free for non-production use. Production use requires a [license](https://ergenekon.dev/#pricing).
+
+After 4 years, the code converts to Apache 2.0.
+
+---
+
+<p align="center">
+  Built by <a href="https://github.com/zencefilefendi">İlhan Göktaş</a> · 
+  <a href="https://ergenekon.dev">ergenekon.dev</a>
+</p>

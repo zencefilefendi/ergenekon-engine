@@ -1,0 +1,1380 @@
+{
+  "id": "01KNPQX4VZKATD9T34SG6843B1",
+  "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+  "serviceName": "order-service",
+  "startedAt": 1775658505087,
+  "endedAt": 1775658505090,
+  "events": [
+    {
+      "id": "01KNPQX4VZQ6P28PTRFHJRPNXE",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 0,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "http_request_in",
+      "serviceName": "order-service",
+      "operationName": "POST /api/orders",
+      "sequence": 0,
+      "data": {
+        "method": "POST",
+        "url": "/api/orders",
+        "path": "/api/orders",
+        "query": {},
+        "headers": {
+          "host": "localhost:3001",
+          "connection": "keep-alive",
+          "content-type": "application/json",
+          "accept": "*/*",
+          "accept-language": "*",
+          "sec-fetch-mode": "cors",
+          "user-agent": "node",
+          "accept-encoding": "gzip, deflate",
+          "content-length": "39"
+        },
+        "body": {
+          "userId": "3",
+          "item": "PARADOX License"
+        },
+        "ip": "::1"
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ05MFFDHBQ495VCMC",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 1,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "timestamp",
+      "serviceName": "order-service",
+      "operationName": "Date.now()",
+      "sequence": 1,
+      "data": {
+        "value": 1775658505087
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZDYCB2JKF7V4F9RKQ",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 2,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 2,
+      "data": {
+        "value": 0.7656805523911709
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZGNRSVE3J1Q4032XP",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 4,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "timestamp",
+      "serviceName": "order-service",
+      "operationName": "Date.now()",
+      "sequence": 3,
+      "data": {
+        "value": 1775658505087
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ6S8XH72ZZQ6H4H08",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 5,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 4,
+      "data": {
+        "value": 0.5782619483206286
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZRJJ2A5P87YHY1ZA8",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 6,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 5,
+      "data": {
+        "value": 0.33461333426157536
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZZ2J2W61HTBSMDWN2",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 7,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 6,
+      "data": {
+        "value": 0.32660049250497725
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZYJQNGDNQEHMGE40V",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 8,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 7,
+      "data": {
+        "value": 0.6311642046524519
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZE9B49DYQREQWF7ZH",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 9,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 8,
+      "data": {
+        "value": 0.3766128692917413
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZJ45SD95DNGEGABA7",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 10,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 9,
+      "data": {
+        "value": 0.010874326882812313
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ0130RFYVCWY7SCCA",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 11,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 10,
+      "data": {
+        "value": 0.51802979899945
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZW7KXQZYEYG0DFPC9",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 12,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 11,
+      "data": {
+        "value": 0.5121874457773252
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ2P2KTNMN5ETNTC6S",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 13,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 12,
+      "data": {
+        "value": 0.04004992597128543
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZQKQWZNV1K4Q3NNJF",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 14,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 13,
+      "data": {
+        "value": 0.6057813623713861
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZY0H07VQSWANWF57F",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 15,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 14,
+      "data": {
+        "value": 0.42999047299400295
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ9XY5PN1BRST116NH",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 16,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 15,
+      "data": {
+        "value": 0.5662472056224788
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ0WTW2D97XMP07VGN",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 17,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 16,
+      "data": {
+        "value": 0.7664426451131676
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ4JT311ZG83SG57P7",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 18,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 17,
+      "data": {
+        "value": 0.8617745578632212
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ3Q05EBD3RX6R3QHX",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 19,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 18,
+      "data": {
+        "value": 0.5849574952848203
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZ6PHB02W03MRE6GXA",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 20,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 19,
+      "data": {
+        "value": 0.3744802748605959
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4VZJAAMC0GG1KDJRVJB",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505087,
+        "logical": 3,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505087,
+      "type": "http_request_out",
+      "serviceName": "order-service",
+      "operationName": "GET http://localhost:3002/api/users/3",
+      "sequence": 20,
+      "data": {
+        "url": "http://localhost:3002/api/users/3",
+        "method": "GET",
+        "headers": {
+          "traceparent": "00-b1c6f0ca1aedda703dbac3feaac4f3a4-aefedf93a95ae3fd-01",
+          "x-paradox-hlc": "{\"wallTime\":1775658505087,\"logical\":2,\"nodeId\":\"order-service-01KNPQX4\"}"
+        },
+        "body": null
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2JRC34R0ESZXE1N70",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 1,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "timestamp",
+      "serviceName": "order-service",
+      "operationName": "Date.now()",
+      "sequence": 21,
+      "data": {
+        "value": 1775658505090
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2AXHTW13W63BXET88",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 2,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 22,
+      "data": {
+        "value": 0.19205809108867977
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W25TAXRS4WXCH5K0YS",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 3,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 23,
+      "data": {
+        "value": 0.8395392686472648
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2RZ527078JEDB38RR",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 4,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 24,
+      "data": {
+        "value": 0.02552690776408273
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2CBDPC0556FJB1KEP",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 5,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 25,
+      "data": {
+        "value": 0.17476453538723624
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2FG96VF6NPM72DQ69",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 6,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 26,
+      "data": {
+        "value": 0.22075581180660386
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2YJ89FD0SESX33ZDG",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 7,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 27,
+      "data": {
+        "value": 0.4920487404130588
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2YD3RG12AWD0Q5PPN",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 8,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 28,
+      "data": {
+        "value": 0.08475422758738793
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2TNRF3PYR2ZV7W32Q",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 9,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 29,
+      "data": {
+        "value": 0.31928995819981376
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2QCVGAE81PT537FCA",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 10,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 30,
+      "data": {
+        "value": 0.21093125484818398
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W224CGJ72852CJQ199",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 11,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 31,
+      "data": {
+        "value": 0.5254045387344572
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2MN83VXSEB6N8DHAP",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 12,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 32,
+      "data": {
+        "value": 0.9428957635209965
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2A70MCETDEZJ5TVTV",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 13,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 33,
+      "data": {
+        "value": 0.04508553846728525
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W29C9C0GT55J5VHPYE",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 14,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 34,
+      "data": {
+        "value": 0.47528677469397307
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W281ZXSEMAHPPNWCCY",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 15,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 35,
+      "data": {
+        "value": 0.6491161738533878
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2D0WPPC6X0KNX6R5G",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 16,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 36,
+      "data": {
+        "value": 0.5473079813358769
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W22S31V1F196MZSGBA",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 17,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 37,
+      "data": {
+        "value": 0.11269303561392863
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W26T057F2A6GY1FMH3",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 0,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "http_response_in",
+      "serviceName": "order-service",
+      "operationName": "200 GET http://localhost:3002/api/users/3",
+      "sequence": 38,
+      "data": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "158",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Wed, 08 Apr 2026 14:28:25 GMT",
+          "etag": "W/\"9e-wVUsTAi9GRLbZdxKB+m8qtzWWgc\"",
+          "keep-alive": "timeout=5",
+          "traceparent": "00-b1c6f0ca1aedda703dbac3feaac4f3a4-7b2720d175c14504-01",
+          "x-powered-by": "Express"
+        },
+        "body": {
+          "user": {
+            "id": "3",
+            "name": "Mehmet Kaya",
+            "email": "mehmet@paradox.dev",
+            "credit": 750,
+            "role": "user"
+          },
+          "meta": {
+            "lookupTime": 1775658505088,
+            "requestToken": "hmkyi4ly"
+          }
+        }
+      },
+      "durationMs": 2,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2QT0Z36KFG8VEWAN8",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 18,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 39,
+      "data": {
+        "value": 0.6031484112306061
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2GB1E6YBNB15FS43D",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 19,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 40,
+      "data": {
+        "value": 0.23372731370270983
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2RM97E5KBKHKF6CXT",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 21,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "timestamp",
+      "serviceName": "order-service",
+      "operationName": "Date.now()",
+      "sequence": 41,
+      "data": {
+        "value": 1775658505090
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W29HQC7XF5VV1A3D95",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 22,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 42,
+      "data": {
+        "value": 0.7292004264035958
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2CTWF8902383TW9R7",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 23,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 43,
+      "data": {
+        "value": 0.6726289761466142
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W24JFGDPFFQ2T8HWQ4",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 24,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 44,
+      "data": {
+        "value": 0.46473247361024206
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2HY1HR2ZZ2E5RHZ1D",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 25,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 45,
+      "data": {
+        "value": 0.05272538323032372
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2DVVNKV1ZQF37FSHM",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 26,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 46,
+      "data": {
+        "value": 0.5839801986202471
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2ER0P55C6M0E1YKFK",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 27,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 47,
+      "data": {
+        "value": 0.34165745832648486
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2G199QHBM4987PD2N",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 28,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 48,
+      "data": {
+        "value": 0.762601869912344
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W269S3X67QR2VA6678",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 29,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 49,
+      "data": {
+        "value": 0.1394716408587564
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2PPSNGNYPCEH1V57Q",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 30,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 50,
+      "data": {
+        "value": 0.7556080513732046
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2EFT1PJAGYCSZ0BSD",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 31,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 51,
+      "data": {
+        "value": 0.37373743583217234
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W278AEB9GSRPK8G4FJ",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 32,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 52,
+      "data": {
+        "value": 0.7000883925602528
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W257FZYYMS8556HYSN",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 33,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 53,
+      "data": {
+        "value": 0.044338092586585276
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2TBZJ51HWAEF1HXBT",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 34,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 54,
+      "data": {
+        "value": 0.45106662433956046
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W26E5SA2YSYPZH0JER",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 35,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 55,
+      "data": {
+        "value": 0.010638064166816896
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2DZEHC5CKD8R5ZSC0",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 36,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 56,
+      "data": {
+        "value": 0.9751646872804824
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2VGJZHC4W240TQWQQ",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 37,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 57,
+      "data": {
+        "value": 0.6147321442547556
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4W2QNE1JAR4RBP1E0ZK",
+      "traceId": "b1c6f0ca1aedda703dbac3feaac4f3a4",
+      "spanId": "aefedf93a95ae3fd",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775658505090,
+        "logical": 20,
+        "nodeId": "order-service-01KNPQX4"
+      },
+      "wallClock": 1775658505090,
+      "type": "http_response_out",
+      "serviceName": "order-service",
+      "operationName": "200 POST /api/orders",
+      "sequence": 58,
+      "data": {
+        "statusCode": 200,
+        "headers": {
+          "x-powered-by": "Express",
+          "traceparent": "00-b1c6f0ca1aedda703dbac3feaac4f3a4-aefedf93a95ae3fd-01",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "170",
+          "etag": "W/\"aa-VuE2PhcyID/gQMiH8z5hheJg/Y4\""
+        },
+        "body": {
+          "orderId": "ORD-RKBLB1",
+          "userId": "3",
+          "userName": "Mehmet Kaya",
+          "orderTotal": 351,
+          "status": "confirmed",
+          "reason": null,
+          "timestamp": 1775658505087,
+          "confirmationCode": "8EWS4VWP"
+        }
+      },
+      "durationMs": 3,
+      "error": null,
+      "tags": {}
+    }
+  ],
+  "metadata": {
+    "nodeVersion": "v25.2.1",
+    "platform": "darwin",
+    "probeVersion": "0.1.0",
+    "hasError": false,
+    "totalDurationMs": 3
+  }
+}

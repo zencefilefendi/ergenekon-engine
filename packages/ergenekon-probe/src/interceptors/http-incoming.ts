@@ -18,7 +18,7 @@ import { redactDeep, redactHeaders } from '../redaction.js';
 
 // W3C Trace Context header names
 const TRACEPARENT_HEADER = 'traceparent';
-const ERGENEKON_HLC_HEADER = 'x-paradox-hlc';
+const ERGENEKON_HLC_HEADER = 'x-ergenekon-hlc';
 
 /**
  * Parse W3C traceparent header: "00-traceId-parentId-flags"
@@ -64,7 +64,7 @@ export function createHttpIncomingMiddleware(
   onSessionComplete: SessionCallback,
   samplingEngine?: SamplingEngine
 ) {
-  return function paradoxMiddleware(req: Request, res: Response, next: NextFunction): void {
+  return function ergenekonMiddleware(req: Request, res: Response, next: NextFunction): void {
     if (!config.enabled) {
       next();
       return;

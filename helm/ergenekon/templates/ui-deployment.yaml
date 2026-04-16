@@ -1,0 +1,41 @@
+{{- if .Values.ui.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ergenekon.fullname" . }}-ui
+  labels:
+    {{- include "ergenekon.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ui
+spec:
+  replicas: {{ .Values.ui.replicas }}
+  selector:
+    matchLabels:
+      {{- include "ergenekon.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ui
+  template:
+    metadata:
+      labels:
+        {{- include "ergenekon.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ui
+    spec:
+      serviceAccountName: {{ include "ergenekon.serviceAccountName" . }}
+      containers:
+        - name: ui
+          image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+          imagePullPolicy: {{ .Values.ui.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: ERGENEKON_COLLECTOR_URL
+              value: "http://{{ include "ergenekon.fullname" . }}-collector:{{ .Values.collector.service.port }}"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.ui.resources | nindent 12 }}
+{{- end }}

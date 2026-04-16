@@ -1,0 +1,513 @@
+{
+  "id": "01KNPQX4NAPMMTVFZDQKVR4HBG",
+  "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+  "serviceName": "user-service",
+  "startedAt": 1775658504874,
+  "endedAt": 1775658504874,
+  "events": [
+    {
+      "id": "01KNPQX4NA7QWVV1ZZTS8WTXE6",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 1,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "http_request_in",
+      "serviceName": "user-service",
+      "operationName": "GET /api/users/4",
+      "sequence": 0,
+      "data": {
+        "method": "GET",
+        "url": "/api/users/4",
+        "path": "/api/users/4",
+        "query": {},
+        "headers": {
+          "host": "localhost:3002",
+          "connection": "keep-alive",
+          "traceparent": "00-e8d9813fbb62cf8fd1fedb38510e1b79-3a94903c62e094fa-01",
+          "x-paradox-hlc": "{\"wallTime\":1775658504873,\"logical\":2,\"nodeId\":\"order-service-01KNPQX4\"}",
+          "accept": "*/*",
+          "accept-language": "*",
+          "sec-fetch-mode": "cors",
+          "user-agent": "node",
+          "accept-encoding": "gzip, deflate"
+        },
+        "ip": "::1"
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAY8KG5NEBFS4XEZBV",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 2,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "timestamp",
+      "serviceName": "user-service",
+      "operationName": "Date.now()",
+      "sequence": 1,
+      "data": {
+        "value": 1775658504874
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NABBMQPXSRB0VEM9V0",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 3,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 2,
+      "data": {
+        "value": 0.478600500090424
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAK4PAY7EAFRT65R39",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 5,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "timestamp",
+      "serviceName": "user-service",
+      "operationName": "Date.now()",
+      "sequence": 3,
+      "data": {
+        "value": 1775658504874
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAAES26ZFF3ESA0PY0",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 6,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 4,
+      "data": {
+        "value": 0.5578102909359415
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NA8MRKPR4M9ZPYY44C",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 7,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 5,
+      "data": {
+        "value": 0.22503182763969853
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAK9TGVWXN8266DTGJ",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 8,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 6,
+      "data": {
+        "value": 0.692561263281879
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAYFETNCCM02FPZF9Q",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 9,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 7,
+      "data": {
+        "value": 0.48789601677782113
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NARQEPDX5V45T5B5CH",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 10,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 8,
+      "data": {
+        "value": 0.38066751823071154
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAMYAAWQ1MN75X8YSF",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 11,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 9,
+      "data": {
+        "value": 0.9683467288975627
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NA9YXNCXE0TN6VSJTR",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 12,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 10,
+      "data": {
+        "value": 0.989689385062063
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAFDH9JM17M65HQMTW",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 13,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 11,
+      "data": {
+        "value": 0.9688020862619933
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAR54RVB6FSQJA9CRK",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 14,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 12,
+      "data": {
+        "value": 0.8348829614953563
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAZK02KB5ZWJ0XWYWX",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 15,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 13,
+      "data": {
+        "value": 0.7360967270836064
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAKNS38MX5D1D3Y3F9",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 16,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 14,
+      "data": {
+        "value": 0.2847676599309371
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAKGP4QZ25M90JRT96",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 17,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 15,
+      "data": {
+        "value": 0.8903298186682368
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NA7E09SJJGYJDPJHKM",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 18,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 16,
+      "data": {
+        "value": 0.888050270949071
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAVY0TT92RHZDYEAWM",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 19,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 17,
+      "data": {
+        "value": 0.42057529900823176
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAHTD365D92YR25P38",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 20,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 18,
+      "data": {
+        "value": 0.8806290183795086
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NA6KY1DEPQG6VZWRQ8",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 21,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 19,
+      "data": {
+        "value": 0.6597263748547156
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNPQX4NAH7PFCYZZTQ9WWDWN",
+      "traceId": "e8d9813fbb62cf8fd1fedb38510e1b79",
+      "spanId": "2525f749fe391b8e",
+      "parentSpanId": "3a94903c62e094fa",
+      "hlc": {
+        "wallTime": 1775658504874,
+        "logical": 4,
+        "nodeId": "user-service-01KNPQX4"
+      },
+      "wallClock": 1775658504874,
+      "type": "http_response_out",
+      "serviceName": "user-service",
+      "operationName": "200 GET /api/users/4",
+      "sequence": 20,
+      "data": {
+        "statusCode": 200,
+        "headers": {
+          "x-powered-by": "Express",
+          "traceparent": "00-e8d9813fbb62cf8fd1fedb38510e1b79-2525f749fe391b8e-01",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "156",
+          "etag": "W/\"9c-18MWfnwxqM71wNo8JO4sBo6+4Xw\""
+        },
+        "body": {
+          "user": {
+            "id": "4",
+            "name": "Fatma Celik",
+            "email": "fatma@paradox.dev",
+            "credit": 50,
+            "role": "user"
+          },
+          "meta": {
+            "lookupTime": 1775658504874,
+            "requestToken": "h89l22li"
+          }
+        }
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    }
+  ],
+  "metadata": {
+    "nodeVersion": "v25.2.1",
+    "platform": "darwin",
+    "probeVersion": "0.1.0",
+    "hasError": false,
+    "totalDurationMs": 0
+  }
+}

@@ -28,7 +28,7 @@ export class SpillBuffer {
   private lineCount = 0;
 
   constructor(config: SpillBufferConfig = {}) {
-    this.spillDir = config.spillDir ?? join(homedir(), '.paradox', 'spill');
+    this.spillDir = config.spillDir ?? join(homedir(), '.ergenekon', 'spill');
     this.maxSpillFiles = config.maxSpillFiles ?? 100;
     this.maxLinesPerFile = config.maxLinesPerFile ?? 1000;
 

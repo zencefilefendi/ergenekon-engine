@@ -1,0 +1,461 @@
+{
+  "id": "01KNRAF969RXZNB9EHZ72FPWDM",
+  "traceId": "768cee61278f0b847bb5bcb9b7492267",
+  "serviceName": "order-service",
+  "startedAt": 1775711528137,
+  "endedAt": 1775711528140,
+  "events": [
+    {
+      "id": "01KNRAF969ZNWJAYPFF3BV5HNM",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528137,
+        "logical": 0,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528137,
+      "type": "http_request_in",
+      "serviceName": "order-service",
+      "operationName": "GET /",
+      "sequence": 0,
+      "data": {
+        "method": "GET",
+        "url": "/",
+        "path": "/",
+        "query": {},
+        "headers": {
+          "host": "localhost:3001",
+          "sec-fetch-dest": "document",
+          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5 Safari/605.1.15",
+          "upgrade-insecure-requests": "1",
+          "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "sec-fetch-site": "none",
+          "sec-fetch-mode": "navigate",
+          "accept-language": "tr-TR,tr;q=0.9",
+          "priority": "u=0, i",
+          "accept-encoding": "gzip, deflate",
+          "cookie": "[REDACTED]",
+          "connection": "keep-alive"
+        },
+        "ip": "::1"
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BJCZPGT4JB4ZQDBB6",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 1,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "timestamp",
+      "serviceName": "order-service",
+      "operationName": "Date.now()",
+      "sequence": 1,
+      "data": {
+        "value": 1775711528139
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96B6CCJ4TPDQ8AWB64G",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 2,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 2,
+      "data": {
+        "value": 0.713165266465781
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BTB03RY3HN74J0QNM",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 3,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 3,
+      "data": {
+        "value": 0.8355321243990798
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BF6C2APE9BSTR9MBZ",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 4,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 4,
+      "data": {
+        "value": 0.5204834415285206
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96B7DC2W7KNYFJKZ40M",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 5,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 5,
+      "data": {
+        "value": 0.17193943745735019
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BD357W0B40AXFJW63",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 6,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 6,
+      "data": {
+        "value": 0.04641517073088253
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BNZH9EDM8GJX2X44X",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 7,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 7,
+      "data": {
+        "value": 0.5896260416574138
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BYG1M8T5E08E0H0CN",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 8,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 8,
+      "data": {
+        "value": 0.5929273789397499
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BFTJ4FN2DZ216MXW0",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 9,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 9,
+      "data": {
+        "value": 0.47803744136385284
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BM861RYDXHW508MAF",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 10,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 10,
+      "data": {
+        "value": 0.17359170794594536
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BSD8DHTQA5MFE29TV",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 11,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 11,
+      "data": {
+        "value": 0.6029406424121578
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BBP93V1WV7YJ8R7ZP",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 12,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 12,
+      "data": {
+        "value": 0.33380500608433095
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96B7ZJKZ8R5Z4VSJ49G",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 13,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 13,
+      "data": {
+        "value": 0.5562051245299146
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96B33CT99DJRANE0JJS",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 14,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 14,
+      "data": {
+        "value": 0.7213292663967685
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BJNDQ0XF45JMPFS4M",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 15,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528139,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 15,
+      "data": {
+        "value": 0.43598058167706444
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96C5BN6CRGDFQHAYSX5",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528140,
+        "logical": 0,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528140,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 16,
+      "data": {
+        "value": 0.6325044806796846
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96CVTJ3P3XM3BQESCS1",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528140,
+        "logical": 1,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528140,
+      "type": "random",
+      "serviceName": "order-service",
+      "operationName": "Math.random()",
+      "sequence": 17,
+      "data": {
+        "value": 0.37082536253560383
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRAF96BPTG51JJF5KAHQDMB",
+      "traceId": "768cee61278f0b847bb5bcb9b7492267",
+      "spanId": "a6187bb5962e9d8d",
+      "parentSpanId": null,
+      "hlc": {
+        "wallTime": 1775711528139,
+        "logical": 0,
+        "nodeId": "order-service-01KNRA9W"
+      },
+      "wallClock": 1775711528140,
+      "type": "http_response_out",
+      "serviceName": "order-service",
+      "operationName": "404 GET /",
+      "sequence": 18,
+      "data": {
+        "statusCode": 404,
+        "headers": {
+          "x-powered-by": "Express",
+          "traceparent": "00-768cee61278f0b847bb5bcb9b7492267-a6187bb5962e9d8d-01",
+          "content-security-policy": "default-src 'none'",
+          "x-content-type-options": "nosniff",
+          "content-type": "text/html; charset=utf-8",
+          "content-length": 139
+        },
+        "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /</pre>\n</body>\n</html>\n"
+      },
+      "durationMs": 1,
+      "error": null,
+      "tags": {}
+    }
+  ],
+  "metadata": {
+    "nodeVersion": "v25.2.1",
+    "platform": "darwin",
+    "probeVersion": "0.1.0",
+    "hasError": false,
+    "totalDurationMs": 3
+  }
+}

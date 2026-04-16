@@ -3,8 +3,8 @@
 //
 // Supports two formats:
 //
-// 1. JSON (.paradox.json) — Human-readable, great for sharing & debugging
-// 2. Binary (.paradox.bin) — Compact, ~60% smaller, fast to parse
+// 1. JSON (.ergenekon.json) — Human-readable, great for sharing & debugging
+// 2. Binary (.ergenekon.bin) — Compact, ~60% smaller, fast to parse
 //
 // Binary format (ERGENEKON Binary Session v1):
 //   [4 bytes: magic "PRDX"]
@@ -45,7 +45,7 @@ export function exportSessionJSON(
   opts: ExportOptions = {}
 ): string {
   const payload = {
-    _format: 'paradox-session-v1',
+    _format: 'ergenekon-session-v1',
     _exportedAt: Date.now(),
     session,
   };
@@ -60,7 +60,7 @@ export function exportSessionsJSON(
   opts: ExportOptions = {}
 ): string {
   const payload = {
-    _format: 'paradox-sessions-v1',
+    _format: 'ergenekon-sessions-v1',
     _exportedAt: Date.now(),
     _count: sessions.length,
     sessions,
@@ -75,11 +75,11 @@ export function exportSessionsJSON(
 export function importSessionsJSON(json: string): RecordingSession[] {
   const parsed = JSON.parse(json);
 
-  if (parsed._format === 'paradox-session-v1') {
+  if (parsed._format === 'ergenekon-session-v1') {
     return [parsed.session as RecordingSession];
   }
 
-  if (parsed._format === 'paradox-sessions-v1') {
+  if (parsed._format === 'ergenekon-sessions-v1') {
     return parsed.sessions as RecordingSession[];
   }
 

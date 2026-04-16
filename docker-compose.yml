@@ -22,7 +22,7 @@ services:
       STORAGE_DIR: /data/sessions
       LOG_LEVEL: info
     volumes:
-      - paradox-data:/data/sessions
+      - ergenekon-data:/data/sessions
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4380/health"]
@@ -68,5 +68,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  paradox-data:
+  ergenekon-data:
     driver: local

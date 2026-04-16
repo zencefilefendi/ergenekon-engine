@@ -1,0 +1,513 @@
+{
+  "id": "01KNRA9WCPHFXR15HBSKEHAPQ7",
+  "traceId": "600406eff4a20800a0ae53eb90fa596d",
+  "serviceName": "user-service",
+  "startedAt": 1775711351190,
+  "endedAt": 1775711351190,
+  "events": [
+    {
+      "id": "01KNRA9WCP3P3C1FSNZG5P0NN5",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 1,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "http_request_in",
+      "serviceName": "user-service",
+      "operationName": "GET /api/users/4",
+      "sequence": 0,
+      "data": {
+        "method": "GET",
+        "url": "/api/users/4",
+        "path": "/api/users/4",
+        "query": {},
+        "headers": {
+          "host": "localhost:3002",
+          "connection": "keep-alive",
+          "traceparent": "00-600406eff4a20800a0ae53eb90fa596d-15ba51839691fe04-01",
+          "x-paradox-hlc": "{\"wallTime\":1775711351189,\"logical\":2,\"nodeId\":\"order-service-01KNRA9W\"}",
+          "accept": "*/*",
+          "accept-language": "*",
+          "sec-fetch-mode": "cors",
+          "user-agent": "node",
+          "accept-encoding": "gzip, deflate"
+        },
+        "ip": "::1"
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPA513BS8QSWGPKDWW",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 2,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "timestamp",
+      "serviceName": "user-service",
+      "operationName": "Date.now()",
+      "sequence": 1,
+      "data": {
+        "value": 1775711351190
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCP229362JPYGR0KWF5",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 3,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 2,
+      "data": {
+        "value": 0.13959731281505638
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPXFQBFVRCMBC834MQ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 5,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "timestamp",
+      "serviceName": "user-service",
+      "operationName": "Date.now()",
+      "sequence": 3,
+      "data": {
+        "value": 1775711351190
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPQCTW6T9WD02CY89X",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 6,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 4,
+      "data": {
+        "value": 0.7937834067742837
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPQXZSKS8CQQ4FGA1F",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 7,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 5,
+      "data": {
+        "value": 0.9473060742202357
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPMN9DFDWK6W681JDE",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 8,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 6,
+      "data": {
+        "value": 0.675587397214855
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPHTYGGS5JNB6ASJ4H",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 9,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 7,
+      "data": {
+        "value": 0.4113042885194058
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPXTN7Q4DSWQAP98H2",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 10,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 8,
+      "data": {
+        "value": 0.5212178426002315
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCP58CQS4VS2JGY7VRS",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 11,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 9,
+      "data": {
+        "value": 0.916968043242479
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPFS858SEM7ZZ5PFMJ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 12,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 10,
+      "data": {
+        "value": 0.8113348205122833
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPKGFAA9WNSMNGS5EQ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 13,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 11,
+      "data": {
+        "value": 0.548559037637336
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPPD7C7EGEPZE6NDSZ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 14,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 12,
+      "data": {
+        "value": 0.682165670258345
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCP13M9B0D3CRMR3SEZ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 15,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 13,
+      "data": {
+        "value": 0.10271312960352053
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPP6GN6J95Q85JBSA1",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 16,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 14,
+      "data": {
+        "value": 0.9967262093553623
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPDPXK8QGZWXN27W7J",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 17,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 15,
+      "data": {
+        "value": 0.01590375445072112
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPBAVSY1FQ97AKVKSZ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 18,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 16,
+      "data": {
+        "value": 0.22220987982232676
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPYS8M645FTQRD93DJ",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 19,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 17,
+      "data": {
+        "value": 0.3382158739599288
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCP3B4D8WF5ARXGZX63",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 20,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 18,
+      "data": {
+        "value": 0.9997242714958267
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPKR0NP30523XSGQG2",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 21,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "random",
+      "serviceName": "user-service",
+      "operationName": "Math.random()",
+      "sequence": 19,
+      "data": {
+        "value": 0.025078078372326007
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    },
+    {
+      "id": "01KNRA9WCPSYNDGXSHN3Z07AZ0",
+      "traceId": "600406eff4a20800a0ae53eb90fa596d",
+      "spanId": "36e1e326badba39e",
+      "parentSpanId": "15ba51839691fe04",
+      "hlc": {
+        "wallTime": 1775711351190,
+        "logical": 4,
+        "nodeId": "user-service-01KNRA9W"
+      },
+      "wallClock": 1775711351190,
+      "type": "http_response_out",
+      "serviceName": "user-service",
+      "operationName": "200 GET /api/users/4",
+      "sequence": 20,
+      "data": {
+        "statusCode": 200,
+        "headers": {
+          "x-powered-by": "Express",
+          "traceparent": "00-600406eff4a20800a0ae53eb90fa596d-36e1e326badba39e-01",
+          "content-type": "application/json; charset=utf-8",
+          "content-length": "156",
+          "etag": "W/\"9c-ksNi6rqj/NkUcpri7s0URTUGvnM\""
+        },
+        "body": {
+          "user": {
+            "id": "4",
+            "name": "Fatma Celik",
+            "email": "fatma@paradox.dev",
+            "credit": 50,
+            "role": "user"
+          },
+          "meta": {
+            "lookupTime": 1775711351190,
+            "requestToken": "50x1voos"
+          }
+        }
+      },
+      "durationMs": 0,
+      "error": null,
+      "tags": {}
+    }
+  ],
+  "metadata": {
+    "nodeVersion": "v25.2.1",
+    "platform": "darwin",
+    "probeVersion": "0.1.0",
+    "hasError": false,
+    "totalDurationMs": 0
+  }
+}

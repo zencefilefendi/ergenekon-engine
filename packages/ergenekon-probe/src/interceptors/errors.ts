@@ -71,7 +71,7 @@ export function installErrorInterceptors(): void {
 
   // ── console.log/warn/error ──────────────────────────────────────
 
-  console.log = function paradoxConsoleLog(...args: unknown[]): void {
+  console.log = function ergenekonConsoleLog(...args: unknown[]): void {
     const session = getActiveSession();
     if (session) {
       session.record('custom', 'console.log', {
@@ -83,7 +83,7 @@ export function installErrorInterceptors(): void {
     return _originalConsoleLog.apply(console, args);
   };
 
-  console.warn = function paradoxConsoleWarn(...args: unknown[]): void {
+  console.warn = function ergenekonConsoleWarn(...args: unknown[]): void {
     const session = getActiveSession();
     if (session) {
       session.record('custom', 'console.warn', {
@@ -95,7 +95,7 @@ export function installErrorInterceptors(): void {
     return _originalConsoleWarn.apply(console, args);
   };
 
-  console.error = function paradoxConsoleError(...args: unknown[]): void {
+  console.error = function ergenekonConsoleError(...args: unknown[]): void {
     const session = getActiveSession();
     if (session) {
       session.record('custom', 'console.error', {

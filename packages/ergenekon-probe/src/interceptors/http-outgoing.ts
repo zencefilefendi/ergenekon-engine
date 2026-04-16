@@ -23,7 +23,7 @@ export function installFetchInterceptor(): void {
 
   _originalFetch = globalThis.fetch;
 
-  globalThis.fetch = async function paradoxFetch(
+  globalThis.fetch = async function ergenekonFetch(
     input: Parameters<typeof globalThis.fetch>[0],
     init?: RequestInit
   ): Promise<Response> {
@@ -40,7 +40,7 @@ export function installFetchInterceptor(): void {
     // Inject trace context headers
     const headers = new Headers(init?.headers);
     headers.set('traceparent', `00-${session.traceId}-${session.spanId}-01`);
-    headers.set('x-paradox-hlc', JSON.stringify(session['hlc'].peek()));
+    headers.set('x-ergenekon-hlc', JSON.stringify(session['hlc'].peek()));
 
     // Record outgoing request
     session.record('http_request_out', `${method} ${url}`, {

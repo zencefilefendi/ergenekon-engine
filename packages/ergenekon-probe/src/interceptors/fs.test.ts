@@ -21,7 +21,7 @@ const fsp = fs.promises;
 let testDir: string;
 
 beforeEach(async () => {
-  testDir = await mkdtemp(join(tmpdir(), 'paradox-fs-test-'));
+  testDir = await mkdtemp(join(tmpdir(), 'ergenekon-fs-test-'));
 });
 
 afterEach(async () => {
@@ -63,13 +63,13 @@ describe('FS Interceptor — install/uninstall', () => {
 describe('FS Interceptor — passthrough when not recording', () => {
   it('readFile works normally when intercepted but not recording', async () => {
     const testFile = join(testDir, 'test.txt');
-    await fsp.writeFile(testFile, 'hello paradox');
+    await fsp.writeFile(testFile, 'hello ergenekon');
 
     installFsInterceptor();
 
     // No active session — should pass through
     const content = await fsp.readFile(testFile, 'utf-8');
-    expect(content).toBe('hello paradox');
+    expect(content).toBe('hello ergenekon');
   });
 
   it('writeFile works normally when intercepted but not recording', async () => {

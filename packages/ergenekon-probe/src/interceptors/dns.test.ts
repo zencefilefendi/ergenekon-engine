@@ -85,7 +85,7 @@ describe('DNS Interceptor — passthrough when not recording', () => {
 
     await expect(
       new Promise<void>((resolve, reject) => {
-        dns.lookup('this-domain-definitely-does-not-exist-paradox-12345.test', (err) => {
+        dns.lookup('this-domain-definitely-does-not-exist-ergenekon-12345.test', (err) => {
           if (err) reject(err);
           else resolve();
         });
@@ -111,7 +111,7 @@ describe('DNS Interceptor — passthrough when not recording', () => {
     installDnsInterceptor();
 
     await expect(
-      dnsPromises.resolve('this-domain-definitely-does-not-exist-paradox-12345.test')
+      dnsPromises.resolve('this-domain-definitely-does-not-exist-ergenekon-12345.test')
     ).rejects.toThrow();
   });
 });

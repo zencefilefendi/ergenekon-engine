@@ -1,4 +1,4 @@
-# ERGENEKON Engine — Geliştirme Yol Haritası
+# ERGENEKON Engine — Development Roadmap
 
 ---
 
@@ -167,7 +167,7 @@ Tüm paketler npm publish'e hazır
 
 ### Deployment ✅ TAMAMLANDI
 - [x] Docker image + Docker Compose (`docker-compose.yml` + `docker/` Dockerfiles)
-- [x] Kubernetes Helm chart (`helm/paradox/` — collector + UI + ingress + PVC)
+- [x] Kubernetes Helm chart (`helm/ergenekon/` — collector + UI + ingress + PVC)
 - [x] CI/CD pipeline (`/.github/workflows/ci.yml` + `publish.yml`)
 
 ### GitHub Altyapısı ✅ TAMAMLANDI

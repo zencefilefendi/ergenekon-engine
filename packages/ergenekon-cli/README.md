@@ -18,23 +18,23 @@ npx @ergenekon/cli sessions
 ## Commands
 
 ```
-paradox sessions               List all recorded sessions
-paradox inspect <sessionId>    Show detailed session info + event breakdown
-paradox timeline <sessionId>   Print ASCII event timeline with timing
-paradox trace <traceId>        Visualize distributed trace across services
-paradox export <id> [file]     Export session (.json or .paradox.bin)
-paradox import <file>          Import session into collector
-paradox stats                  Show collector statistics
-paradox watch                  Live-tail new recordings (polls every 2s)
-paradox health                 Check collector connectivity
-paradox help                   Show help
+ergenekon sessions               List all recorded sessions
+ergenekon inspect <sessionId>    Show detailed session info + event breakdown
+ergenekon timeline <sessionId>   Print ASCII event timeline with timing
+ergenekon trace <traceId>        Visualize distributed trace across services
+ergenekon export <id> [file]     Export session (.json or .ergenekon.bin)
+ergenekon import <file>          Import session into collector
+ergenekon stats                  Show collector statistics
+ergenekon watch                  Live-tail new recordings (polls every 2s)
+ergenekon health                 Check collector connectivity
+ergenekon help                   Show help
 ```
 
 ## Examples
 
 ```bash
 # List all sessions
-paradox sessions
+ergenekon sessions
 
 # 📼 Recorded Sessions (32)
 # ID                           Service            Events   Duration   Error  Time
@@ -42,10 +42,10 @@ paradox sessions
 # 01HWXYZ...                   order-service      59       23ms       ✓      4/9/2026...
 
 # Inspect a session
-paradox inspect 01HWXYZ...
+ergenekon inspect 01HWXYZ...
 
 # ⏱ Timeline — see exactly when each event fired
-paradox timeline 01HWXYZ...
+ergenekon timeline 01HWXYZ...
 
 #   000   +0ms  ● http_request_in      POST /api/orders
 #   001   +1ms  ● timestamp            Date.now()
@@ -56,18 +56,18 @@ paradox timeline 01HWXYZ...
 #   ...
 
 # See distributed trace across 2 services
-paradox trace abc123def456...
+ergenekon trace abc123def456...
 
 # 🔗 Distributed Trace
 #   order-service    ╠══════════════╣ 23ms (59 events)
 #   user-service       ╠═════╣ 8ms (21 events)
 
 # Export to compact binary
-paradox export 01HWXYZ... recording.paradox.bin
+ergenekon export 01HWXYZ... recording.ergenekon.bin
 # ✓ Exported (420 bytes, 24% smaller than JSON)
 
 # Live-tail new recordings
-paradox watch
+ergenekon watch
 # 👀 Watching for new recordings...
 #   NEW 12:35:48 order-service — 59 events, 23ms
 #   NEW 12:35:49 user-service — 21 events, 8ms
@@ -77,7 +77,7 @@ paradox watch
 
 ```bash
 # Point to a non-default collector
-ERGENEKON_COLLECTOR_URL=http://staging:4380 paradox sessions
+ERGENEKON_COLLECTOR_URL=http://staging:4380 ergenekon sessions
 ```
 
 ## Part of ERGENEKON Engine

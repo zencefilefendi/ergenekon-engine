@@ -207,7 +207,7 @@ export interface LicenseValidation {
 /** Ordered list of paths where the license file is searched */
 export const LICENSE_FILE_SEARCH_PATHS = [
   '.ergenekon-license.json',                   // Current directory
-  'paradox-license.json',                    // Current directory (alt)
+  'ergenekon-license.json',                    // Current directory (alt)
   `${process.env.HOME || '~'}/.ergenekon-license.json`,  // Home directory
 ];
 

@@ -27,7 +27,7 @@ export function installGlobalInterceptors(): void {
 
   // ── Date.now() ──────────────────────────────────────────────────
 
-  Date.now = function paradoxDateNow(): number {
+  Date.now = function ergenekonDateNow(): number {
     const value = _originalDateNow();
     if (_recording) return value; // Re-entrancy: don't record our own internal calls
     const session = getActiveSession();
@@ -44,7 +44,7 @@ export function installGlobalInterceptors(): void {
 
   // ── Math.random() ──────────────────────────────────────────────
 
-  Math.random = function paradoxMathRandom(): number {
+  Math.random = function ergenekonMathRandom(): number {
     const value = _originalMathRandom();
     if (_recording) return value; // Re-entrancy: don't record our own internal calls
     const session = getActiveSession();

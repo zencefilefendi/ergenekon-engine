@@ -2,7 +2,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 .env
-.paradox-recordings/
+.ergenekon-recordings/
 coverage/
 **/.DS_Store
 
@@ -13,3 +13,8 @@ license-server/.env
 
 # License files (never commit)
 .ergenekon-license.json
+
+# Development files
+CLAUDE.md
+.claude/
+STRIPE_SETUP.md

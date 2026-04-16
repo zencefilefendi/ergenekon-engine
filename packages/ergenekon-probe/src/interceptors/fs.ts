@@ -78,7 +78,7 @@ export function uninstallFsInterceptor(): void {
 }
 
 function createWrapper(method: InterceptedMethod, original: Function): Function {
-  return async function paradoxFs(...args: unknown[]): Promise<unknown> {
+  return async function ergenekonFs(...args: unknown[]): Promise<unknown> {
     const session = getActiveSession();
 
     // No active recording — pass through with zero overhead
