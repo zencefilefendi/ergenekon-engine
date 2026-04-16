@@ -39,7 +39,7 @@ import {
 // This is the PUBLIC key — safe to distribute in the npm package.
 // The corresponding PRIVATE key exists only on the license generation server.
 const ERGENEKON_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAVP3KV5BrkTN64LmyKqhgK8LB+WPJupfuNnuUmZx49KE=
+MCowBQYDK2VwAyEAm2DL8DjYG3R3HR5Dxib1gLa1AI6GlCd9ZkvrXTq5vCM=
 -----END PUBLIC KEY-----`;
 
 // ── Community Fallback ─────────────────────────────────────────────
@@ -72,7 +72,7 @@ function communityFallback(error: string | null = null): LicenseValidation {
  * @param signedLicenseJson - The raw JSON string of the .ergenekon-license.json file
  * @returns LicenseValidation — always returns a result, never throws
  */
-export function validateLicense(signedLicenseJson: string): LicenseValidation {
+export function validateLicense(signedLicenseJson: string, publicKeyPem?: string): LicenseValidation {
   // 1. Parse the signed license
   let signed: SignedLicense;
   try {
@@ -105,7 +105,7 @@ export function validateLicense(signedLicenseJson: string): LicenseValidation {
 
   // 6. Verify Ed25519 signature
   try {
-    const publicKey = createPublicKey(ERGENEKON_PUBLIC_KEY_PEM);
+    const publicKey = createPublicKey(publicKeyPem ?? ERGENEKON_PUBLIC_KEY_PEM);
     const payloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
     const signatureBytes = Buffer.from(signature, 'base64');
 
@@ -200,11 +200,11 @@ export function getTierDisplay(tier: LicenseTier): string {
  *
  * If no license is found, returns Community-tier validation (not an error).
  */
-export function loadLicense(): LicenseValidation {
+export function loadLicense(publicKeyPem?: string): LicenseValidation {
   // 1. Check inline env var first
   const inlineKey = process.env[LICENSE_INLINE_ENV_VAR];
   if (inlineKey) {
-    return validateLicense(inlineKey);
+    return validateLicense(inlineKey, publicKeyPem);
   }
 
   // 2. Check explicit file path env var
@@ -214,7 +214,7 @@ export function loadLicense(): LicenseValidation {
       const resolved = resolve(envPath);
       if (existsSync(resolved)) {
         const content = readFileSync(resolved, 'utf-8');
-        return validateLicense(content);
+        return validateLicense(content, publicKeyPem);
       }
       return communityFallback(`License file not found at ERGENEKON_LICENSE path: ${envPath}`);
     } catch (err) {
@@ -228,7 +228,7 @@ export function loadLicense(): LicenseValidation {
       const resolved = resolve(searchPath);
       if (existsSync(resolved)) {
         const content = readFileSync(resolved, 'utf-8');
-        return validateLicense(content);
+        return validateLicense(content, publicKeyPem);
       }
     } catch {
       // Continue to next path

@@ -18,10 +18,15 @@ import type { LicenseValidation, SignedLicense } from './license-types.js';
 import { TIER_FEATURES, TIER_LIMITS } from './license-types.js';
 import { writeFileSync, unlinkSync, existsSync } from 'node:fs';
 
-// The test private key — ONLY used in tests, never in production
+// Test key pair — ONLY for tests. Has NO relation to production keys.
+// This private key is intentionally in the repo; it cannot sign real licenses.
 const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
-***REDACTED_ROTATED_KEY***
+MC4CAQAwBQYDK2VwBCIEIJc9/erVLI4HZ8KiIAwHeVoRVDW8zFhHsBWJX7bAm8P5
 -----END PRIVATE KEY-----`;
+
+const TEST_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAyUUydeL+CP9O1NAKbEFqFuvDsSRUhzKkjdAuI7Y3V+M=
+-----END PUBLIC KEY-----`;
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -139,7 +144,7 @@ describe('License Validator', () => {
   describe('valid license verification', () => {
     it('validates a properly signed Pro license', () => {
       const signed = createValidProLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.valid).toBe(true);
       expect(result.tier).toBe('pro');
@@ -151,7 +156,7 @@ describe('License Validator', () => {
 
     it('validates a properly signed Enterprise license', () => {
       const signed = createValidEnterpriseLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.valid).toBe(true);
       expect(result.tier).toBe('enterprise');
@@ -162,7 +167,7 @@ describe('License Validator', () => {
 
     it('resolves Pro tier features correctly', () => {
       const signed = createValidProLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.features).toContain('distributed_replay');
       expect(result.features).toContain('smart_sampling');
@@ -178,7 +183,7 @@ describe('License Validator', () => {
 
     it('resolves limits from tier defaults', () => {
       const signed = createValidProLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.limits.maxServices).toBe(-1); // unlimited for pro
       expect(result.limits.maxRetentionHours).toBe(720); // 30 days
@@ -195,7 +200,7 @@ describe('License Validator', () => {
         maxEventsPerDay: 5000,
       }, TEST_PRIVATE_KEY);
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.limits.maxServices).toBe(3);
       expect(result.limits.maxEventsPerDay).toBe(5000);
     });
@@ -206,7 +211,7 @@ describe('License Validator', () => {
       const signed = createValidProLicense();
       signed.payload.customerEmail = 'hacker@evil.com';  // tamper!
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.valid).toBe(false);
       expect(result.tier).toBe('community');
       expect(result.error).toContain('signature verification failed');
@@ -216,7 +221,7 @@ describe('License Validator', () => {
       const signed = createValidProLicense();
       (signed as any).payload.tier = 'enterprise';  // try to upgrade!
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('signature verification failed');
     });
@@ -225,7 +230,7 @@ describe('License Validator', () => {
       const signed = createValidProLicense();
       signed.payload.features.push('sso_saml' as any);  // add enterprise feature
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.valid).toBe(false);
     });
 
@@ -233,7 +238,7 @@ describe('License Validator', () => {
       const signed = createValidProLicense();
       signed.payload.expiresAt = '2099-12-31T23:59:59.999Z';  // extend!
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.valid).toBe(false);
     });
 
@@ -241,7 +246,7 @@ describe('License Validator', () => {
       const signed = createValidProLicense();
       signed.signature = 'dGhpcyBpcyBub3QgYSB2YWxpZCBzaWduYXR1cmU=';
 
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('signature verification failed');
     });
@@ -250,7 +255,7 @@ describe('License Validator', () => {
   describe('expiration handling', () => {
     it('rejects an expired license', () => {
       const signed = createExpiredLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.valid).toBe(false);
       expect(result.tier).toBe('community');
@@ -259,7 +264,7 @@ describe('License Validator', () => {
 
     it('reports days until expiry for valid license', () => {
       const signed = createValidProLicense();
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
       expect(result.daysUntilExpiry).toBeGreaterThan(360);
       expect(result.daysUntilExpiry).toBeLessThanOrEqual(366);
@@ -289,7 +294,7 @@ describe('License Validator', () => {
     it('returns community for unsupported version', () => {
       const signed = createValidProLicense();
       (signed as any).payload.version = 99;
-      const result = validateLicense(JSON.stringify(signed));
+      const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
       // Will fail signature check because payload was modified
       expect(result.valid).toBe(false);
     });
@@ -322,7 +327,7 @@ describe('License Validator', () => {
 describe('Helper Functions', () => {
   it('hasFeature returns true for included features', () => {
     const signed = createValidProLicense();
-    const result = validateLicense(JSON.stringify(signed));
+    const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
     expect(hasFeature(result, 'distributed_replay')).toBe(true);
     expect(hasFeature(result, 'smart_sampling')).toBe(true);
@@ -330,19 +335,19 @@ describe('Helper Functions', () => {
 
   it('hasFeature returns false for excluded features', () => {
     const signed = createValidProLicense();
-    const result = validateLicense(JSON.stringify(signed));
+    const result = validateLicense(JSON.stringify(signed), TEST_PUBLIC_KEY);
 
     expect(hasFeature(result, 'sso_saml')).toBe(false);
     expect(hasFeature(result, 'unlimited_retention')).toBe(false);
   });
 
   it('isAtLeastTier works correctly', () => {
-    const proResult = validateLicense(JSON.stringify(createValidProLicense()));
+    const proResult = validateLicense(JSON.stringify(createValidProLicense()), TEST_PUBLIC_KEY);
     expect(isAtLeastTier(proResult, 'community')).toBe(true);
     expect(isAtLeastTier(proResult, 'pro')).toBe(true);
     expect(isAtLeastTier(proResult, 'enterprise')).toBe(false);
 
-    const entResult = validateLicense(JSON.stringify(createValidEnterpriseLicense()));
+    const entResult = validateLicense(JSON.stringify(createValidEnterpriseLicense()), TEST_PUBLIC_KEY);
     expect(isAtLeastTier(entResult, 'community')).toBe(true);
     expect(isAtLeastTier(entResult, 'pro')).toBe(true);
     expect(isAtLeastTier(entResult, 'enterprise')).toBe(true);
@@ -379,7 +384,7 @@ describe('License File Discovery', () => {
     const signed = createValidProLicense();
     process.env.ERGENEKON_LICENSE_KEY = JSON.stringify(signed);
 
-    const result = loadLicense();
+    const result = loadLicense(TEST_PUBLIC_KEY);
     expect(result.valid).toBe(true);
     expect(result.tier).toBe('pro');
   });
@@ -388,7 +393,7 @@ describe('License File Discovery', () => {
     const signed = createValidProLicense();
     writeFileSync(testLicensePath, JSON.stringify(signed, null, 2));
 
-    const result = loadLicense();
+    const result = loadLicense(TEST_PUBLIC_KEY);
     expect(result.valid).toBe(true);
     expect(result.tier).toBe('pro');
   });
@@ -402,7 +407,7 @@ describe('License File Discovery', () => {
     const entSigned = createValidEnterpriseLicense();
     process.env.ERGENEKON_LICENSE_KEY = JSON.stringify(entSigned);
 
-    const result = loadLicense();
+    const result = loadLicense(TEST_PUBLIC_KEY);
     expect(result.tier).toBe('enterprise'); // env var wins
   });
 });
@@ -422,7 +427,7 @@ describe('Roundtrip Integrity', () => {
 
       // Serialize → deserialize → validate
       const json = JSON.stringify(signed);
-      const result = validateLicense(json);
+      const result = validateLicense(json, TEST_PUBLIC_KEY);
 
       expect(result.valid).toBe(true);
       expect(result.tier).toBe(tier);
@@ -438,7 +443,7 @@ describe('Roundtrip Integrity', () => {
       tier: 'pro',
     }, TEST_PRIVATE_KEY);
 
-    const result = validateLicense(json);
+    const result = validateLicense(json, TEST_PUBLIC_KEY);
     expect(result.valid).toBe(true);
     expect(result.tier).toBe('pro');
   });
