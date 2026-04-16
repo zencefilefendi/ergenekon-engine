@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERGENEKON — Time-Travel Debugger (Live Demo)</title>
+  <meta name="description" content="ERGENEKON Engine Time-Travel Debugger — visualize, inspect, and replay recorded sessions from your distributed system.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐺</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header" id="main-header">
+      <div class="header-left">
+        <div class="logo">
+          <div class="logo-glow"></div>
+          <span class="logo-wolf">🐺</span>
+          <span class="logo-text">ERGENEKON</span>
+        </div>
+        <span class="header-badge">Time-Travel Debugger</span>
+        <span id="tier-badge" class="tier-badge tier-pro" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border-color:rgba(99,102,241,0.3);color:#a78bfa">⚡ Pro</span>
+      </div>
+      <div class="header-right">
+        <div class="live-pulse" id="live-pulse">
+          <span class="pulse-dot"></span>
+          <span class="pulse-label" id="live-label">LIVE</span>
+        </div>
+        <button class="btn btn-ghost" onclick="toggleKeyboardHelp()" title="Keyboard shortcuts (?)">⌨</button>
+        <button class="btn btn-ghost" onclick="loadSessions()" title="Refresh">↻</button>
+        <span id="status-indicator" class="status-dot status-disconnected"></span>
+        <span id="status-text" class="status-text">Disconnected</span>
+      </div>
+    </header>
+
+    <div class="upgrade-banner" style="display:flex;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(16,185,129,0.08));border:1px solid rgba(99,102,241,0.2);padding:10px 20px;align-items:center;gap:12px;font-size:13px">
+      <span>🐺</span>
+      <span style="flex:1"><strong>Live Demo</strong> — This dashboard shows realistic mock data. <a href="https://ergenekon.dev/#pricing" target="_blank" style="color:#818cf8">Get your free license</a> to connect your own services.</span>
+      <a href="https://ergenekon.dev" target="_blank" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a78bfa;padding:6px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">ergenekon.dev →</a>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="layout">
+      <!-- Left Panel: Session List -->
+      <aside class="panel panel-sessions" id="panel-sessions">
+        <div class="panel-header">
+          <h2>Recordings</h2>
+          <span id="session-count" class="count-badge">0</span>
+        </div>
+        <div class="search-box">
+          <div class="search-icon">🔍</div>
+          <input type="text" id="search-input" placeholder="Search sessions..." oninput="filterSessions()">
+        </div>
+        <div id="session-list" class="session-list">
+          <div class="empty-state">
+            <div class="loading-skeleton">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center: Timeline + Event Detail -->
+      <main class="panel panel-main" id="panel-main">
+        <!-- No session selected state -->
+        <div id="empty-main" class="empty-main">
+          <div class="empty-hero">
+            <div class="empty-icon-ring">
+              <div class="empty-icon">🐺</div>
+            </div>
+            <h2>Select a Recording</h2>
+            <p>Choose a recording from the left panel to inspect its timeline.</p>
+            <p class="hint">Or run: <code>npx tsx demo/app.ts</code> and make requests.</p>
+            <div class="empty-shortcuts">
+              <span class="shortcut-hint"><kbd>←</kbd><kbd>→</kbd> Navigate</span>
+              <span class="shortcut-hint"><kbd>Space</kbd> Play/Pause</span>
+              <span class="shortcut-hint"><kbd>?</kbd> Help</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session Detail (hidden until session selected) -->
+        <div id="session-detail" class="session-detail" style="display:none">
+          <!-- Session Header -->
+          <div class="session-header">
+            <div class="session-info">
+              <div class="session-title-row">
+                <span id="session-method" class="method-badge method-get">GET</span>
+                <h2 id="session-title"></h2>
+              </div>
+              <div class="session-meta">
+                <span id="session-service" class="tag tag-service"></span>
+                <span id="session-status" class="tag tag-status"></span>
+                <span id="session-trace" class="tag tag-trace"></span>
+                <span id="session-duration" class="tag tag-duration"></span>
+                <span id="session-event-count" class="tag tag-events"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline Scrubber -->
+          <div class="timeline-container">
+            <div class="timeline-controls">
+              <button class="btn btn-icon" onclick="seekFirst()" title="First event (Home)">⏮</button>
+              <button class="btn btn-icon" onclick="seekPrev()" title="Previous (←)">◀</button>
+              <button id="btn-play" class="btn btn-icon btn-play" onclick="togglePlay()" title="Play/Pause (Space)">▶</button>
+              <button class="btn btn-icon" onclick="seekNext()" title="Next (→)">▶</button>
+              <button class="btn btn-icon" onclick="seekLast()" title="Last event (End)">⏭</button>
+              <span id="timeline-position" class="timeline-pos">0 / 0</span>
+              <div class="timeline-legend">
+                <span class="legend-dot" style="background:var(--accent)"></span>HTTP
+                <span class="legend-dot" style="background:var(--accent-green)"></span>DB
+                <span class="legend-dot" style="background:var(--accent-orange)"></span>Non-det
+                <span class="legend-dot" style="background:var(--accent-red)"></span>Error
+                <span class="legend-dot" style="background:var(--accent-purple)"></span>Timer
+              </div>
+            </div>
+            <div class="timeline-track" id="timeline-track" onclick="onTimelineClick(event)">
+              <div class="timeline-progress" id="timeline-progress"></div>
+              <div class="timeline-cursor" id="timeline-cursor"></div>
+            </div>
+            <div class="timeline-labels">
+              <span id="timeline-start">0ms</span>
+              <span id="timeline-end">0ms</span>
+            </div>
+          </div>
+
+          <!-- Service Flow (visual graph) -->
+          <div class="flow-container" id="flow-container">
+            <h3>Service Flow</h3>
+            <div class="flow-graph" id="flow-graph"></div>
+          </div>
+
+          <!-- Event List + Detail Split -->
+          <div class="detail-split">
+            <!-- Event List -->
+            <div class="event-list-container">
+              <h3>Events <span id="event-filter-count"></span></h3>
+              <div class="event-filters">
+                <button class="filter-btn active" data-type="all" onclick="filterEvents('all')">All</button>
+                <button class="filter-btn" data-type="http" onclick="filterEvents('http')">HTTP</button>
+                <button class="filter-btn" data-type="db" onclick="filterEvents('db')">DB</button>
+                <button class="filter-btn" data-type="fs" onclick="filterEvents('fs')">FS</button>
+                <button class="filter-btn" data-type="dns" onclick="filterEvents('dns')">DNS</button>
+                <button class="filter-btn" data-type="random" onclick="filterEvents('random')">Non-det</button>
+                <button class="filter-btn" data-type="error" onclick="filterEvents('error')">Errors</button>
+              </div>
+              <div id="event-list" class="event-list"></div>
+            </div>
+
+            <!-- Event Detail -->
+            <div class="event-detail-container" id="event-detail-container">
+              <div id="event-detail-empty" class="empty-state">
+                Click an event to inspect
+              </div>
+              <div id="event-detail" style="display:none">
+                <div class="detail-header">
+                  <span id="detail-type" class="event-type-badge"></span>
+                  <span id="detail-operation" class="detail-op"></span>
+                  <button class="btn btn-ghost btn-copy" onclick="copyEventJSON()" title="Copy JSON">📋</button>
+                </div>
+                <div class="detail-timing">
+                  <span id="detail-sequence"></span>
+                  <span id="detail-wallclock"></span>
+                  <span id="detail-duration"></span>
+                </div>
+                <div class="detail-tabs">
+                  <button class="tab-btn active" onclick="switchTab('data')">Data</button>
+                  <button class="tab-btn" onclick="switchTab('meta')">Metadata</button>
+                  <button class="tab-btn" id="tab-error-btn" style="display:none" onclick="switchTab('error')">Error</button>
+                </div>
+                <div class="detail-tab-content" id="tab-data">
+                  <pre id="detail-data" class="json-view"></pre>
+                </div>
+                <div class="detail-tab-content" id="tab-meta" style="display:none">
+                  <pre id="detail-meta" class="json-view json-meta"></pre>
+                </div>
+                <div class="detail-tab-content" id="tab-error" style="display:none">
+                  <pre id="detail-error" class="json-view json-error"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Right Panel: Metrics -->
+      <aside class="panel panel-metrics" id="panel-metrics">
+        <div class="panel-header">
+          <h2>Metrics</h2>
+        </div>
+        <div class="metrics-content">
+          <div class="metric-card">
+            <div class="metric-icon">📊</div>
+            <div class="metric-value" id="metric-sessions">0</div>
+            <div class="metric-label">Total Sessions</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">⚡</div>
+            <div class="metric-value" id="metric-events">0</div>
+            <div class="metric-label">Total Events</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">🕐</div>
+            <div class="metric-value" id="metric-uptime">0s</div>
+            <div class="metric-label">Collector Uptime</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon">📡</div>
+            <div class="metric-value" id="metric-services">—</div>
+            <div class="metric-label">Active Services</div>
+          </div>
+          <div class="metrics-divider"></div>
+          <div class="metric-card metric-mini">
+            <div class="metric-label">License</div>
+            <div class="metric-value small" id="metric-tier">Community</div>
+          </div>
+          <div class="metric-card metric-mini">
+            <div class="metric-label">Status</div>
+            <div class="metric-value small" id="metric-status">
+              <span class="metric-dot metric-dot-ok"></span> Healthy
+            </div>
+          </div>
+          <div class="metrics-divider"></div>
+          <!-- Event Type Breakdown -->
+          <div class="metric-card metric-breakdown">
+            <div class="metric-label">Event Types</div>
+            <div id="event-breakdown" class="breakdown-list">
+              <span class="breakdown-empty">Select a session</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Keyboard Shortcuts Overlay -->
+    <div id="keyboard-overlay" class="keyboard-overlay" style="display:none" onclick="toggleKeyboardHelp()">
+      <div class="keyboard-modal" onclick="event.stopPropagation()">
+        <div class="keyboard-header">
+          <h3>⌨ Keyboard Shortcuts</h3>
+          <button class="btn btn-ghost" onclick="toggleKeyboardHelp()">✕</button>
+        </div>
+        <div class="keyboard-grid">
+          <div class="kb-group">
+            <h4>Navigation</h4>
+            <div class="kb-row"><kbd>←</kbd> or <kbd>k</kbd> <span>Previous event</span></div>
+            <div class="kb-row"><kbd>→</kbd> or <kbd>j</kbd> <span>Next event</span></div>
+            <div class="kb-row"><kbd>Home</kbd> <span>First event</span></div>
+            <div class="kb-row"><kbd>End</kbd> <span>Last event</span></div>
+          </div>
+          <div class="kb-group">
+            <h4>Playback</h4>
+            <div class="kb-row"><kbd>Space</kbd> <span>Play / Pause</span></div>
+            <div class="kb-row"><kbd>?</kbd> <span>Toggle this help</span></div>
+            <div class="kb-row"><kbd>R</kbd> <span>Refresh sessions</span></div>
+            <div class="kb-row"><kbd>/</kbd> <span>Search sessions</span></div>
+            <div class="kb-row"><kbd>Esc</kbd> <span>Close overlay</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip" style="display:none"></div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script src="/demo-data.js"></script>
+  <script>
+    // Re-init with demo data
+    setTimeout(() => { loadSessions(); loadMetrics(); }, 500);
+  </script>
+</body>
+</html>
