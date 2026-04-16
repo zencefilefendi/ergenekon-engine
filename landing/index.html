@@ -1655,7 +1655,11 @@
         a.click();
         URL.revokeObjectURL(url);
 
-        msgEl.innerHTML = '✅ License sent to <strong>' + email + '</strong> + downloaded!';
+        msgEl.innerHTML = `✅ License downloaded! Now install:
+          <pre style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;margin-top:10px;font-size:13px;overflow-x:auto;text-align:left;color:#e2e8f0">
+<span style="color:#10b981">$</span> npm install @ergenekon/probe @ergenekon/collector
+<span style="color:#10b981">$</span> mv ~/Downloads/.ergenekon-license.json ./
+<span style="color:#6366f1"># 3 lines of code → you're recording</span></pre>`;
       }
     } catch (err) {
       console.error('Registration error:', err);
