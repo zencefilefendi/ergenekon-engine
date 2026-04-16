@@ -4,12 +4,14 @@
 
 > Production'daki her bug'ı birebir reproduce et. Zamanda geri git, olayı adım adım izle, kodu düzelt, aynı senaryoyu tekrar çalıştır — tüm bunları geliştirici makinesinde yap.
 
-[![Phase](https://img.shields.io/badge/phase-4%20%E2%9C%93%20launch%20ready-brightgreen)]()
+[![Phase](https://img.shields.io/badge/phase-5%20%E2%9C%93%20LAUNCHED-brightgreen)](https://ergenekon.dev)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-213%20passing-brightgreen)]()
 [![Node](https://img.shields.io/badge/node-%3E%3D20-blue)]()
 [![TypeScript](https://img.shields.io/badge/typescript-strict-blue)]()
 [![License](https://img.shields.io/badge/license-BSL%201.1-orange)]()
-[![Packages](https://img.shields.io/badge/packages-6-purple)]()
+[![npm](https://img.shields.io/npm/v/@ergenekon/core?label=%40ergenekon%2Fcore)](https://www.npmjs.com/package/@ergenekon/core)
+[![Website](https://img.shields.io/badge/website-ergenekon.dev-cyan)](https://ergenekon.dev)
 
 ---
 
@@ -120,12 +122,12 @@ Production → [ERGENEKON PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REP
 
 | Paket | Versiyon | Açıklama |
 |-------|----------|----------|
-| [`@ergenekon/core`](packages/ergenekon-core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
-| [`@ergenekon/probe`](packages/ergenekon-probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
-| [`@ergenekon/collector`](packages/ergenekon-collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
-| [`@ergenekon/replay`](packages/ergenekon-replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
-| [`@ergenekon/ui`](packages/ergenekon-ui) | v0.4.0 | Dark theme time-travel visual debugger |
-| [`@ergenekon/cli`](packages/ergenekon-cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
+| [`@ergenekon/core`](https://www.npmjs.com/package/@ergenekon/core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
+| [`@ergenekon/probe`](https://www.npmjs.com/package/@ergenekon/probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
+| [`@ergenekon/collector`](https://www.npmjs.com/package/@ergenekon/collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
+| [`@ergenekon/replay`](https://www.npmjs.com/package/@ergenekon/replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
+| [`@ergenekon/ui`](https://www.npmjs.com/package/@ergenekon/ui) | v0.4.0 | Dark theme time-travel visual debugger |
+| [`@ergenekon/cli`](https://www.npmjs.com/package/@ergenekon/cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
 
 ---
 
@@ -183,7 +185,7 @@ npm run cli watch              # Canlı izleme modu
 | **Phase 2: Time-Travel UI** | ✅ Tamamlandı | Dark theme debugger, timeline scrubber, service flow |
 | **Phase 3: Production Hardening** | ✅ Tamamlandı | Smart sampling, deep redaction, binary export, CLI |
 | **Phase 4: Launch Ready** | ✅ Tamamlandı | TypeScript build pipeline, per-package README, npm hazır |
-| **Phase 5: Scale & Launch** | 🔄 Sırada | npm publish, landing page, Product Hunt |
+| **Phase 5: LAUNCHED 🚀** | ✅ Tamamlandı | npm published, ergenekon.dev canlı, license API aktif |
 
 ---
 
@@ -231,5 +233,7 @@ Business Source License 1.1 (BSL-1.1)
 
 Production kullanımı için ticari lisans gereklidir.
 Geliştirme ve test için ücretsizdir.
+
+🐺 **[ergenekon.dev](https://ergenekon.dev)** — Ücretsiz Pro lisans al
 
 &copy; 2026 ERGENEKON Engine Contributors
