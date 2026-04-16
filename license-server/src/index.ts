@@ -61,11 +61,15 @@ async function readBody(req: IncomingMessage): Promise<Buffer> {
 
 // ── Helper: JSON response ───────────────────────────────────────
 function json(res: ServerResponse, status: number, data: unknown) {
+  const allowedOrigins = ['https://ergenekon.dev', 'http://localhost:3000', 'http://localhost:5500'];
+  const origin = (res as any).req?.headers?.origin || '*';
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
   res.writeHead(status, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': corsOrigin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, stripe-signature',
+    'Access-Control-Allow-Headers': 'Content-Type, stripe-signature, x-admin-key',
   });
   res.end(JSON.stringify(data));
 }

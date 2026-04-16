@@ -20,7 +20,7 @@ import { writeFileSync, unlinkSync, existsSync } from 'node:fs';
 
 // The test private key — ONLY used in tests, never in production
 const TEST_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
-***REDACTED_OLD_KEY***
+***REDACTED_ROTATED_KEY***
 -----END PRIVATE KEY-----`;
 
 // ── Helpers ────────────────────────────────────────────────────────

@@ -9,7 +9,11 @@
   <meta property="og:description" content="Record production requests. Replay them on your laptop. Byte-for-byte identical. The debugging tool that fintech and SaaS teams have been waiting for.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ergenekon.dev">
+  <meta property="og:image" content="https://ergenekon.dev/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ERGENEKON Engine — Time-Travel Debugging">
+  <meta name="twitter:description" content="Record production requests. Replay them on your laptop. Byte-for-byte identical.">
+  <meta name="twitter:image" content="https://ergenekon.dev/og-image.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -798,7 +802,7 @@
       <li><a href="#architecture">Architecture</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank">GitHub</a></li>
-      <li><a href="#cta" class="btn-nav">Get Started</a></li>
+      <li><a href="#pricing" class="btn-nav">Get Started</a></li>
     </ul>
   </div>
 </nav>
@@ -1277,16 +1281,15 @@
         <span class="copy-icon">📋</span>
       </div>
 
-      <br><br>
-      <div class="hero-cta">
-        <a href="./docs.html" class="btn-primary">
-          <span>📖</span> Read the Docs
-        </a>
-        <a href="#pricing" class="btn-secondary">
-          <span>🐺</span> Get Free License
-        </a>
+      <br>
+      <div class="free-register-form" id="cta-register-form" style="max-width:380px;margin:0 auto;">
+        <input type="email" id="cta-email" placeholder="you@company.com" class="register-email" />
+        <button class="btn-plan primary" style="width:100%;padding:14px;font-size:15px;" onclick="registerFree('cta')">
+          🐺 Get Free Pro License
+        </button>
+        <div id="cta-register-msg" class="register-msg"></div>
       </div>
-      <p style="margin-top:16px;font-size:12px;color:var(--text-muted);">
+      <p style="margin-top:20px;font-size:12px;color:var(--text-muted);">
         Open source under <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" style="color:var(--text-tertiary);">BSL-1.1</a> · 
         <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" style="color:var(--text-tertiary);">View source on GitHub</a>
       </p>
@@ -1596,12 +1599,12 @@
   // ── Pricing Toggle ─────────────────────────────────────
   // Pricing toggle disabled — all plans are free during launch
   function toggleBilling() { /* coming soon */ }
-
   // ── Free License Registration ──────────────────────────────
   const LICENSE_SERVER = 'https://license.ergenekon.dev';
 
   async function registerFree(tier) {
-    const prefix = tier === 'enterprise' ? 'ent' : 'pro';
+    const prefix = tier === 'enterprise' ? 'ent' : tier === 'cta' ? 'cta' : 'pro';
+    const actualTier = tier === 'cta' ? 'pro' : tier;
     const emailInput = document.getElementById(`${prefix}-email`);
     const msgEl = document.getElementById(`${prefix}-register-msg`);
     const btn = event.target;
