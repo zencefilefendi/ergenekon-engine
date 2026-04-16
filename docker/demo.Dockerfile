@@ -3,12 +3,12 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
-COPY packages/paradox-core/package.json ./packages/paradox-core/
-COPY packages/paradox-probe/package.json ./packages/paradox-probe/
-COPY packages/paradox-collector/package.json ./packages/paradox-collector/
-COPY packages/paradox-replay/package.json ./packages/paradox-replay/
-COPY packages/paradox-ui/package.json ./packages/paradox-ui/
-COPY packages/paradox-cli/package.json ./packages/paradox-cli/
+COPY packages/ergenekon-core/package.json ./packages/ergenekon-core/
+COPY packages/ergenekon-probe/package.json ./packages/ergenekon-probe/
+COPY packages/ergenekon-collector/package.json ./packages/ergenekon-collector/
+COPY packages/ergenekon-replay/package.json ./packages/ergenekon-replay/
+COPY packages/ergenekon-ui/package.json ./packages/ergenekon-ui/
+COPY packages/ergenekon-cli/package.json ./packages/ergenekon-cli/
 
 RUN npm ci
 
