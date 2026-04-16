@@ -1,6 +1,6 @@
 {
   "name": "@ergenekon/collector",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "ERGENEKON collector server — receives, orders, and stores recordings",
   "main": "./dist/index.js",

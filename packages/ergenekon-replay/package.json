@@ -1,6 +1,6 @@
 {
   "name": "@ergenekon/replay",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "ERGENEKON deterministic replay engine — replay production bugs on your laptop",
   "main": "./dist/index.js",

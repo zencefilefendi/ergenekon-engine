@@ -1,6 +1,6 @@
 {
   "name": "@ergenekon/core",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "Shared types, HLC clock, ULID, and session I/O for ERGENEKON Engine",
   "main": "./dist/index.js",

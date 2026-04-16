@@ -10,3 +10,6 @@ coverage/
 license-server/keys/private.pem
 license-server/.env
 *.pem
+
+# License files (never commit)
+.ergenekon-license.json

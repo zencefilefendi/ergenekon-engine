@@ -122,12 +122,12 @@ Production → [ERGENEKON PROBE] → [COLLECTOR] → [TIME-TRAVEL UI / CLI / REP
 
 | Paket | Versiyon | Açıklama |
 |-------|----------|----------|
-| [`@ergenekon/core`](https://www.npmjs.com/package/@ergenekon/core) | v0.4.0 | Tipler, HLC clock, ULID, session import/export |
-| [`@ergenekon/probe`](https://www.npmjs.com/package/@ergenekon/probe) | v0.4.0 | Express middleware — 15+ interceptor, smart sampling, redaction |
-| [`@ergenekon/collector`](https://www.npmjs.com/package/@ergenekon/collector) | v0.4.0 | HTTP ingestion server, HLC ordering, file storage |
-| [`@ergenekon/replay`](https://www.npmjs.com/package/@ergenekon/replay) | v0.4.0 | Deterministik replay engine, time-travel inspection |
-| [`@ergenekon/ui`](https://www.npmjs.com/package/@ergenekon/ui) | v0.4.0 | Dark theme time-travel visual debugger |
-| [`@ergenekon/cli`](https://www.npmjs.com/package/@ergenekon/cli) | v0.4.0 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
+| [`@ergenekon/core`](https://www.npmjs.com/package/@ergenekon/core) | v0.4.1 | Tipler, HLC clock, ULID, session import/export |
+| [`@ergenekon/probe`](https://www.npmjs.com/package/@ergenekon/probe) | v0.4.1 | Express middleware — 15+ interceptor, smart sampling, redaction |
+| [`@ergenekon/collector`](https://www.npmjs.com/package/@ergenekon/collector) | v0.4.1 | HTTP ingestion server, HLC ordering, file storage |
+| [`@ergenekon/replay`](https://www.npmjs.com/package/@ergenekon/replay) | v0.4.1 | Deterministik replay engine, time-travel inspection |
+| [`@ergenekon/ui`](https://www.npmjs.com/package/@ergenekon/ui) | v0.4.1 | Dark theme time-travel visual debugger |
+| [`@ergenekon/cli`](https://www.npmjs.com/package/@ergenekon/cli) | v0.4.1 | 10-komut CLI: sessions, inspect, timeline, trace, export, watch |
 
 ---
 
