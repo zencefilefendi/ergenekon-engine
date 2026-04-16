@@ -1,0 +1,12 @@
+# ERGENEKON Engine
+User-agent: *
+Allow: /
+Allow: /docs.html
+
+# Block API endpoints from indexing
+Disallow: /api/
+Disallow: /api/register-free
+Disallow: /api/health
+
+# Sitemap
+Sitemap: https://ergenekon.dev/sitemap.xml

@@ -1,0 +1,6 @@
+Contact: mailto:security@ergenekon.dev
+Contact: https://github.com/zencefilefendi/ergenekon-engine/security/advisories
+Expires: 2027-04-17T00:00:00.000Z
+Preferred-Languages: en, tr
+Canonical: https://ergenekon.dev/.well-known/security.txt
+Policy: https://github.com/zencefilefendi/ergenekon-engine/blob/main/SECURITY.md
