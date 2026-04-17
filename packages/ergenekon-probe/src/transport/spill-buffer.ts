@@ -102,7 +102,10 @@ export class SpillBuffer {
 
           for (const line of lines) {
             try {
-              sessions.push(JSON.parse(line) as RecordingSession);
+              sessions.push(JSON.parse(line, (key, value) => {
+                if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+                return value;
+              }) as RecordingSession);
             } catch {
               // skip corrupt lines
             }

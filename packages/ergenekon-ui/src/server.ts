@@ -81,19 +81,38 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     }
     try {
       const collectorUrl = `${COLLECTOR_URL}${url.pathname}${url.search}`;
+      // SECURITY: Forward collector auth token from UI → Collector
+      const proxyHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      const collectorToken = process.env['ERGENEKON_COLLECTOR_TOKEN'];
+      if (collectorToken) {
+        proxyHeaders['Authorization'] = `Bearer ${collectorToken}`;
+      }
+      // SECURITY: 10s timeout prevents slow-loris DoS via compromised collector
       const response = await fetch(collectorUrl, {
         method: req.method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: proxyHeaders,
+        signal: AbortSignal.timeout(10_000),
       });
       const body = await response.text();
+      // SECURITY: Cap response size — prevent OOM from malicious collector response
+      const MAX_PROXY_RESPONSE = 50 * 1024 * 1024; // 50MB
+      if (body.length > MAX_PROXY_RESPONSE) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Collector response too large' }));
+        return;
+      }
       res.writeHead(response.status, {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': corsOrigin,
       });
       res.end(body);
     } catch (err) {
+      // SECURITY: Don't leak internal collector URL in error details
+      const safeMessage = err instanceof Error && err.name === 'AbortError'
+        ? 'Collector request timed out'
+        : 'Collector unreachable';
       res.writeHead(502, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Collector unreachable', details: String(err) }));
+      res.end(JSON.stringify({ error: safeMessage }));
     }
     return;
   }

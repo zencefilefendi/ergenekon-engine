@@ -58,11 +58,17 @@ function sanitizeEmail(raw) {
   if (!emailRegex.test(email)) return null;
 
   // Block disposable email providers
-  const disposable = ['tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator', 'trashmail', 'fakeinbox',
-    '10minutemail', 'temp-mail', 'dispostable', 'sharklasers', 'grr.la', 'guerrillamailblock',
-    'maildrop', 'mailnesia', 'getairmail', 'minutemail', 'tempinbox', 'mohmal', 'burpcollaborator'];
+  // SECURITY (HIGH-16): Exact domain match via Set — NOT substring includes()
+  const disposable = new Set([
+    'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'yopmail.com', 'mailinator.com',
+    'trashmail.com', 'fakeinbox.com', '10minutemail.com', 'temp-mail.org', 'dispostable.com',
+    'sharklasers.com', 'grr.la', 'guerrillamailblock.com', 'maildrop.cc', 'mailnesia.com',
+    'getairmail.com', 'minutemail.com', 'tempinbox.com', 'mohmal.com', 'burpcollaborator.net',
+    'tempmail.net', 'guerrillamail.info', 'guerrillamail.de', 'mailnull.com',
+    'mytemp.email', 'nada.email', 'dropmail.me', 'harakirimail.com',
+  ]);
   const domain = email.split('@')[1];
-  if (disposable.some(d => domain.includes(d))) return null;
+  if (disposable.has(domain)) return null;
 
   return email;
 }

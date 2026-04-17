@@ -86,7 +86,8 @@ describe('CollectorServer', () => {
   it('OPTIONS returns CORS headers', async () => {
     const res = await request('OPTIONS', '/api/v1/sessions');
     expect(res.status).toBe(204);
-    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    // SECURITY: Unknown origins get empty ACAO — no origin leak
+    expect(res.headers['access-control-allow-origin']).toBe('');
     expect(res.headers['access-control-allow-methods']).toContain('POST');
   });
 

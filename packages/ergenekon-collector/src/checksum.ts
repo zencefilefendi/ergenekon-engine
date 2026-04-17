@@ -42,7 +42,11 @@ export function wrapWithChecksum(data: unknown): string {
 export function verifyAndUnwrap<T>(content: string): T {
   let parsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    // SECURITY: Prototype pollution guard — disk files could be crafted
+    parsed = JSON.parse(content, (key, value) => {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+      return value;
+    });
   } catch {
     throw new ChecksumError('Failed to parse JSON');
   }

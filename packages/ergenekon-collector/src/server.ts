@@ -25,6 +25,7 @@
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { timingSafeEqual } from 'node:crypto';
 import type { RecordingSession, LicenseValidation } from '@ergenekon/core';
 import { FileStorage, SessionIdError } from './storage.js';
 import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
@@ -65,10 +66,18 @@ export class CollectorServer {
     this.server = createServer((req, res) => {
       this.handleRequest(req, res).catch((err) => {
         console.error('[ERGENEKON COLLECTOR] Unhandled error:', err);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal server error' }));
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+        }
       });
     });
+
+    // SECURITY: Timeouts to prevent slow-loris and connection exhaustion attacks
+    this.server.requestTimeout = 30_000;    // 30s max for full request
+    this.server.headersTimeout = 10_000;    // 10s max for headers
+    this.server.keepAliveTimeout = 5_000;   // 5s keep-alive
+    this.server.maxRequestsPerSocket = 100; // Limit pipelining abuse
 
     return new Promise((resolve) => {
       this.server!.listen(this.config.port, () => {
@@ -106,7 +115,7 @@ export class CollectorServer {
       'https://ergenekon-dashboard.vercel.app',  // production dashboard
     ];
     const origin = req.headers.origin || '';
-    const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+    const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
 
     // Host header validation — reject DNS rebinding
     const host = req.headers.host || '';
@@ -151,20 +160,29 @@ export class CollectorServer {
     const url = new URL(req.url ?? '/', `http://localhost:${this.config.port}`);
     const path = url.pathname;
 
+    // ── Auth helper — reused for both read and write operations ───
+    const collectorToken = process.env['ERGENEKON_COLLECTOR_TOKEN'];
+    const requireAuth = (): boolean => {
+      if (!collectorToken) return true; // no token configured = open
+      const authHeader = req.headers['authorization'] || '';
+      const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+      // SECURITY: timingSafeEqual with fixed 64-byte buffers to prevent timing + length oracle
+      const tokenBuf = Buffer.alloc(64, 0);
+      const inputBuf = Buffer.alloc(64, 0);
+      Buffer.from(collectorToken).copy(tokenBuf);
+      Buffer.from(bearerToken).copy(inputBuf);
+      return timingSafeEqual(tokenBuf, inputBuf) && bearerToken.length === collectorToken.length;
+    };
+
     // ── POST /api/v1/sessions — Receive recordings from probes ────
     // SECURITY (CRIT-01): Require bearer token for write operations
     if (req.method === 'POST' && path === '/api/v1/sessions') {
-      const collectorToken = process.env['ERGENEKON_COLLECTOR_TOKEN'];
-      if (collectorToken) {
-        const authHeader = req.headers['authorization'] || '';
-        const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-        if (bearerToken !== collectorToken) {
-          console.warn(`[SECURITY] Unauthorized POST /api/v1/sessions from ${clientIp}`);
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized: invalid or missing collector token' }));
-          return;
-        }
-      } else if (process.env['NODE_ENV'] === 'production') {
+      if (collectorToken && !requireAuth()) {
+        console.warn(`[SECURITY] Unauthorized POST /api/v1/sessions from ${clientIp}`);
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized: invalid or missing collector token' }));
+        return;
+      } else if (!collectorToken && process.env['NODE_ENV'] === 'production') {
         console.warn('[SECURITY] ERGENEKON_COLLECTOR_TOKEN not set in production. Write operations are unauthenticated!');
       }
       // Layer 1: Safe body read (16MB hard limit, streaming abort)
@@ -186,7 +204,11 @@ export class CollectorServer {
       // Layer 2: JSON parse (400, not 500)
       let payload: { sessions: RecordingSession[] };
       try {
-        payload = JSON.parse(body) as { sessions: RecordingSession[] };
+        // SECURITY: Prototype pollution guard on incoming session data
+        payload = JSON.parse(body, (key, value) => {
+          if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+          return value;
+        }) as { sessions: RecordingSession[] };
       } catch {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid JSON body' }));
@@ -255,7 +277,13 @@ export class CollectorServer {
     }
 
     // ── GET /api/v1/sessions — List all sessions ──────────────────
+    // SECURITY: Session data may contain PII — require auth when token is set
     if (req.method === 'GET' && path === '/api/v1/sessions') {
+      if (collectorToken && !requireAuth()) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
       const sessions = await this.storage.listSessions();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ sessions }));
@@ -264,6 +292,11 @@ export class CollectorServer {
 
     // ── GET /api/v1/sessions/:id — Get a specific session ─────────
     if (req.method === 'GET' && path.startsWith('/api/v1/sessions/')) {
+      if (collectorToken && !requireAuth()) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
       const sessionId = path.split('/').pop()!;
       // SECURITY: Validate session ID from URL to prevent path traversal
       if (!/^[a-zA-Z0-9_\-]{1,128}$/.test(sessionId)) {
@@ -286,6 +319,11 @@ export class CollectorServer {
 
     // ── GET /api/v1/traces/:traceId — Get all sessions for a trace ─
     if (req.method === 'GET' && path.startsWith('/api/v1/traces/')) {
+      if (collectorToken && !requireAuth()) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
       const traceId = path.split('/').pop()!;
       // SECURITY: Validate trace ID
       if (!/^[a-zA-Z0-9_\-]{1,128}$/.test(traceId)) {
@@ -328,7 +366,7 @@ export class CollectorServer {
         features: this.license.features,
         limits: this.license.limits,
         daysUntilExpiry: this.license.daysUntilExpiry,
-        customerName: this.license.license?.customerName ?? null,
+        // SECURITY: Do NOT leak customerName to unauthenticated callers
       }));
       return;
     }
