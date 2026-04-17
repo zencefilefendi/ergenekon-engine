@@ -37,27 +37,27 @@ export async function handleStripeWebhook(
   // Verify webhook signature
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  if (webhookSecret) {
-    // In production, verify the Stripe signature
-    try {
-      const Stripe = (await import('stripe')).default;
-      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-      const event = stripe.webhooks.constructEvent(
-        body.toString('utf-8'),
-        signature,
-        webhookSecret,
-      ) as unknown as StripeEvent;
+  if (!webhookSecret) {
+    // SECURITY: Fail-closed — if webhook secret is not configured, reject ALL webhooks.
+    // Never process unverified webhook events in any environment.
+    console.error('[SECURITY] /api/webhook called but STRIPE_WEBHOOK_SECRET is not configured. Rejecting.');
+    return { received: false, error: 'Webhook endpoint not configured' };
+  }
 
-      return processEvent(event);
-    } catch (err) {
-      console.error('[WEBHOOK] Signature verification failed:', err);
-      return { received: false, error: 'Invalid signature' };
-    }
-  } else {
-    // Development mode — skip signature verification
-    console.warn('[WEBHOOK] ⚠️  No webhook secret configured — skipping signature verification');
-    const event = JSON.parse(body.toString('utf-8')) as StripeEvent;
+  // Verify the Stripe signature
+  try {
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const event = stripe.webhooks.constructEvent(
+      body.toString('utf-8'),
+      signature,
+      webhookSecret,
+    ) as unknown as StripeEvent;
+
     return processEvent(event);
+  } catch (err) {
+    console.error('[WEBHOOK] Signature verification failed:', err);
+    return { received: false, error: 'Invalid signature' };
   }
 }
 

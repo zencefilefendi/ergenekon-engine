@@ -222,12 +222,22 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
       const adminKey = (req.headers['x-admin-key'] as string) || '';
       // Timing-safe comparison to prevent timing attacks
-      const keyBuffer = Buffer.from(adminKey);
-      const configBuffer = Buffer.from(configuredKey);
-      const isValid = keyBuffer.length === configBuffer.length &&
-        (await import('node:crypto')).then(c => c.timingSafeEqual(keyBuffer, configBuffer)).catch(() => false);
+      // Pad to same length to avoid length-oracle
+      const maxLen = Math.max(adminKey.length, configuredKey.length);
+      const keyBuffer = Buffer.alloc(maxLen);
+      const configBuffer = Buffer.alloc(maxLen);
+      Buffer.from(adminKey).copy(keyBuffer);
+      Buffer.from(configuredKey).copy(configBuffer);
 
-      if (!await isValid) {
+      let isValid = false;
+      try {
+        const { timingSafeEqual } = await import('node:crypto');
+        isValid = adminKey.length === configuredKey.length && timingSafeEqual(keyBuffer, configBuffer);
+      } catch {
+        isValid = false;
+      }
+
+      if (!isValid) {
         console.warn(`[SECURITY] Unauthorized /api/generate-license attempt from ${req.socket.remoteAddress}`);
         json(res, 401, { error: 'Unauthorized' });
         return;

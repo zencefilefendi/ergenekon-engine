@@ -101,10 +101,26 @@ export function createHttpIncomingMiddleware(
 
     // Receive remote HLC if present (distributed clock sync)
     const remoteHlcHeader = req.headers[ERGENEKON_HLC_HEADER] as string | undefined;
-    if (remoteHlcHeader) {
+    if (remoteHlcHeader && remoteHlcHeader.length < 256) { // hard limit on header size
       try {
         const remoteHlc = JSON.parse(remoteHlcHeader);
-        hlc.receive(remoteHlc);
+        // SECURITY: Validate HLC structure to prevent clock manipulation
+        // and prototype pollution attacks
+        if (
+          remoteHlc &&
+          typeof remoteHlc === 'object' &&
+          !Array.isArray(remoteHlc) &&
+          typeof remoteHlc.wallTime === 'number' &&
+          typeof remoteHlc.logical === 'number' &&
+          Number.isFinite(remoteHlc.wallTime) &&
+          Number.isFinite(remoteHlc.logical) &&
+          remoteHlc.logical >= 0 &&
+          remoteHlc.logical <= 65535 && // logical counter sanity cap
+          Math.abs(remoteHlc.wallTime - Date.now()) < 86400000 // within ±24h
+        ) {
+          hlc.receive({ wallTime: remoteHlc.wallTime, logical: remoteHlc.logical, nodeId: String(remoteHlc.nodeId || 'remote') });
+        }
+        // else: silently discard — don't let attackers manipulate our clock
       } catch {
         // Malformed HLC header — ignore
       }
