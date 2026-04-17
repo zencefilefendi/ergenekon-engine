@@ -117,7 +117,8 @@ async function handleCheckoutCompleted(
   }
   const tier = (rawTier as 'pro' | 'enterprise') || 'pro';
 
-  console.log(`[WEBHOOK] Generating ${tier} license for ${customerEmail}`);
+  const maskedEmail = customerEmail.slice(0, 3) + '***@' + customerEmail.split('@')[1];
+  console.log(`[WEBHOOK] Generating ${tier} license for ${maskedEmail}`);
 
   try {
     const license = generateLicenseForCustomer({
@@ -131,7 +132,7 @@ async function handleCheckoutCompleted(
     const licenseJSON = formatLicenseJSON(license);
 
     console.log(`[WEBHOOK] ✅ License generated: ${license.payload.licenseId}`);
-    console.log(`[WEBHOOK] Customer: ${customerEmail} (${tier})`);
+    console.log(`[WEBHOOK] Customer: ${maskedEmail} (${tier})`);
     console.log(`[WEBHOOK] Expires: ${license.payload.expiresAt}`);
 
     // Send license via email (Resend)
