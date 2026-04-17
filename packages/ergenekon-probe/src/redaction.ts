@@ -57,23 +57,32 @@ export const DEFAULT_REDACTION_CONFIG: RedactionConfig = {
 // ── Value shape detectors ─────────────────────────────────────────
 
 // Credit cards: 15 digits (Amex) or 16 digits (Visa/MC/Discover)
-const CREDIT_CARD_RE = /^\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{3,4}$/;
-const JWT_RE = /^eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/;
-const BEARER_RE = /^Bearer\s+.{20,}$/;
-const BASIC_AUTH_RE = /^Basic\s+[A-Za-z0-9+/=]{8,}$/;
-const AWS_KEY_RE = /^AKIA[0-9A-Z]{16}$/;
-// All private key types: RSA, EC, DSA, OPENSSH, ENCRYPTED
-const PRIVATE_KEY_RE = /-----BEGIN\s+(RSA\s+|EC\s+|DSA\s+|OPENSSH\s+|ENCRYPTED\s+)?PRIVATE\s+KEY-----/;
+const CREDIT_CARD_RE = /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{3,4}\b/;
+const JWT_RE = /eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/;
+const BEARER_RE = /Bearer\s+.{20,}/i;
+const BASIC_AUTH_RE = /Basic\s+[A-Za-z0-9+/=]{8,}/i;
+const AWS_KEY_RE = /(?:AKIA|ASIA)[0-9A-Z]{16}/;
+// All private key types: RSA, EC, DSA, OPENSSH, ENCRYPTED (unanchored + bypass ReDoS)
+const PRIVATE_KEY_RE = /-----BEGIN[^-]+PRIVATE\s+KEY-----/;
 // Stripe keys: sk_live_, rk_live_, whsec_
-const STRIPE_KEY_RE = /^(sk_live_|rk_live_|whsec_|sk_test_|rk_test_)[a-zA-Z0-9]{10,}$/;
+const STRIPE_KEY_RE = /(?:sk_live_|rk_live_|whsec_|sk_test_|rk_test_)[a-zA-Z0-9]{10,}/;
 // Slack tokens: xoxb-, xoxp-, xoxa-, xoxr-, xoxs-
-const SLACK_TOKEN_RE = /^xox[bpars]-[a-zA-Z0-9-]{10,}$/;
+const SLACK_TOKEN_RE = /xox[bpars]-[a-zA-Z0-9-]{10,}/;
 // GitHub tokens: ghp_, gho_, ghs_, ghu_, ghr_
-const GITHUB_TOKEN_RE = /^(ghp_|gho_|ghs_|ghu_|ghr_)[a-zA-Z0-9]{30,}$/;
+const GITHUB_TOKEN_RE = /(?:ghp_|gho_|ghs_|ghu_|ghr_)[a-zA-Z0-9]{30,}/;
 // Email addresses in free text
-const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 // SSN pattern (US)
-const SSN_RE = /^\d{3}-\d{2}-\d{4}$/;
+const SSN_RE = /\b\d{3}-\d{2}-\d{4}\b/;
+
+// New Cloud / SaaS Providers
+const GOOGLE_TOKEN_RE = /ya29\.[a-zA-Z0-9_-]{30,}/;
+const OPENAI_TOKEN_RE = /sk-(?:proj-)?[a-zA-Z0-9_-]{30,}/;
+const ANTHROPIC_TOKEN_RE = /sk-ant-[a-zA-Z0-9_-]{30,}/;
+const SENDGRID_TOKEN_RE = /SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}/;
+const TWILIO_TOKEN_RE = /SK[a-f0-9]{32}/i;
+const NOTION_TOKEN_RE = /secret_[a-zA-Z0-9]{43}/;
+const SUPABASE_TOKEN_RE = /sbp_[a-zA-Z0-9]{40}/;
 
 function looksLikeSecret(value: unknown): boolean {
   if (typeof value !== 'string') return false;
@@ -89,7 +98,14 @@ function looksLikeSecret(value: unknown): boolean {
     STRIPE_KEY_RE.test(value) ||
     SLACK_TOKEN_RE.test(value) ||
     GITHUB_TOKEN_RE.test(value) ||
-    SSN_RE.test(value)
+    SSN_RE.test(value) ||
+    GOOGLE_TOKEN_RE.test(value) ||
+    OPENAI_TOKEN_RE.test(value) ||
+    ANTHROPIC_TOKEN_RE.test(value) ||
+    SENDGRID_TOKEN_RE.test(value) ||
+    TWILIO_TOKEN_RE.test(value) ||
+    NOTION_TOKEN_RE.test(value) ||
+    SUPABASE_TOKEN_RE.test(value)
   );
 }
 
@@ -130,7 +146,18 @@ export function redactDeep(
   obj: unknown,
   config: Partial<RedactionConfig> = {}
 ): unknown {
-  const cfg: RedactionConfig = { ...DEFAULT_REDACTION_CONFIG, ...config };
+  const cfg: RedactionConfig = {
+    ...DEFAULT_REDACTION_CONFIG,
+    ...config,
+    fieldNames: Array.from(new Set([
+      ...DEFAULT_REDACTION_CONFIG.fieldNames,
+      ...(config.fieldNames || [])
+    ])),
+    pathPatterns: Array.from(new Set([
+      ...DEFAULT_REDACTION_CONFIG.pathPatterns,
+      ...(config.pathPatterns || [])
+    ]))
+  };
   const fieldNamesLower = new Set(cfg.fieldNames.map(f => f.toLowerCase()));
   // SECURITY: Track visited objects to prevent circular reference → stack overflow
   const visited = new WeakSet<object>();
@@ -215,8 +242,11 @@ export function redactHeaders(
   redactList: string[]
 ): Record<string, string | string[] | undefined> {
   const redactSet = new Set(redactList.map(h => h.toLowerCase()));
-  // SECURITY: Always redact session/auth headers regardless of config
-  const ALWAYS_REDACT = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
+  // SECURITY: Always redact session/auth/cloud metadata headers regardless of config
+  const ALWAYS_REDACT = new Set([
+    'authorization', 'cookie', 'set-cookie', 'proxy-authorization',
+    'x-amz-security-token', 'x-aws-session-token', 'x-goog-auth', 'x-goog-iam-authorization-token'
+  ]);
   const result: Record<string, string | string[] | undefined> = {};
 
   for (const [key, value] of Object.entries(headers)) {
