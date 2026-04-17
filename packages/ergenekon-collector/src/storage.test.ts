@@ -71,10 +71,9 @@ describe('checksum utilities', () => {
     expect(() => verifyAndUnwrap(tampered)).toThrow(ChecksumError);
   });
 
-  it('verifyAndUnwrap handles legacy files (no checksum)', () => {
+  it('verifyAndUnwrap throws ChecksumError on legacy files (no checksum)', () => {
     const legacy = JSON.stringify({ id: 'old-session', events: [] });
-    const result = verifyAndUnwrap<{ id: string }>(legacy);
-    expect(result.id).toBe('old-session');
+    expect(() => verifyAndUnwrap<{ id: string }>(legacy)).toThrow(ChecksumError);
   });
 
   it('verifyAndUnwrap throws on malformed JSON', () => {

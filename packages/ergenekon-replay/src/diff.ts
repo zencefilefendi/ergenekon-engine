@@ -137,6 +137,7 @@ export function deepDiff(
       ...Object.keys(objB),
     ]);
     for (const key of allKeys) {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
       const childPath = path ? `${path}.${key}` : key;
       if (!(key in objA)) {
         if (!shouldIgnore(childPath)) {
