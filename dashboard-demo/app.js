@@ -554,13 +554,18 @@ function showEventDetail(event) {
   document.getElementById('detail-wallclock').textContent = `time: ${new Date(event.wallClock).toISOString().slice(11, 23)}`;
   document.getElementById('detail-duration').textContent = event.durationMs > 0 ? `duration: ${event.durationMs}ms` : '';
 
-  document.getElementById('detail-data').innerHTML = syntaxHighlight(event.data);
+  // SECURITY: Using strict DOM insertion instead of innerHTML for complete XSS immunity
+  const dataEl = document.getElementById('detail-data');
+  dataEl.innerHTML = '';
+  dataEl.appendChild(syntaxHighlight(event.data));
 
   // Error tab
   const errorBtn = document.getElementById('tab-error-btn');
   if (event.error) {
     errorBtn.style.display = '';
-    document.getElementById('detail-error').innerHTML = syntaxHighlight(event.error);
+    const errEl = document.getElementById('detail-error');
+    errEl.innerHTML = '';
+    errEl.appendChild(syntaxHighlight(event.error));
   } else {
     errorBtn.style.display = 'none';
     // If error tab was active, switch to data
@@ -570,14 +575,16 @@ function showEventDetail(event) {
   }
 
   // Metadata
-  document.getElementById('detail-meta').innerHTML = syntaxHighlight({
+  const metaEl = document.getElementById('detail-meta');
+  metaEl.innerHTML = '';
+  metaEl.appendChild(syntaxHighlight({
     id: event.id,
     traceId: event.traceId,
     spanId: event.spanId,
     parentSpanId: event.parentSpanId,
     hlc: event.hlc,
     tags: event.tags,
-  });
+  }));
 }
 
 function switchTab(tab) {
@@ -634,29 +641,48 @@ function renderEventBreakdown() {
 // ── JSON Syntax Highlighting ─────────────────────────────────────
 
 function syntaxHighlight(obj) {
-  let json = JSON.stringify(obj, null, 2);
-  if (!json) return '';
+  const fragment = document.createDocumentFragment();
+  // SECURITY: JSON stringification guarantees valid syntax but not safety from HTML injection
+  const json = JSON.stringify(obj, null, 2);
+  if (!json) return fragment;
 
-  // SECURITY: JSON.stringify does NOT escape HTML tags.
-  // We MUST escape &, <, > before injecting into innerHTML.
-  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // We use DOM nodes instead of a string replacement to achieve 100% immunity to XSS 
+  const regex = /(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+  let lastIndex = 0;
+  let match;
 
-  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+  while ((match = regex.exec(json)) !== null) {
+    if (match.index > lastIndex) {
+      fragment.appendChild(document.createTextNode(json.slice(lastIndex, match.index)));
+    }
+
+    let matchStr = match[0];
     let cls = 'json-number';
-    if (/^"/.test(match)) {
-      if (/:$/.test(match)) {
+    if (/^"/.test(matchStr)) {
+      if (/:$/.test(matchStr)) {
         cls = 'json-key';
-        match = match.replace(/:$/, '') + ':';
       } else {
         cls = 'json-string';
       }
-    } else if (/true|false/.test(match)) {
+    } else if (/true|false/.test(matchStr)) {
       cls = 'json-boolean';
-    } else if (/null/.test(match)) {
+    } else if (/null/.test(matchStr)) {
       cls = 'json-null';
     }
-    return `<span class="${cls}">${match}</span>`;
-  });
+
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = matchStr; // Browser strictly escapes this content
+    fragment.appendChild(span);
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < json.length) {
+    fragment.appendChild(document.createTextNode(json.slice(lastIndex)));
+  }
+
+  return fragment;
 }
 
 // ── Tooltip ──────────────────────────────────────────────────────
