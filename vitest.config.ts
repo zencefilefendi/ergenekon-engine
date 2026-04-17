@@ -47,7 +47,6 @@ export default defineConfig({
         '**/*.property.test.ts',
         '**/*.d.ts',
         '**/dist/**',
-        '**/index.ts', // re-exports only
       ],
       thresholds: {
         lines: 80,
