@@ -50,6 +50,6 @@
     "url": "https://github.com/zencefilefendi/ergenekon-engine/issues"
   },
   "devDependencies": {
-    "@types/node": "^25.5.2"
+    "@types/node": "^25.6.0"
   }
 }
