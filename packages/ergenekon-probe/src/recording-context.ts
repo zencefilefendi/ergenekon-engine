@@ -27,6 +27,7 @@ export class RecordingSession {
 
   private events: ErgenekonEvent[] = [];
   private sequence = 0;
+  private timerSequence = 0;
   private readonly hlc: HybridLogicalClock;
 
   constructor(opts: {
@@ -140,6 +141,11 @@ export class RecordingSession {
   /** Get the current event count */
   get eventCount(): number {
     return this.events.length;
+  }
+
+  /** Allocate a deterministic timer ID scoped to this session */
+  allocateTimerId(prefix: string): string {
+    return `${prefix}_${++this.timerSequence}`;
   }
 
   /** Receive an HLC timestamp from a remote service */

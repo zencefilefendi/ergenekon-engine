@@ -20,9 +20,9 @@ const _originalClearInterval = globalThis.clearInterval;
 
 let _originalRandomUUID: (() => string) | null = null;
 
-// Track timer IDs to correlate set/fire events
-const _timerMap = new WeakMap<object, { timerId: string, type: string }>();
-let timerCounter = 0;
+// Track timer IDs and their owning session to correlate set/fire/clear events
+import type { RecordingSession } from '../recording-context.js';
+const _timerMap = new WeakMap<object, { timerId: string, type: string, session: RecordingSession }>();
 
 /**
  * Install timer and crypto interceptors.
@@ -41,7 +41,7 @@ export function installTimerInterceptors(): void {
     const session = getActiveSession();
     if (!session) return _originalSetTimeout(callback, ms, ...args);
 
-    const timerId = `timer_${++timerCounter}`;
+    const timerId = session.allocateTimerId('timeout');
     const delay = ms ?? 0;
 
     session.record('timer_set', `setTimeout(${delay}ms)`, {
@@ -51,21 +51,20 @@ export function installTimerInterceptors(): void {
     });
 
     const wrappedCallback = (...cbArgs: unknown[]) => {
-      const activeSession = getActiveSession();
-      if (activeSession) {
-        activeSession.record('timer_fire', `setTimeout fired (${delay}ms)`, {
-          timerId,
-          delay,
-          type: 'timeout',
-          firedAt: originalDateNow(),
-        });
-      }
+      // SECURITY: Close over the originating session, not getActiveSession(), to ensure
+      // timers firing out-of-band (after request end) are still explicitly bound.
+      session.record('timer_fire', `setTimeout fired (${delay}ms)`, {
+        timerId,
+        delay,
+        type: 'timeout',
+        firedAt: originalDateNow(),
+      });
       return callback(...cbArgs);
     };
 
     const timer = _originalSetTimeout(wrappedCallback, ms, ...args);
     if (timer && typeof timer === 'object') {
-      _timerMap.set(timer, { timerId, type: 'timeout' });
+      _timerMap.set(timer, { timerId, type: 'timeout', session });
     }
     return timer;
   } as typeof globalThis.setTimeout;
@@ -80,7 +79,7 @@ export function installTimerInterceptors(): void {
     const session = getActiveSession();
     if (!session) return _originalSetInterval(callback, ms, ...args);
 
-    const timerId = `interval_${++timerCounter}`;
+    const timerId = session.allocateTimerId('interval');
     const delay = ms ?? 0;
 
     session.record('timer_set', `setInterval(${delay}ms)`, {
@@ -91,22 +90,19 @@ export function installTimerInterceptors(): void {
 
     let fireCount = 0;
     const wrappedCallback = (...cbArgs: unknown[]) => {
-      const activeSession = getActiveSession();
-      if (activeSession) {
-        activeSession.record('timer_fire', `setInterval fired #${++fireCount} (${delay}ms)`, {
-          timerId,
-          delay,
-          type: 'interval',
-          fireCount,
-          firedAt: originalDateNow(),
-        });
-      }
+      session.record('timer_fire', `setInterval fired #${++fireCount} (${delay}ms)`, {
+        timerId,
+        delay,
+        type: 'interval',
+        fireCount,
+        firedAt: originalDateNow(),
+      });
       return callback(...cbArgs);
     };
 
     const timer = _originalSetInterval(wrappedCallback, ms, ...args);
     if (timer && typeof timer === 'object') {
-      _timerMap.set(timer, { timerId, type: 'interval' });
+      _timerMap.set(timer, { timerId, type: 'interval', session });
     }
     return timer;
   } as typeof globalThis.setInterval;
@@ -116,9 +112,8 @@ export function installTimerInterceptors(): void {
   globalThis.clearTimeout = function ergenekonClearTimeout(timerId?: string | number | NodeJS.Timeout | undefined) {
     if (timerId && typeof timerId === 'object') {
       const meta = _timerMap.get(timerId);
-      const session = getActiveSession();
-      if (meta && session) {
-        session.record('timer_clear', `clearTimeout`, meta);
+      if (meta) {
+        meta.session.record('timer_clear', `clearTimeout`, { timerId: meta.timerId, type: meta.type });
       }
     }
     return _originalClearTimeout(timerId);
@@ -129,9 +124,8 @@ export function installTimerInterceptors(): void {
   globalThis.clearInterval = function ergenekonClearInterval(timerId?: string | number | NodeJS.Timeout | undefined) {
     if (timerId && typeof timerId === 'object') {
       const meta = _timerMap.get(timerId);
-      const session = getActiveSession();
-      if (meta && session) {
-        session.record('timer_clear', `clearInterval`, meta);
+      if (meta) {
+        meta.session.record('timer_clear', `clearInterval`, { timerId: meta.timerId, type: meta.type });
       }
     }
     return _originalClearInterval(timerId);
