@@ -803,7 +803,7 @@
       <li><a href="#how-it-works">How It Works</a></li>
       <li><a href="#architecture">Architecture</a></li>
       <li><a href="#pricing">Pricing</a></li>
-      <li><a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank">GitHub</a></li>
+      <li><a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer">GitHub</a></li>
       <li><a href="./docs.html">Docs</a></li>
       <li><a href="#pricing" class="btn-nav">Get Started</a></li>
     </ul>
@@ -827,10 +827,10 @@
       <a href="#pricing" class="btn-primary">
         <span>🐺</span> Get Free License
       </a>
-      <a href="https://ergenekon-dashboard.vercel.app" target="_blank" class="btn-secondary">
+      <a href="https://ergenekon-dashboard.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-secondary">
         <span>⚡</span> Live Demo
       </a>
-      <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" class="btn-secondary" style="border-color:rgba(255,255,255,0.1)">
+      <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="border-color:rgba(255,255,255,0.1)">
         <span>💻</span> GitHub
       </a>
     </div>
@@ -1215,7 +1215,7 @@
           <li>Time-Travel UI</li>
           <li>Community support</li>
         </ul>
-        <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" class="btn-plan outline">Get Started</a>
+        <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer" class="btn-plan outline">Get Started</a>
       </div>
 
       <!-- Pro -->
@@ -1296,8 +1296,8 @@
         <div id="cta-register-msg" class="register-msg"></div>
       </div>
       <p style="margin-top:20px;font-size:12px;color:var(--text-muted);">
-        Open source under <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" style="color:var(--text-tertiary);">BSL-1.1</a> · 
-        <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" style="color:var(--text-tertiary);">View source on GitHub</a>
+        Open source under <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer" style="color:var(--text-tertiary);">BSL-1.1</a> · 
+        <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer" style="color:var(--text-tertiary);">View source on GitHub</a>
       </p>
     </div>
   </div>
@@ -1309,7 +1309,7 @@
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; text-align: left; margin-bottom: 40px;">
       <div>
         <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-size: 14px;">ERGENEKON Engine</div>
-        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">Deterministic record & replay<br>debugger for distributed systems.<br>Built by <a href="https://github.com/zencefilefendi" target="_blank" style="color: var(--text-tertiary);">İlhan Göktaş</a></p>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">Deterministic record & replay<br>debugger for distributed systems.<br>Built by <a href="https://github.com/zencefilefendi" target="_blank" rel="noopener noreferrer" style="color: var(--text-tertiary);">İlhan Göktaş</a></p>
       </div>
       <div>
         <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 12px; font-size: 14px;">Product</div>
@@ -1317,8 +1317,8 @@
           <a href="#demo" style="font-size: 13px;">Live Demo</a>
           <a href="#pricing" style="font-size: 13px;">Pricing</a>
           <a href="./docs.html" style="font-size: 13px;">Documentation</a>
-          <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" style="font-size: 13px;">GitHub</a>
-          <a href="https://github.com/zencefilefendi/ergenekon-engine/releases" target="_blank" style="font-size: 13px;">Changelog</a>
+          <a href="https://github.com/zencefilefendi/ergenekon-engine" target="_blank" rel="noopener noreferrer" style="font-size: 13px;">GitHub</a>
+          <a href="https://github.com/zencefilefendi/ergenekon-engine/releases" target="_blank" rel="noopener noreferrer" style="font-size: 13px;">Changelog</a>
         </div>
       </div>
       <div>
@@ -1550,7 +1550,7 @@
   async function runTerminalDemo() {
     const output = document.getElementById('terminal-output');
     if (!output) return;
-    output.innerHTML = '';
+    output.textContent = '';
 
     for (const line of terminalLines) {
       if (line.type === 'cmd') {
@@ -1622,11 +1622,11 @@
     const actualTier = tier === 'cta' ? 'pro' : tier;
     const emailInput = document.getElementById(`${prefix}-email`);
     const msgEl = document.getElementById(`${prefix}-register-msg`);
-    const btn = event.target;
+    const btn = document.activeElement; // SECURITY: don't use implicit global `event`
     const email = emailInput.value.trim();
 
     // Validate
-     if (!email || !email.includes('@') || !email.includes('.')) {
+      if (!email || !/^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/i.test(email)) {
       msgEl.className = 'register-msg error';
       msgEl.textContent = 'Please enter a valid email address.';
       emailInput.focus();
