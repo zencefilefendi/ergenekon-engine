@@ -599,7 +599,7 @@ async function loadMetrics() {
 
   // License tier from stats
   if (data.license) {
-    const tier = data.license.tier || 'community';
+    const tier = typeof data.license.tier === 'string' ? data.license.tier : 'community';
     document.getElementById('metric-tier').textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
   }
 
@@ -633,7 +633,8 @@ async function loadLicenseInfo() {
     const badge = document.getElementById('tier-badge');
     const banner = document.getElementById('upgrade-banner');
 
-    // Update tier badge — SECURITY: textContent
+    // Update tier badge — SECURITY: Type validation to prevent array coercion DoS
+    currentTier = typeof currentTier === 'string' ? currentTier : 'community';
     badge.textContent = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
     badge.className = `tier-badge tier-${currentTier}`;
 

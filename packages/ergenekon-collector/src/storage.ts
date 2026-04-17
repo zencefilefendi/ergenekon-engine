@@ -25,6 +25,8 @@ import { wrapWithChecksum, verifyAndUnwrap, ChecksumError } from './checksum.js'
 // ── Security: Session ID validation ──────────────────────────────
 // Prevents path traversal attacks (e.g. id="../../package.json")
 const SAFE_SESSION_ID = /^[a-zA-Z0-9_\-]{1,128}$/;
+// SECURITY: Prevent Windows Native I/O DOS via reserved names (CON, PRN, etc.)
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i;
 
 function validateSessionId(id: string): void {
   if (!id || typeof id !== 'string') {
@@ -32,6 +34,9 @@ function validateSessionId(id: string): void {
   }
   if (!SAFE_SESSION_ID.test(id)) {
     throw new SessionIdError(`Invalid session ID: contains illegal characters or exceeds 128 chars`);
+  }
+  if (WINDOWS_RESERVED.test(id)) {
+    throw new SessionIdError(`Invalid session ID: reserved Windows device name`);
   }
 }
 

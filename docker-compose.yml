@@ -16,7 +16,7 @@ services:
       context: .
       dockerfile: docker/collector.Dockerfile
     ports:
-      - "4380:4380"
+      - "127.0.0.1:4380:4380"
     environment:
       PORT: 4380
       STORAGE_DIR: /data/sessions
