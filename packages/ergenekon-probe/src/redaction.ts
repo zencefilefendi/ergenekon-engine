@@ -56,11 +56,24 @@ export const DEFAULT_REDACTION_CONFIG: RedactionConfig = {
 
 // ── Value shape detectors ─────────────────────────────────────────
 
-const CREDIT_CARD_RE = /^\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}$/;
+// Credit cards: 15 digits (Amex) or 16 digits (Visa/MC/Discover)
+const CREDIT_CARD_RE = /^\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{3,4}$/;
 const JWT_RE = /^eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/;
 const BEARER_RE = /^Bearer\s+.{20,}$/;
+const BASIC_AUTH_RE = /^Basic\s+[A-Za-z0-9+/=]{8,}$/;
 const AWS_KEY_RE = /^AKIA[0-9A-Z]{16}$/;
-const PRIVATE_KEY_RE = /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/;
+// All private key types: RSA, EC, DSA, OPENSSH, ENCRYPTED
+const PRIVATE_KEY_RE = /-----BEGIN\s+(RSA\s+|EC\s+|DSA\s+|OPENSSH\s+|ENCRYPTED\s+)?PRIVATE\s+KEY-----/;
+// Stripe keys: sk_live_, rk_live_, whsec_
+const STRIPE_KEY_RE = /^(sk_live_|rk_live_|whsec_|sk_test_|rk_test_)[a-zA-Z0-9]{10,}$/;
+// Slack tokens: xoxb-, xoxp-, xoxa-, xoxr-, xoxs-
+const SLACK_TOKEN_RE = /^xox[bpars]-[a-zA-Z0-9-]{10,}$/;
+// GitHub tokens: ghp_, gho_, ghs_, ghu_, ghr_
+const GITHUB_TOKEN_RE = /^(ghp_|gho_|ghs_|ghu_|ghr_)[a-zA-Z0-9]{30,}$/;
+// Email addresses in free text
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+// SSN pattern (US)
+const SSN_RE = /^\d{3}-\d{2}-\d{4}$/;
 
 function looksLikeSecret(value: unknown): boolean {
   if (typeof value !== 'string') return false;
@@ -70,8 +83,13 @@ function looksLikeSecret(value: unknown): boolean {
     CREDIT_CARD_RE.test(value) ||
     JWT_RE.test(value) ||
     BEARER_RE.test(value) ||
+    BASIC_AUTH_RE.test(value) ||
     AWS_KEY_RE.test(value) ||
-    PRIVATE_KEY_RE.test(value)
+    PRIVATE_KEY_RE.test(value) ||
+    STRIPE_KEY_RE.test(value) ||
+    SLACK_TOKEN_RE.test(value) ||
+    GITHUB_TOKEN_RE.test(value) ||
+    SSN_RE.test(value)
   );
 }
 
@@ -178,9 +196,12 @@ export function redactHeaders(
   for (const [key, value] of Object.entries(headers)) {
     if (redactSet.has(key.toLowerCase())) {
       result[key] = '[REDACTED]';
-    } else if (typeof value === 'string' && BEARER_RE.test(value)) {
-      // Auto-detect Bearer tokens in any header
-      result[key] = 'Bearer [REDACTED]';
+    } else if (key.toLowerCase() === 'authorization' || key.toLowerCase().startsWith('x-api-key')) {
+      // SECURITY: Treat ANY authorization header as secret regardless of scheme
+      result[key] = '[REDACTED]';
+    } else if (typeof value === 'string' && (BEARER_RE.test(value) || BASIC_AUTH_RE.test(value))) {
+      // Auto-detect Bearer and Basic tokens in any header
+      result[key] = '[REDACTED]';
     } else {
       result[key] = value;
     }

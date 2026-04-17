@@ -241,7 +241,7 @@ describe('redactHeaders', () => {
       { 'x-custom-auth': 'Bearer sk-12345678901234567890' },
       []
     );
-    expect(result['x-custom-auth']).toBe('Bearer [REDACTED]');
+    expect(result['x-custom-auth']).toBe('[REDACTED]');
   });
 
   it('case-insensitive header matching', () => {
