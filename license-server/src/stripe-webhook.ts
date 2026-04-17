@@ -104,9 +104,16 @@ async function processEvent(event: StripeEvent): Promise<WebhookResult> {
 async function handleCheckoutCompleted(
   session: Record<string, unknown>,
 ): Promise<WebhookResult> {
-  const customerEmail = (session.customer_email as string) || (session.customer_details as any)?.email || 'unknown@example.com';
+  const customerEmail = (session.customer_email as string) || (session.customer_details as any)?.email;
+  // SECURITY (HIGH-20): Fail closed if email is missing — don't generate license for 'unknown@example.com'
+  if (!customerEmail) {
+    console.error('[WEBHOOK] Missing customer email in checkout session');
+    return { received: false, error: 'Missing customer email' };
+  }
   const customerId = (session.customer as string) || `cus_${Date.now()}`;
-  const customerName = (session.customer_details as any)?.name || customerEmail.split('@')[0];
+  // SECURITY (HIGH-04): sanitize customer name from Stripe — strip HTML/scripts
+  const rawName = (session.customer_details as any)?.name || customerEmail.split('@')[0];
+  const customerName = rawName.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}\s._\-]/gu, '').trim().slice(0, 100) || 'Customer';
 
   // Determine tier from metadata — SECURITY: reject unknown tiers
   const metadata = session.metadata as Record<string, string> | undefined;

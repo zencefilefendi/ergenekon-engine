@@ -157,8 +157,14 @@ export function exportSessionBinary(session: RecordingSession): Buffer {
 
 /**
  * Import a recording session from binary format.
+ * SECURITY (CRIT-07): Caps on compressed payload lengths + maxOutputLength to prevent gzip bombs.
  */
 export function importSessionBinary(buf: Buffer): RecordingSession {
+  const MAX_METADATA_COMPRESSED = 1 * 1024 * 1024;   // 1 MB compressed
+  const MAX_EVENTS_COMPRESSED   = 128 * 1024 * 1024;  // 128 MB compressed
+  const MAX_METADATA_DECOMPRESSED = 4 * 1024 * 1024;  // 4 MB decompressed
+  const MAX_EVENTS_DECOMPRESSED   = 512 * 1024 * 1024; // 512 MB decompressed
+
   let offset = 0;
 
   // Verify magic
@@ -174,19 +180,25 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
     throw new Error(`Unsupported ERGENEKON binary version: ${version}`);
   }
 
-  // Metadata
+  // Metadata — SECURITY: cap compressed size
   const metadataLen = buf.readUInt32BE(offset); offset += 4;
+  if (metadataLen > MAX_METADATA_COMPRESSED) {
+    throw new Error(`Metadata compressed size ${metadataLen} exceeds cap of ${MAX_METADATA_COMPRESSED}`);
+  }
   const metadataGzip = buf.subarray(offset, offset + metadataLen); offset += metadataLen;
-  const metadataJson = gunzipSync(metadataGzip).toString('utf-8');
+  const metadataJson = gunzipSync(metadataGzip, { maxOutputLength: MAX_METADATA_DECOMPRESSED }).toString('utf-8');
   const meta = JSON.parse(metadataJson);
 
   // Events count
   const eventsCount = buf.readUInt32BE(offset); offset += 4;
 
-  // Events payload
+  // Events payload — SECURITY: cap compressed size
   const eventsLen = buf.readUInt32BE(offset); offset += 4;
+  if (eventsLen > MAX_EVENTS_COMPRESSED) {
+    throw new Error(`Events compressed size ${eventsLen} exceeds cap of ${MAX_EVENTS_COMPRESSED}`);
+  }
   const eventsGzip = buf.subarray(offset, offset + eventsLen); offset += eventsLen;
-  const eventsJson = gunzipSync(eventsGzip).toString('utf-8');
+  const eventsJson = gunzipSync(eventsGzip, { maxOutputLength: MAX_EVENTS_DECOMPRESSED }).toString('utf-8');
   const events: ErgenekonEvent[] = JSON.parse(eventsJson);
 
   // Verify CRC32

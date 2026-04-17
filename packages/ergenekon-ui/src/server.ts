@@ -37,11 +37,26 @@ const MIME_TYPES: Record<string, string> = {
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const url = new URL(req.url ?? '/', `http://localhost:${UI_PORT}`);
 
+  // SECURITY (HIGH-13): Host header validation — reject DNS rebinding
+  const host = req.headers.host || '';
+  const hostName = host.split(':')[0];
+  const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
+  if (!allowedHosts.includes(hostName)) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Forbidden: invalid Host header' }));
+    return;
+  }
+
+  // SECURITY: Restricted CORS instead of wildcard
+  const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
+  const origin = req.headers.origin || '';
+  const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
   // ── Inject license info endpoint (local, no collector needed) ──
   if (url.pathname === '/api/v1/ui-license') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': corsOrigin,
     });
     res.end(JSON.stringify({
       tier: license.tier,
@@ -50,13 +65,20 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       features: license.features,
       limits: license.limits,
       daysUntilExpiry: license.daysUntilExpiry,
-      customerName: license.license?.customerName ?? null,
+      // SECURITY (HIGH-06): Don't leak customerName to unauthenticated callers
     }));
     return;
   }
 
   // Proxy API calls to collector
+  // SECURITY (HIGH-22): Validate path against strict allowlist to prevent SSRF
+  const API_PATH_RE = /^\/api\/v1\/(sessions|traces|stats|license)(\/[a-zA-Z0-9_-]{1,128})?$/;
   if (url.pathname.startsWith('/api/')) {
+    if (!API_PATH_RE.test(url.pathname)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Invalid API path' }));
+      return;
+    }
     try {
       const collectorUrl = `${COLLECTOR_URL}${url.pathname}${url.search}`;
       const response = await fetch(collectorUrl, {
@@ -66,7 +88,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       const body = await response.text();
       res.writeHead(response.status, {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': corsOrigin,
       });
       res.end(body);
     } catch (err) {

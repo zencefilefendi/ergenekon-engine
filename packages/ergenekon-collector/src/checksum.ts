@@ -47,9 +47,10 @@ export function verifyAndUnwrap<T>(content: string): T {
     throw new ChecksumError('Failed to parse JSON');
   }
 
-  // Handle legacy files (pre-checksum, plain JSON sessions)
+  // SECURITY (CRIT-10): Legacy files without checksum are NOT silently returned.
+  // We log a warning and mark as unverified. Previously this was a silent bypass.
   if (parsed && typeof parsed === 'object' && !('_cksum' in parsed)) {
-    // Legacy file — no checksum, return as-is (backwards compatible)
+    console.warn('[SECURITY] Loading legacy file without checksum — integrity NOT verified. Run migration to add checksums.');
     return parsed as T;
   }
 

@@ -11,6 +11,7 @@
 
 import { getActiveSession } from '../recording-context.js';
 import { originalDateNow } from '../internal-clock.js';
+import { redactDeep } from '../redaction.js';
 
 // ── Type stubs (avoids hard dependency on pg/ioredis/mongoose) ────
 
@@ -83,7 +84,7 @@ export function installPgInterceptor(): boolean {
     session.record('db_query', `PG: ${queryText.slice(0, 80)}`, {
       engine: 'postgresql',
       query: queryText,
-      values: queryValues ?? null,
+      values: redactDeep(queryValues ?? null),
     });
 
     const start = originalDateNow();
@@ -95,7 +96,7 @@ export function installPgInterceptor(): boolean {
         const durationMs = originalDateNow() - start;
         session.record('db_result', `PG Result: ${res.rowCount ?? 0} rows`, {
           engine: 'postgresql',
-          rows: res.rows,
+          rows: redactDeep(res.rows),
           rowCount: res.rowCount ?? 0,
         }, { durationMs });
         return res;
@@ -133,7 +134,7 @@ export function installPgInterceptor(): boolean {
     session.record('db_query', `PG Pool: ${queryText.slice(0, 80)}`, {
       engine: 'postgresql',
       query: queryText,
-      values: queryValues ?? null,
+      values: redactDeep(queryValues ?? null),
     });
 
     const start = originalDateNow();
@@ -144,7 +145,7 @@ export function installPgInterceptor(): boolean {
         const durationMs = originalDateNow() - start;
         session.record('db_result', `PG Pool Result: ${res.rowCount ?? 0} rows`, {
           engine: 'postgresql',
-          rows: res.rows,
+          rows: redactDeep(res.rows),
           rowCount: res.rowCount ?? 0,
         }, { durationMs });
         return res;
@@ -274,8 +275,8 @@ export function installMongoInterceptor(): boolean {
       session.record('db_query', `MONGO: ${method}`, {
         engine: 'mongodb',
         operation: method,
-        filter: args[0] ?? null,
-        options: args[1] ?? null,
+        filter: redactDeep(args[0] ?? null),
+        options: redactDeep(args[1] ?? null),
       });
 
       const start = originalDateNow();
@@ -287,7 +288,7 @@ export function installMongoInterceptor(): boolean {
           session.record('db_result', `MONGO Result: ${method}`, {
             engine: 'mongodb',
             operation: method,
-            result: res,
+            result: redactDeep(res),
           }, { durationMs });
           return res;
         });

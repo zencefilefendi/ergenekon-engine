@@ -1,4 +1,4 @@
-import { createPrivateKey, sign } from 'node:crypto';
+import { createPrivateKey, sign, randomBytes } from 'node:crypto';
 
 // ── Feature Lists ──────────────────────────────────────────
 const PRO_FEATURES = [
@@ -102,7 +102,8 @@ function generateLicense(email, name, tier) {
 
   const payload = {
     version: 1,
-    licenseId: `lic_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    // SECURITY (MED-05): Use crypto.randomBytes instead of Math.random
+    licenseId: `lic_${Date.now().toString(36)}${randomBytes(6).toString('base64url').slice(0, 8)}`,
     customerId: `free_${Date.now().toString(36)}`,
     customerEmail: email,
     customerName: name,
@@ -114,7 +115,7 @@ function generateLicense(email, name, tier) {
     expiresAt: expiresAt.toISOString(),
     // Canary: unique fingerprint derived from registration context
     // If this license appears on a forum/Pastebin, we can trace it back
-    _fp: Buffer.from(`${email}:${now.getTime()}:${Math.random()}`).toString('base64url').slice(0, 16),
+    _fp: randomBytes(12).toString('base64url').slice(0, 16),
   };
 
   const privateKey = createPrivateKey(privateKeyPem);
@@ -179,15 +180,20 @@ export default async function handler(req, res) {
     // The 'website' field is hidden in the form — real users send ''
     // Bots auto-fill it → instant reject (silent, returns success to confuse bot)
     if (req.body?.website) {
-      console.warn(JSON.stringify({ event: 'honeypot_triggered', requestId }));
-      await timingSafeDelay(requestStart, 300);
+      // SECURITY (CRIT-05): These were previously undefined, causing ReferenceError
+      const honeypotRequestId = randomBytes(16).toString('hex');
+      const honeypotStart = Date.now();
+      console.warn(JSON.stringify({ event: 'honeypot_triggered', requestId: honeypotRequestId }));
+      // Timing-safe delay: always take at least 300ms to prevent timing oracle
+      const elapsed = Date.now() - honeypotStart;
+      if (elapsed < 300) await new Promise(r => setTimeout(r, 300 - elapsed));
       return res.status(200).json({
         success: true,
-        message: 'License generated!',
-        licenseId: 'lic_' + Date.now().toString(36),
+        message: 'Registration received!',
+        // SECURITY: Return a clearly fake/non-functional license shape
+        licenseId: 'lic_' + randomBytes(8).toString('hex'),
         tier: 'pro',
         expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
-        license: { payload: {}, signature: '' },
       });
     }
 

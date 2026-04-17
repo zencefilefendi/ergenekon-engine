@@ -57,15 +57,13 @@ const DISPOSABLE_DOMAINS = [
 // SECURITY: Body size limit (prevent DoS via oversized payloads)
 const MAX_BODY_BYTES = 32 * 1024; // 32 KB
 
-// SECURITY: Strip __proto__ and constructor from parsed JSON (prototype pollution)
+// SECURITY: Recursive prototype-pollution guard via JSON.parse reviver (HIGH-01)
+// The reviver runs for EVERY key during parse construction — protects nested objects too
 function safeParse(str: string): Record<string, unknown> {
-  const obj = JSON.parse(str);
-  if (typeof obj === 'object' && obj !== null) {
-    delete obj.__proto__;
-    delete obj.constructor;
-    delete obj.prototype;
-  }
-  return obj;
+  return JSON.parse(str, (key, value) => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+    return value;
+  });
 }
 
 // SECURITY: Sanitize name — strip HTML tags and limit length
@@ -101,9 +99,17 @@ try {
 } catch { /* .env not found, use env vars directly */ }
 
 // ── Helper: Read request body ───────────────────────────────────
-async function readBody(req: IncomingMessage): Promise<Buffer> {
+// SECURITY (CRIT-04): Enforce size limit DURING streaming, not after.
+// This prevents OOM from oversized payloads before the buffer is allocated.
+async function readBody(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promise<Buffer> {
   const chunks: Buffer[] = [];
+  let totalSize = 0;
   for await (const chunk of req) {
+    totalSize += (chunk as Buffer).length;
+    if (totalSize > maxBytes) {
+      req.destroy();
+      throw new Error('Request body too large');
+    }
     chunks.push(chunk as Buffer);
   }
   return Buffer.concat(chunks);
@@ -150,8 +156,9 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     }
 
     // ── POST /api/webhook — Stripe Webhook Handler ──────────────
+    // SECURITY (CRIT-04): Webhook also enforces body size cap (Stripe events are well under 64KB)
     if (req.method === 'POST' && path === '/api/webhook') {
-      const body = await readBody(req);
+      const body = await readBody(req, 64 * 1024); // 64KB for Stripe events
       const sig = req.headers['stripe-signature'] as string;
       const result = await handleStripeWebhook(body, sig);
       // SECURITY: Return 500 on failure so Stripe retries (H5)
@@ -269,18 +276,20 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       }
 
       const adminKey = (req.headers['x-admin-key'] as string) || '';
-      // Timing-safe comparison to prevent timing attacks
-      // Pad to same length to avoid length-oracle
-      const maxLen = Math.max(adminKey.length, configuredKey.length);
-      const keyBuffer = Buffer.alloc(maxLen);
-      const configBuffer = Buffer.alloc(maxLen);
-      Buffer.from(adminKey).copy(keyBuffer);
-      Buffer.from(configuredKey).copy(configBuffer);
+      // SECURITY (HIGH-03): Fixed 64-byte buffers mask key length.
+      // timingSafeEqual runs FIRST, length check AFTER — no short-circuit length oracle.
+      const FIXED_LEN = 64;
+      const keyBuffer = Buffer.alloc(FIXED_LEN);
+      const configBuffer = Buffer.alloc(FIXED_LEN);
+      Buffer.from(adminKey).copy(keyBuffer, 0, 0, FIXED_LEN);
+      Buffer.from(configuredKey).copy(configBuffer, 0, 0, FIXED_LEN);
 
       let isValid = false;
       try {
         const { timingSafeEqual } = await import('node:crypto');
-        isValid = adminKey.length === configuredKey.length && timingSafeEqual(keyBuffer, configBuffer);
+        // Compare first (constant-time), THEN check length — prevents length oracle
+        const bytesMatch = timingSafeEqual(keyBuffer, configBuffer);
+        isValid = bytesMatch && adminKey.length === configuredKey.length;
       } catch {
         isValid = false;
       }

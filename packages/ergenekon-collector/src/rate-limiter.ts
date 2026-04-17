@@ -42,19 +42,26 @@ export class RateLimiter {
    * Returns true if allowed, false if rate limited.
    */
   consume(key: string): boolean {
+    const MAX_BUCKETS = 100_000; // SECURITY (HIGH-25): prevent OOM via IP rotation
     const now = Date.now();
     let bucket = this.buckets.get(key);
 
     if (!bucket) {
+      // SECURITY (HIGH-25): evict oldest entry if at cap
+      if (this.buckets.size >= MAX_BUCKETS) {
+        const oldestKey = this.buckets.keys().next().value;
+        if (oldestKey) this.buckets.delete(oldestKey);
+      }
       bucket = { tokens: this.config.maxTokens, lastRefill: now };
       this.buckets.set(key, bucket);
     }
 
     // Refill tokens based on elapsed time
-    const elapsed = (now - bucket.lastRefill) / 1000;
+    // SECURITY (HIGH-24): Math.max(0,...) prevents negative tokens on NTP backward clock step
+    const elapsed = Math.max(0, (now - bucket.lastRefill) / 1000);
     bucket.tokens = Math.min(
       this.config.maxTokens,
-      bucket.tokens + elapsed * this.config.refillRate,
+      Math.max(0, bucket.tokens) + elapsed * this.config.refillRate,
     );
     bucket.lastRefill = now;
 

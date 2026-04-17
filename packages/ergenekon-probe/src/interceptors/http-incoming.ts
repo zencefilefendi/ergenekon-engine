@@ -13,6 +13,7 @@ import type { ProbeConfig } from '@ergenekon/core';
 import { HybridLogicalClock, ulid } from '@ergenekon/core';
 import { RecordingSession, runWithSession } from '../recording-context.js';
 import { originalDateNow } from './globals.js';
+import { randomBytes } from 'node:crypto';
 import type { SamplingEngine, SamplingDecision } from '../sampling.js';
 import { redactDeep, redactHeaders } from '../redaction.js';
 
@@ -32,24 +33,18 @@ function parseTraceparent(header: string | undefined): { traceId: string; parent
 
 /**
  * Generate a 16-character hex span ID.
+ * SECURITY (HIGH-26): Uses crypto.randomBytes instead of Math.random
  */
 function generateSpanId(): string {
-  const bytes = new Uint8Array(8);
-  for (let i = 0; i < 8; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
-  }
-  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return randomBytes(8).toString('hex');
 }
 
 /**
  * Generate a 32-character hex trace ID.
+ * SECURITY (HIGH-26): Uses crypto.randomBytes instead of Math.random
  */
 function generateTraceId(): string {
-  const bytes = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
-  }
-  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return randomBytes(16).toString('hex');
 }
 
 

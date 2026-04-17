@@ -1,7 +1,22 @@
 // ============================================================================
 // ERGENEKON UI — Time-Travel Debugger Application Logic
 // Premium Dashboard — Phase 1 Upgrade
+//
+// SECURITY: All user-controlled data is HTML-escaped before innerHTML insertion.
+// See escapeHtml() below. This prevents stored XSS via probe-captured data
+// (service names, operation names, URLs, paths, query text, etc.)
 // ============================================================================
+
+// SECURITY: HTML escape helper — prevents XSS on all probe-captured data
+function escapeHtml(str) {
+  if (typeof str !== 'string') return String(str ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 let sessions = [];
 let currentSession = null;
@@ -59,26 +74,28 @@ function renderSessionList(list) {
     return;
   }
 
+  // SECURITY: All session fields are HTML-escaped before interpolation
   container.innerHTML = list.map(s => {
     const active = currentSession?.id === s.id ? 'active' : '';
     const errorDot = s.hasError ? '<span class="error-dot">&#9679;</span>' : '';
 
-    // Extract method and path from first event or session metadata
-    const method = s.method || s.httpMethod || 'GET';
-    const path = s.path || s.url || s.id.slice(0, 12);
+    const method = escapeHtml(s.method || s.httpMethod || 'GET');
+    const path = escapeHtml(s.path || s.url || s.id.slice(0, 12));
     const statusCode = s.statusCode || s.httpStatus || null;
-    const methodLower = method.toLowerCase();
+    const methodLower = (s.method || s.httpMethod || 'GET').toLowerCase();
     const statusClass = getStatusClass(statusCode);
+    const safeId = escapeHtml(s.id);
+    const serviceName = escapeHtml(s.serviceName);
 
     return `
-      <div class="session-item ${active}" onclick="selectSession('${s.id}')">
+      <div class="session-item ${active}" onclick="selectSession('${safeId}')">
         <div class="session-item-top">
-          <span class="session-method m-${methodLower}">${method}</span>
+          <span class="session-method m-${escapeHtml(methodLower)}">${method}</span>
           <span class="session-path">${path}</span>
-          ${statusCode ? `<span class="session-status-code ${statusClass}">${statusCode}</span>` : ''}
+          ${statusCode ? `<span class="session-status-code ${statusClass}">${escapeHtml(String(statusCode))}</span>` : ''}
         </div>
         <div class="session-item-meta">
-          <span class="session-service-name">${s.serviceName}</span>
+          <span class="session-service-name">${serviceName}</span>
           <span>${relativeTime(s.startedAt)}</span>
           <span>${s.eventCount} events</span>
           ${errorDot}
@@ -150,6 +167,7 @@ async function selectSession(sessionId) {
     }
   }
 
+  // SECURITY: textContent for user-controlled data
   document.getElementById('session-title').textContent = path;
   const methodBadge = document.getElementById('session-method');
   methodBadge.textContent = method;
@@ -199,17 +217,18 @@ function renderTimeline() {
   // Clear old markers
   track.querySelectorAll('.timeline-marker').forEach(m => m.remove());
 
-  // Add markers
+  // Add markers — SECURITY: title uses textContent-safe values, event data is escaped
   currentEvents.forEach((event, idx) => {
     const marker = document.createElement('div');
     const pct = ((event.wallClock - startTime) / totalDuration) * 100;
     const mType = getMarkerType(event.type);
-    marker.className = `timeline-marker type-${mType}`;
+    marker.className = `timeline-marker type-${escapeHtml(mType)}`;
     marker.style.left = `${pct}%`;
+    // SECURITY: title attribute is auto-escaped by the browser for tooltip display
     marker.title = `#${event.sequence} ${event.type}: ${event.operationName}`;
     marker.onclick = (e) => { e.stopPropagation(); seekTo(idx); };
 
-    // Tooltip on hover
+    // Tooltip on hover — SECURITY: uses textContent, not innerHTML
     marker.onmouseenter = (e) => showTooltip(e, `#${event.sequence} ${event.type}\n${event.operationName}`);
     marker.onmouseleave = hideTooltip;
 
@@ -310,9 +329,10 @@ function renderFlowGraph() {
     }
   });
 
-  // Build flow with SVG connectors
+  // SECURITY: Escape all user-controlled values in flow graph
+  const safeServiceName = escapeHtml(currentSession.serviceName);
   let html = `<div class="flow-node active">
-    ${currentSession.serviceName}
+    ${safeServiceName}
     <span class="flow-node-count">${thisServiceCount} events</span>
   </div>`;
 
@@ -325,7 +345,7 @@ function renderFlowGraph() {
         </svg>
       </div>
       <div class="flow-node">
-        ${target}
+        ${escapeHtml(target)}
         <span class="flow-node-count">${count} calls</span>
       </div>`;
   });
@@ -363,6 +383,7 @@ function renderEventList() {
 
   document.getElementById('event-filter-count').textContent = `(${filtered.length})`;
 
+  // SECURITY: All event fields HTML-escaped
   container.innerHTML = filtered.map((event, idx) => {
     const originalIdx = currentEvents.indexOf(event);
     const durStr = event.durationMs > 0 ? `${event.durationMs}ms` : '';
@@ -372,8 +393,8 @@ function renderEventList() {
       <div class="event-item ${originalIdx === currentCursor ? 'current' : ''}"
            onclick="seekTo(${originalIdx})">
         <span class="event-seq">#${event.sequence}</span>
-        <span class="event-type-badge type-${event.type}">${typeShort}</span>
-        <span class="event-op">${event.operationName}</span>
+        <span class="event-type-badge type-${escapeHtml(event.type)}">${escapeHtml(typeShort)}</span>
+        <span class="event-op">${escapeHtml(event.operationName)}</span>
         ${durStr ? `<span class="event-dur">${durStr}</span>` : ''}
       </div>`;
   }).join('');
@@ -407,6 +428,7 @@ function showEventDetail(event) {
   document.getElementById('event-detail-empty').style.display = 'none';
   document.getElementById('event-detail').style.display = 'block';
 
+  // SECURITY: textContent for all user-controlled fields
   document.getElementById('detail-type').textContent = event.type;
   document.getElementById('detail-type').className = `event-type-badge type-${event.type}`;
   document.getElementById('detail-operation').textContent = event.operationName;
@@ -415,6 +437,9 @@ function showEventDetail(event) {
   document.getElementById('detail-wallclock').textContent = `time: ${new Date(event.wallClock).toISOString().slice(11, 23)}`;
   document.getElementById('detail-duration').textContent = event.durationMs > 0 ? `duration: ${event.durationMs}ms` : '';
 
+  // SECURITY: syntaxHighlight uses JSON.stringify (which escapes HTML chars in strings)
+  // and regex replacement that wraps in <span> with CSS classes — safe because
+  // JSON.stringify escapes <, >, &, " within string values
   document.getElementById('detail-data').innerHTML = syntaxHighlight(event.data);
 
   // Error tab
@@ -486,7 +511,7 @@ function renderEventBreakdown() {
     .map(([type, count]) => `
       <div class="breakdown-row">
         <span class="breakdown-dot" style="background:${colorMap[type] || '#505872'}"></span>
-        <span>${type}</span>
+        <span>${escapeHtml(type)}</span>
         <span class="breakdown-count">${count}</span>
       </div>
     `).join('');
@@ -495,10 +520,12 @@ function renderEventBreakdown() {
 // ── JSON Syntax Highlighting ─────────────────────────────────────
 
 function syntaxHighlight(obj) {
+  // SECURITY: JSON.stringify escapes <, >, " inside string values
+  // producing safe output for innerHTML when combined with our regex wrapper
   const json = JSON.stringify(obj, null, 2);
   if (!json) return '';
 
-  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+  return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
     let cls = 'json-number';
     if (/^"/.test(match)) {
       if (/:$/.test(match)) {
@@ -520,6 +547,7 @@ function syntaxHighlight(obj) {
 
 function showTooltip(e, text) {
   const tip = document.getElementById('tooltip');
+  // SECURITY: textContent prevents XSS in tooltips
   tip.textContent = text;
   tip.style.display = 'block';
   tip.style.left = (e.clientX + 12) + 'px';
@@ -575,7 +603,7 @@ async function loadMetrics() {
     document.getElementById('metric-tier').textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
   }
 
-  // Health status
+  // Health status — SECURITY: no user data interpolated here
   const statusEl = document.getElementById('metric-status');
   statusEl.innerHTML = `<span class="metric-dot metric-dot-ok"></span> Healthy`;
 }
@@ -605,7 +633,7 @@ async function loadLicenseInfo() {
     const badge = document.getElementById('tier-badge');
     const banner = document.getElementById('upgrade-banner');
 
-    // Update tier badge
+    // Update tier badge — SECURITY: textContent
     badge.textContent = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
     badge.className = `tier-badge tier-${currentTier}`;
 

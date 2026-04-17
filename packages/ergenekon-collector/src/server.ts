@@ -121,7 +121,7 @@ export class CollectorServer {
     // Security headers
     res.setHeader('Access-Control-Allow-Origin', corsOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Vary', 'Origin');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -152,7 +152,21 @@ export class CollectorServer {
     const path = url.pathname;
 
     // ── POST /api/v1/sessions — Receive recordings from probes ────
+    // SECURITY (CRIT-01): Require bearer token for write operations
     if (req.method === 'POST' && path === '/api/v1/sessions') {
+      const collectorToken = process.env['ERGENEKON_COLLECTOR_TOKEN'];
+      if (collectorToken) {
+        const authHeader = req.headers['authorization'] || '';
+        const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+        if (bearerToken !== collectorToken) {
+          console.warn(`[SECURITY] Unauthorized POST /api/v1/sessions from ${clientIp}`);
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Unauthorized: invalid or missing collector token' }));
+          return;
+        }
+      } else if (process.env['NODE_ENV'] === 'production') {
+        console.warn('[SECURITY] ERGENEKON_COLLECTOR_TOKEN not set in production. Write operations are unauthenticated!');
+      }
       // Layer 1: Safe body read (16MB hard limit, streaming abort)
       let body: string;
       try {

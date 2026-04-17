@@ -8,6 +8,7 @@
 
 import { getActiveSession } from '../recording-context.js';
 import { originalDateNow } from './globals.js';
+import { redactDeep, redactHeaders } from '../redaction.js';
 
 let installed = false;
 let _originalFetch: typeof globalThis.fetch;
@@ -42,12 +43,12 @@ export function installFetchInterceptor(): void {
     headers.set('traceparent', `00-${session.traceId}-${session.spanId}-01`);
     headers.set('x-ergenekon-hlc', JSON.stringify(session['hlc'].peek()));
 
-    // Record outgoing request
+    // Record outgoing request — SECURITY (CRIT-03): redact secrets
     session.record('http_request_out', `${method} ${url}`, {
       url,
       method,
-      headers: Object.fromEntries(headers.entries()),
-      body: init?.body ? String(init.body) : null,
+      headers: redactHeaders(Object.fromEntries(headers.entries()), []),
+      body: init?.body ? redactDeep(String(init.body)) : null,
     });
 
     const start = originalDateNow();
@@ -75,8 +76,8 @@ export function installFetchInterceptor(): void {
         {
           status: response.status,
           statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries()),
-          body: responseBody,
+          headers: redactHeaders(Object.fromEntries(response.headers.entries()), []),
+          body: redactDeep(responseBody),
         },
         { durationMs }
       );
