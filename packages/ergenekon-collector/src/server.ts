@@ -7,10 +7,21 @@
 // Defense layers:
 //   1. readBody() — hard 16MB byte limit, streaming abort → 413
 //   2. JSON parse error → 400 Bad Request (not 500)
-//   3. Schema validation — events array + length cap
-//   4. Future: rate limiting (token bucket), Zod schema
+//   3. Schema validation — events array + length cap + required fields
+//   4. Session ID validation — strict regex, path traversal prevention
+//   5. Rate limiting — token bucket per IP
+//   6. CORS + security headers
 //
-// INVARIANT: No request can OOM the collector.
+// SECURITY NOTES:
+//   - TLS: The collector runs on localhost by default. For production
+//     deployment over a network, ALWAYS run behind a TLS-terminating
+//     reverse proxy (nginx, Caddy, cloud LB). Never expose the raw
+//     HTTP collector to the public internet.
+//   - Replay safety: The replay engine does NOT execute code from
+//     recordings. It only substitutes I/O return values. The user's
+//     own app code runs — never attacker-supplied code.
+//
+// INVARIANT: No request can OOM or crash the collector.
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';

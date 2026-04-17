@@ -14,6 +14,20 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import type { RecordingSession } from '@ergenekon/core';
 
+// Safe JSON.stringify that handles circular references without crashing
+// Circular refs in Express req/res, socket handles etc. would throw TypeError
+// and crash the host application — this is a critical DoS prevention measure.
+function safeStringify(obj: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
 export interface SpillBufferConfig {
   spillDir?: string;
   maxSpillFiles?: number; // prevent unbounded disk growth
@@ -44,7 +58,7 @@ export class SpillBuffer {
   /** Append a session to the spill file (fsync'd) */
   append(session: RecordingSession): boolean {
     try {
-      const line = JSON.stringify(session) + '\n';
+      const line = safeStringify(session) + '\n';
       const filePath = join(this.spillDir, this.currentFile);
 
       appendFileSync(filePath, line, 'utf-8');

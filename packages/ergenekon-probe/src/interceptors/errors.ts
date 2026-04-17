@@ -10,6 +10,18 @@
 import { getActiveSession } from '../recording-context.js';
 import { originalDateNow } from '../internal-clock.js';
 
+// Safe JSON.stringify — prevents crash on circular references (Express req/res, sockets)
+function safeStringify(obj: unknown): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (_key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
 let installed = false;
 
 const _originalConsoleLog = console.log;
@@ -76,7 +88,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.log', {
         level: 'log',
-        args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
         timestamp: originalDateNow(),
       });
     }
@@ -88,7 +100,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.warn', {
         level: 'warn',
-        args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
         timestamp: originalDateNow(),
       });
     }
@@ -100,7 +112,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.error', {
         level: 'error',
-        args: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
         timestamp: originalDateNow(),
       });
     }
