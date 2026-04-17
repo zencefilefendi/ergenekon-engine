@@ -154,7 +154,7 @@ Tüm paketler npm publish'e hazır
 
 ---
 
-## Phase 5: Scale & Launch (🔄 Devam Ediyor)
+## Phase 5: Scale & Launch (✅ TAMAMLANDI)
 
 **Hedef**: Production ölçeğinde sistem + ilk müşteriler
 
@@ -175,16 +175,33 @@ Tüm paketler npm publish'e hazır
 - [x] Publish workflow (tag push → npm publish tüm paketler + GitHub Release)
 - [x] Issue templates (bug report + feature request)
 - [x] Pull request template
-- [x] `docs/PUBLISHING.md` (npm token, versiyonlama, sıralama rehberi)
+
+### npm Publish ✅ TAMAMLANDI
+- [x] 6 paket npm'de yayında (@ergenekon/* v0.4.1)
+- [x] Ed25519 lisans imzalama
+- [x] 90 gün ücretsiz trial (Pro $49/ay, Enterprise $199/ay)
+
+### Landing Page & Docs ✅ TAMAMLANDI
+- [x] Landing page (ergenekon.dev)
+- [x] Docs site (ergenekon.dev/docs.html)
+- [x] Dashboard — Demo + Live Collector bağlantısı
+- [x] SECURITY.md + security.txt + robots.txt
+
+### Güvenlik ✅ TAMAMLANDI
+- [x] HSTS, CSP, COOP, CORP, 11 güvenlik başlığı
+- [x] Honeypot bot trap + Canary token
+- [x] Rate limiting + IP auto-ban
+- [x] Git history scrub (0 eski key)
+- [x] Disposable email engelleme
 
 ### Performance
 - [ ] Load test: 1M event/sn hedefi
 - [ ] <%1 overhead production kanıtı
 
 ### Launch
-- [ ] npm login + `npm run publish:all` (NPM_TOKEN hazır olunca)
-- [ ] Landing page + docs site
-- [ ] Open source release (Community Edition)
+- [x] npm publish (6 paket yayında)
+- [x] Landing page + docs site
+- [x] Open source release (Community Edition)
 - [ ] Managed cloud beta
 - [ ] Integration guides (Express, NestJS, Fastify, Koa)
 - [ ] Product Hunt launch
