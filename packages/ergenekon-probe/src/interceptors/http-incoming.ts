@@ -82,7 +82,9 @@ export function createHttpIncomingMiddleware(
       }
     } else {
       // Legacy: simple random sampling (no SamplingEngine)
-      if (Math.random() > config.samplingRate) {
+      // SECURITY (HIGH-33): Use crypto.randomBytes for uniform distribution
+      const rand = randomBytes(4).readUInt32BE(0) / 0xFFFFFFFF;
+      if (rand > config.samplingRate) {
         next();
         return;
       }

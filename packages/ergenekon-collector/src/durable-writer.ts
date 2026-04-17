@@ -43,10 +43,19 @@ export async function durableWrite(path: string, data: string | Buffer): Promise
   await rename(tmp, path);
 
   // Step 4: fsync the directory — the rename is now durable
-  const dfh = await open(dir, 'r');
+  // SECURITY (HIGH-29): Windows does not support directory fsync (EINVAL/EPERM)
   try {
-    await dfh.sync();
-  } finally {
-    await dfh.close();
+    const dfh = await open(dir, 'r');
+    try {
+      await dfh.sync();
+    } finally {
+      await dfh.close();
+    }
+  } catch (err: unknown) {
+    // Gracefully degrade on Windows where directory fsync is not supported
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code !== 'EINVAL' && code !== 'EPERM' && code !== 'EACCES') {
+      throw err;
+    }
   }
 }

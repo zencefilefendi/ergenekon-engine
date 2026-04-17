@@ -46,13 +46,16 @@ function normalizeEmail(email: string): string {
 // SECURITY: Strict email validation (matches landing page)
 const EMAIL_REGEX = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
 
-// SECURITY: Disposable email blocklist (must match landing page)
-const DISPOSABLE_DOMAINS = [
-  'tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator',
-  'trashmail', 'fakeinbox', '10minutemail', 'temp-mail', 'dispostable',
-  'sharklasers', 'grr.la', 'guerrillamailblock', 'maildrop', 'mailnesia',
-  'getairmail', 'minutemail', 'tempinbox', 'mohmal', 'burpcollaborator',
-];
+// SECURITY (HIGH-16): Disposable email blocklist — exact domain match, not substring
+// Each entry is a full domain to prevent false positives (e.g. 'mail' matching 'gmail')
+const DISPOSABLE_DOMAINS = new Set([
+  'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'yopmail.com', 'mailinator.com',
+  'trashmail.com', 'fakeinbox.com', '10minutemail.com', 'temp-mail.org', 'dispostable.com',
+  'sharklasers.com', 'grr.la', 'guerrillamailblock.com', 'maildrop.cc', 'mailnesia.com',
+  'getairmail.com', 'minutemail.com', 'tempinbox.com', 'mohmal.com', 'burpcollaborator.net',
+  'tempmail.net', 'guerrillamail.info', 'guerrillamail.de', 'throwaway.email',
+  'mailnull.com', 'mytemp.email', 'nada.email', 'dropmail.me', 'harakirimail.com',
+]);
 
 // SECURITY: Body size limit (prevent DoS via oversized payloads)
 const MAX_BODY_BYTES = 32 * 1024; // 32 KB
@@ -118,8 +121,9 @@ async function readBody(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promis
 // ── Helper: JSON response ───────────────────────────────────────
 function json(res: ServerResponse, status: number, data: unknown) {
   const allowedOrigins = ['https://ergenekon.dev', 'http://localhost:3000', 'http://localhost:5500'];
-  const origin = (res as any).req?.headers?.origin || '*';
-  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+  const origin = (res as any).req?.headers?.origin || '';
+  // SECURITY (HIGH-21): Don't leak first allowed origin when request origin is unknown
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : '';
 
   res.writeHead(status, {
     'Content-Type': 'application/json',
@@ -195,7 +199,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         return;
       }
       const domain = email.split('@')[1];
-      if (DISPOSABLE_DOMAINS.some(d => domain.includes(d))) {
+      // SECURITY (HIGH-16): Exact domain match via Set.has()
+      if (DISPOSABLE_DOMAINS.has(domain)) {
         json(res, 400, { error: 'Valid email address is required' });
         return;
       }

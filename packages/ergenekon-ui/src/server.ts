@@ -115,16 +115,40 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   
   const ext = extname(fullPath);
   const contentType = MIME_TYPES[ext] ?? 'text/plain';
+  // SECURITY (HIGH-07): Binary file types must NOT be read as UTF-8
+  const binaryExts = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot']);
+  const isBinary = binaryExts.has(ext);
+
+  // SECURITY (HIGH-14): Content-Security-Policy for UI pages
+  const securityHeaders: Record<string, string> = {
+    'Content-Type': contentType,
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  };
+  if (ext === '.html') {
+    securityHeaders['Content-Security-Policy'] =
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'";
+  }
 
   try {
-    const content = await readFile(fullPath, 'utf-8');
-    res.writeHead(200, { 'Content-Type': contentType });
+    const content = isBinary
+      ? await readFile(fullPath)           // Buffer for binary
+      : await readFile(fullPath, 'utf-8'); // String for text
+    res.writeHead(200, securityHeaders);
     res.end(content);
   } catch {
-    // Fallback to index.html for SPA routing
+    // SECURITY (HIGH-32): Only SPA-fallback for navigation requests (HTML)
+    // Don't serve index.html for missing .js/.css/.png — return 404
+    if (ext && ext !== '.html') {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not found');
+      return;
+    }
+    // SPA fallback for client-side routing
     try {
       const indexContent = await readFile(join(__dirname, 'public', 'index.html'), 'utf-8');
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { ...securityHeaders, 'Content-Type': 'text/html' });
       res.end(indexContent);
     } catch {
       res.writeHead(404);

@@ -95,15 +95,26 @@ function looksLikeSecret(value: unknown): boolean {
 
 // ── Path matching ─────────────────────────────────────────────────
 
+// SECURITY (HIGH-34): Cache compiled patterns to prevent ReDoS from repeated compilation
+const _patternCache = new Map<string, RegExp>();
+function getPatternRegex(pattern: string): RegExp {
+  let cached = _patternCache.get(pattern);
+  if (!cached) {
+    if (_patternCache.size >= 1000) _patternCache.clear();
+    const regexStr = '^' + pattern
+      .replace(/\./g, '\\.')
+      .replace(/\*\*/g, '{{GLOBSTAR}}')
+      .replace(/\*/g, '[^.]+')
+      .replace(/\{\{GLOBSTAR\}\}/g, '.*')
+    + '$';
+    cached = new RegExp(regexStr, 'i');
+    _patternCache.set(pattern, cached);
+  }
+  return cached;
+}
+
 function pathMatchesPattern(path: string, pattern: string): boolean {
-  // Convert glob pattern to regex: "user.*.password" → /^user\.[^.]+\.password$/
-  const regexStr = '^' + pattern
-    .replace(/\./g, '\\.')
-    .replace(/\*\*/g, '{{GLOBSTAR}}')
-    .replace(/\*/g, '[^.]+')
-    .replace(/\{\{GLOBSTAR\}\}/g, '.*')
-  + '$';
-  return new RegExp(regexStr, 'i').test(path);
+  return getPatternRegex(pattern).test(path);
 }
 
 // ── Main Redaction Engine ─────────────────────────────────────────

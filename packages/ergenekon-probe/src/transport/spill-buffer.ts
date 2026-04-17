@@ -12,6 +12,7 @@
 import { mkdirSync, appendFileSync, readdirSync, readFileSync, unlinkSync, openSync, fsyncSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import { randomUUID } from 'node:crypto';
 import type { RecordingSession } from '@ergenekon/core';
 
 // Safe JSON.stringify that handles circular references without crashing
@@ -131,7 +132,8 @@ export class SpillBuffer {
   }
 
   private newFileName(): string {
-    return `spill-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.ndjson`;
+    // SECURITY: Use crypto.randomUUID instead of Math.random for spill filenames
+    return `spill-${Date.now()}-${randomUUID().slice(0, 8)}.ndjson`;
   }
 
   private rotateFile(): void {
@@ -145,12 +147,17 @@ export class SpillBuffer {
         .filter(f => f.startsWith('spill-') && f.endsWith('.ndjson'))
         .sort();
 
+      // SECURITY (HIGH-10): Count dropped sessions when evicting old spill files
       while (files.length > this.maxSpillFiles) {
         const oldest = files.shift()!;
         try {
+          // Count lines in file being dropped
+          const content = readFileSync(join(this.spillDir, oldest), 'utf-8');
+          const lineCount = content.trim().split('\n').filter(Boolean).length;
+          console.warn(`[ERGENEKON] Evicting spill file ${oldest} (${lineCount} sessions dropped)`);
           unlinkSync(join(this.spillDir, oldest));
         } catch {
-          // best effort
+          try { unlinkSync(join(this.spillDir, oldest)); } catch { /* best effort */ }
         }
       }
     } catch {

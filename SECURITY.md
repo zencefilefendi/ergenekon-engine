@@ -37,15 +37,19 @@ We take security seriously. If you discover a vulnerability in ERGENEKON Engine,
 | License validation bypass | Social engineering |
 | API authentication bypass | Denial of service (rate limited) |
 | Private key exposure | Issues in dependencies |
-| XSS / injection in API | UI cosmetic issues |
+| XSS / injection in UI or API | UI cosmetic issues |
 | CORS misconfiguration | |
+| Collector auth bypass | |
+| Session data exfiltration | |
+| Prototype pollution | |
 
 ### Cryptographic Details
 
 - **Signing Algorithm:** Ed25519 (RFC 8032)
 - **Key Size:** 256-bit (128-bit security level)
-- **License Format:** JSON + base64 Ed25519 signature
+- **License Format:** Canonical JSON + base64 Ed25519 signature
 - **Key Rotation:** Production keys are rotated when any exposure is detected
+- **Random Generation:** All IDs and sampling use `crypto.randomBytes` (CSPRNG)
 
 ### Safe Harbor
 
@@ -57,11 +61,48 @@ We support responsible disclosure. Security researchers acting in good faith wil
 
 ## Security Measures
 
-- HSTS with preload (63M seconds)
-- CORS restricted to ergenekon.dev
-- Ed25519 license signatures (not HMAC)
-- Input sanitization on all API endpoints
-- Rate limiting (global + per-email)
-- No PII in server logs
-- Disposable email blocking
-- Security headers on all responses
+### Authentication & Authorization
+- Collector requires `ERGENEKON_COLLECTOR_TOKEN` bearer auth for write ops (CRIT-01)
+- Admin API uses timing-safe comparison with fixed-size buffers (HIGH-03)
+- Host header validation on all servers (HIGH-13)
+
+### Data Protection
+- Deep field redaction: 20+ secret patterns (JWT, Bearer, API keys, CC, SSN, etc.)
+- Outgoing HTTP and database interceptors apply `redactDeep` (CRIT-03)
+- No PII in server logs — customer emails masked before logging
+- Spill buffer sessions redacted before disk write
+
+### Input Validation
+- Streaming body size limits (CRIT-04) — OOM impossible
+- Recursive prototype pollution guard via JSON.parse reviver (HIGH-01)
+- Customer name sanitization via regex (HIGH-04)
+- Disposable email blocklist with exact domain match (HIGH-16)
+- Session overwrite prevention (HIGH-09)
+
+### UI Security
+- All innerHTML uses escaped via `escapeHtml()` (CRIT-09)
+- Content-Security-Policy on all HTML responses (HIGH-14)
+- API proxy validates paths against strict allowlist (HIGH-22)
+- SPA fallback only for navigation, not assets (HIGH-32)
+
+### Cryptographic Integrity
+- Canonical JSON signing with sorted keys (CRIT-06)
+- Gzip bomb protection with `maxOutputLength` (CRIT-07)
+- HLC overflow guard + remote drift cap (CRIT-08)
+- Checksum legacy bypass emits security warning (CRIT-10)
+- License feature override validated against tier allowlist (HIGH-27)
+
+### Infrastructure
+- Docker containers run as non-root user (MED-01)
+- `npm ci --ignore-scripts` in Dockerfiles (MED-17)
+- `.dockerignore` excludes `.env`, `*.pem`, `*.key` (HIGH-30)
+- Rate limiter: negative token fix + 100k bucket cap (HIGH-24/25)
+- Dependabot for npm, Actions, and Docker updates (MED-16)
+- HSTS with preload, CORS restricted to ergenekon.dev
+- Security headers (X-Content-Type-Options, X-Frame-Options, Referrer-Policy)
+
+### Network Security
+- CORS restricted to explicit origin allowlist — no wildcard
+- CORS fallback does not leak allowed origins (HIGH-21)
+- Backend Docker network is internal-only
+- All containers: `no-new-privileges`, `read_only`, `cap_drop: ALL`

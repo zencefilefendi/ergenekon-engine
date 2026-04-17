@@ -189,7 +189,13 @@ export class CollectorClient extends EventEmitter {
     try {
       const response = await fetch(`${this.config.collectorUrl}/api/v1/sessions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // SECURITY (CRIT-01): Include collector auth token if configured
+          ...(process.env['ERGENEKON_COLLECTOR_TOKEN']
+            ? { 'Authorization': `Bearer ${process.env['ERGENEKON_COLLECTOR_TOKEN']}` }
+            : {}),
+        },
         body: JSON.stringify({ sessions: batch }),
         signal: AbortSignal.timeout(5000),
       });
@@ -241,7 +247,21 @@ export class CollectorClient extends EventEmitter {
         }
       } else {
         // Below threshold: put back in buffer for retry
-        this.buffer.unshift(...batch);
+        // SECURITY (HIGH-11): Cap retry buffer to prevent unbounded growth
+        const remaining = this.config.maxBufferSize - this.buffer.length;
+        if (remaining > 0) {
+          this.buffer.unshift(...batch.slice(0, remaining));
+          const discarded = batch.length - remaining;
+          if (discarded > 0) {
+            this._totalDropped += discarded;
+            this.emit('warning', `Retry buffer full: discarded ${discarded} sessions`);
+          }
+        } else {
+          // Buffer is full, spill the batch
+          for (const session of batch) {
+            this.spillSession(session);
+          }
+        }
       }
     } finally {
       this._flushing = false;

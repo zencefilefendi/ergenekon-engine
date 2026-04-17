@@ -14,6 +14,11 @@ import type { HLCTimestamp } from './types.js';
 // This is critical — HLC must use the real clock, not the intercepted one.
 const _rawDateNow = Date.now.bind(Date);
 
+// SECURITY (CRIT-08): Cap logical counter to prevent 2^53 overflow
+const MAX_LOGICAL = Number.MAX_SAFE_INTEGER - 1;
+// SECURITY: Max acceptable wall-time drift from remote nodes (1 hour)
+const MAX_DRIFT_MS = 60 * 60 * 1000;
+
 export class HybridLogicalClock {
   private wallTime: number;
   private logical: number;
@@ -42,6 +47,10 @@ export class HybridLogicalClock {
       this.logical = 0;
     } else {
       this.logical++;
+      // SECURITY (CRIT-08): Overflow guard
+      if (this.logical >= MAX_LOGICAL) {
+        throw new Error(`[ERGENEKON] HLC logical counter overflow at ${this.logical}. Clock is stuck.`);
+      }
     }
 
     return {
@@ -60,20 +69,28 @@ export class HybridLogicalClock {
   receive(remote: HLCTimestamp): HLCTimestamp {
     const physicalNow = this.getPhysicalTime();
 
-    if (physicalNow > this.wallTime && physicalNow > remote.wallTime) {
-      // Physical clock is ahead — use it, reset logical
+    // SECURITY (CRIT-08): Reject remote timestamps that are too far in the future
+    // This prevents a malicious node from advancing our clock arbitrarily
+    const maxAcceptable = physicalNow + MAX_DRIFT_MS;
+    const safeRemoteWall = Math.min(remote.wallTime, maxAcceptable);
+    const safeRemoteLogical = Math.min(remote.logical, MAX_LOGICAL);
+
+    if (physicalNow > this.wallTime && physicalNow > safeRemoteWall) {
       this.wallTime = physicalNow;
       this.logical = 0;
-    } else if (this.wallTime === remote.wallTime) {
-      // Same wall time — advance logical past both
-      this.logical = Math.max(this.logical, remote.logical) + 1;
-    } else if (remote.wallTime > this.wallTime) {
-      // Remote is ahead — adopt remote's wall time
-      this.wallTime = remote.wallTime;
-      this.logical = remote.logical + 1;
+    } else if (this.wallTime === safeRemoteWall) {
+      this.logical = Math.max(this.logical, safeRemoteLogical) + 1;
+    } else if (safeRemoteWall > this.wallTime) {
+      this.wallTime = safeRemoteWall;
+      this.logical = safeRemoteLogical + 1;
     } else {
-      // We're ahead — just increment our logical
       this.logical++;
+    }
+
+    // SECURITY (CRIT-08): Overflow guard
+    if (this.logical >= MAX_LOGICAL) {
+      this.logical = 0;
+      this.wallTime = physicalNow;
     }
 
     return {

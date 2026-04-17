@@ -73,7 +73,11 @@ export function exportSessionsJSON(
  * Handles both single-session and multi-session formats.
  */
 export function importSessionsJSON(json: string): RecordingSession[] {
-  const parsed = JSON.parse(json);
+  // SECURITY (HIGH-15): Strip __proto__ / constructor to prevent prototype pollution
+  const parsed = JSON.parse(json, (key, value) => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+    return value;
+  });
 
   if (parsed._format === 'ergenekon-session-v1') {
     return [parsed.session as RecordingSession];

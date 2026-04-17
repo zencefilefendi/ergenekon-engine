@@ -18,10 +18,22 @@ spec:
         app.kubernetes.io/component: collector
     spec:
       serviceAccountName: {{ include "ergenekon.serviceAccountName" . }}
+      # SECURITY (MED-19): Run as non-root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
       containers:
         - name: collector
           image: "{{ .Values.collector.image.repository }}:{{ .Values.collector.image.tag }}"
           imagePullPolicy: {{ .Values.collector.image.pullPolicy }}
+          # SECURITY (MED-20): Container-level security context
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
             - name: http
               containerPort: 4380
@@ -31,17 +43,27 @@ spec:
               value: "4380"
             - name: STORAGE_DIR
               value: /data/sessions
+            - name: NODE_ENV
+              value: production
             - name: LOG_LEVEL
               value: {{ .Values.collector.env.LOG_LEVEL }}
+            # SECURITY (CRIT-01): Collector auth token from secret
+            {{- if .Values.collector.authSecret }}
+            - name: ERGENEKON_COLLECTOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.collector.authSecret.name }}
+                  key: {{ .Values.collector.authSecret.key | default "token" }}
+            {{- end }}
           livenessProbe:
             httpGet:
-              path: /health
+              path: /api/v1/stats
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /api/v1/stats
               port: http
             initialDelaySeconds: 3
             periodSeconds: 5
@@ -50,6 +72,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data/sessions
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: data
           {{- if .Values.collector.persistence.enabled }}
@@ -58,3 +82,7 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi

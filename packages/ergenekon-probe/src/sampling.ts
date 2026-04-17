@@ -24,8 +24,10 @@
 // ============================================================================
 
 import { originalDateNow } from './internal-clock.js';
+import { randomBytes } from 'node:crypto';
 
 // Capture original Math.random before any monkey-patching
+// Still needed for backwards-compat but NOT for security-critical decisions
 const originalMathRandom = Math.random.bind(Math);
 
 export interface SamplingConfig {
@@ -136,8 +138,9 @@ export class SamplingEngine {
       return { shouldRecord: true, reason: 'new_path' };
     }
 
-    // Random sampling — use ORIGINAL Math.random (not the patched one)
-    if (originalMathRandom() < this.config.baseRate) {
+    // Random sampling — SECURITY (HIGH-33): use CSPRNG, not Math.random
+    const rand = randomBytes(4).readUInt32BE(0) / 0xFFFFFFFF;
+    if (rand < this.config.baseRate) {
       return { shouldRecord: true, reason: 'random' };
     }
 

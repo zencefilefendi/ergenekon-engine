@@ -6,6 +6,8 @@
 // No external dependencies.
 // ============================================================================
 
+import { randomBytes } from 'node:crypto';
+
 const ENCODING = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford Base32
 
 function encodeTime(time: number, length: number): string {
@@ -19,9 +21,11 @@ function encodeTime(time: number, length: number): string {
 }
 
 function encodeRandom(length: number): string {
+  // SECURITY (HIGH-26): Use crypto.randomBytes instead of Math.random
+  const bytes = randomBytes(length);
   let str = '';
   for (let i = 0; i < length; i++) {
-    str += ENCODING[Math.floor(Math.random() * 32)];
+    str += ENCODING[bytes[i]! % 32];
   }
   return str;
 }

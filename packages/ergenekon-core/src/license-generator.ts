@@ -74,7 +74,21 @@ export function generateLicense(
   const durationDays = params.durationDays ?? 365;
   const expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
 
-  // Build the license payload
+  // SECURITY (HIGH-27): Validate features against tier allowlist
+  // Callers cannot request features that their tier doesn't include
+  const tierFeatures = TIER_FEATURES[params.tier];
+  let features: LicenseFeature[];
+  if (params.features) {
+    features = params.features.filter(f => tierFeatures.includes(f));
+    if (features.length !== params.features.length) {
+      console.warn(`[SECURITY] License feature override attempted: ${params.features.length} requested, ${features.length} allowed for tier '${params.tier}'`);
+    }
+  } else {
+    features = [...tierFeatures];
+  }
+
+  // Build the license payload — SECURITY (CRIT-06): Deterministic key order
+  // Keys are explicitly ordered to ensure canonical JSON for signing
   const payload: LicenseToken = {
     version: 1,
     licenseId: `lic_${ulid()}`,
@@ -84,14 +98,18 @@ export function generateLicense(
     tier: params.tier,
     maxServices: params.maxServices ?? -1,
     maxEventsPerDay: params.maxEventsPerDay ?? -1,
-    features: params.features ?? [...TIER_FEATURES[params.tier]],
+    features,
     issuedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
   };
 
-  // Sign the payload with Ed25519
+  // SECURITY (CRIT-06): Sort keys for canonical JSON before signing
+  // This ensures signature verification is deterministic regardless of key insertion order
+  const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+
+  // Sign the canonical payload with Ed25519
   const privateKey = createPrivateKey(keyPem);
-  const payloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
+  const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
   const signature = sign(null, payloadBytes, privateKey);
 
   return {

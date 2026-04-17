@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# SECURITY (MED-15): Least-privilege permissions
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     name: Build & Test
@@ -25,8 +29,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      # SECURITY (MED-17): --ignore-scripts in CI to prevent supply-chain attacks
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build all packages
         run: npm run build
@@ -42,3 +47,28 @@ jobs:
       - name: Verify CLI
         run: |
           node packages/ergenekon-cli/dist/index.js help
+
+  # SECURITY: Audit dependencies for known vulnerabilities
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        run: npx --yes audit-ci --high
+        continue-on-error: true

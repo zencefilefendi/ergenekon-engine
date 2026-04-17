@@ -94,15 +94,25 @@ export class FileStorage {
     const filepath = join(this.sessionsDir, filename);
     assertWithinDir(filepath, this.sessionsDir);
 
+    // SECURITY (HIGH-09): Reject overwrites — session IDs are immutable
+    if (this.sessionIndex.has(session.id)) {
+      throw new Error(`[SECURITY] Session ${session.id} already exists. Overwrites are not allowed.`);
+    }
+
     // Wrap with checksum for integrity verification on load
     const content = wrapWithChecksum(session);
     await durableWrite(filepath, content);
 
     // Update in-memory index
     this.sessionIndex.set(session.id, filename);
-    const traceIds = this.traceIndex.get(session.traceId) ?? [];
-    traceIds.push(session.id);
-    this.traceIndex.set(session.traceId, traceIds);
+    // SECURITY (HIGH-28): Use Set to prevent duplicate trace index entries
+    if (!this.traceIndex.has(session.traceId)) {
+      this.traceIndex.set(session.traceId, []);
+    }
+    const traceIds = this.traceIndex.get(session.traceId)!;
+    if (!traceIds.includes(session.id)) {
+      traceIds.push(session.id);
+    }
 
     return session.id;
   }

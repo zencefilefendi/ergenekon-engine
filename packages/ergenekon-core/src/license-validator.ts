@@ -77,7 +77,11 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
   // 1. Parse the signed license
   let signed: SignedLicense;
   try {
-    signed = JSON.parse(signedLicenseJson) as SignedLicense;
+    // SECURITY (MED-06): Prototype pollution guard
+    signed = JSON.parse(signedLicenseJson, (key, value) => {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+      return value;
+    }) as SignedLicense;
   } catch {
     return communityFallback('Invalid license file: not valid JSON');
   }
@@ -107,13 +111,22 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
   // 6. Verify Ed25519 signature
   try {
     const publicKey = createPublicKey(publicKeyPem ?? ERGENEKON_PUBLIC_KEY_PEM);
-    const payloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
+    // SECURITY (CRIT-06): Verify against canonical JSON (sorted keys)
+    // This matches the generator which signs with sorted keys
+    const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+    const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
     const signatureBytes = Buffer.from(signature, 'base64');
 
     const isValid = verify(null, payloadBytes, publicKey, signatureBytes);
 
     if (!isValid) {
-      return communityFallback('License signature verification failed — license may be tampered');
+      // SECURITY: Also try non-canonical verification for backwards compatibility
+      // with licenses signed before CRIT-06 fix
+      const legacyPayloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
+      const isLegacyValid = verify(null, legacyPayloadBytes, publicKey, signatureBytes);
+      if (!isLegacyValid) {
+        return communityFallback('License signature verification failed — license may be tampered');
+      }
     }
   } catch (err) {
     return communityFallback(`Signature verification error: ${err instanceof Error ? err.message : String(err)}`);
@@ -128,10 +141,11 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
     return communityFallback(`License expired on ${payload.expiresAt} (${Math.abs(daysUntilExpiry)} days ago)`);
   }
 
-  // 8. Resolve features — use explicit features if provided, else tier defaults
+  // 8. Resolve features — SECURITY (MED-07): validate against tier allowlist
+  const tierAllowed = TIER_FEATURES[payload.tier];
   const features: LicenseFeature[] = payload.features.length > 0
-    ? payload.features
-    : [...TIER_FEATURES[payload.tier]];
+    ? payload.features.filter(f => tierAllowed.includes(f))
+    : [...tierAllowed];
 
   // 9. Resolve limits — use explicit values if provided (-1 means tier default)
   const tierLimits = TIER_LIMITS[payload.tier];
