@@ -11,7 +11,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { join, extname, dirname } from 'node:path';
+import { join, extname, dirname, resolve, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLicense, getTierDisplay } from '@ergenekon/core';
 
@@ -77,8 +77,20 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   }
 
   // Serve static files
+  // SECURITY: Prevent path traversal (../../etc/passwd)
   let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
-  const fullPath = join(__dirname, 'public', filePath);
+  // Normalize and strip null bytes
+  filePath = normalize(filePath).replace(/\0/g, '');
+  const publicDir = resolve(__dirname, 'public');
+  const fullPath = resolve(publicDir, '.' + filePath);
+  
+  // Path traversal check: must stay within public/
+  if (!fullPath.startsWith(publicDir)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+  
   const ext = extname(fullPath);
   const contentType = MIME_TYPES[ext] ?? 'text/plain';
 

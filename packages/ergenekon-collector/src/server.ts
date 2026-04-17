@@ -96,10 +96,33 @@ export class CollectorServer {
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    // SECURITY: Restrict CORS to prevent DNS rebinding attacks.
+    // Wildcard (*) would allow any malicious website to query your local collector.
+    const ALLOWED_ORIGINS = [
+      'http://localhost:3000',        // local UI
+      'http://localhost:5173',        // vite dev
+      'http://localhost:5500',        // live server
+      'http://127.0.0.1:3000',
+      'https://ergenekon-dashboard.vercel.app',  // production dashboard
+    ];
+    const origin = req.headers.origin || '';
+    const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+    // Host header validation — reject DNS rebinding
+    const host = req.headers.host || '';
+    const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', 'collector'];
+    const hostName = host.split(':')[0];
+    if (!allowedHosts.includes(hostName)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Forbidden: invalid Host header' }));
+      return;
+    }
+
     // Security headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Vary', 'Origin');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
