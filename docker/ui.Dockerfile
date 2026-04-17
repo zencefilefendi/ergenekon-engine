@@ -33,4 +33,7 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 CMD ["node", "packages/ergenekon-ui/dist/index.js"]

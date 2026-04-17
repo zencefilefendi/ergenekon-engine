@@ -125,10 +125,11 @@ function generateLicense(email, name, tier) {
   };
 
   const privateKey = createPrivateKey(privateKeyPem);
-  const payloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
+  const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+  const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
   const signature = sign(null, payloadBytes, privateKey);
 
-  return { payload, signature: signature.toString('base64') };
+  return { payload, signature: signature.toString('base64'), alg: 'Ed25519', kid: 'key-v1' };
 }
 
 // ── API Handler ────────────────────────────────────────────
@@ -249,7 +250,7 @@ export default async function handler(req, res) {
       licenseId: license.payload.licenseId,
       tier,
       expiresAt: license.payload.expiresAt,
-      license,
+      // SECURITY: License is no longer returned inline
     });
   } catch (err) {
     console.error('[REGISTER] Error:', err.message);

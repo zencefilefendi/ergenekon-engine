@@ -30,6 +30,8 @@ let installed = false;
 
 // Original function references
 const originals: Record<string, Function> = {};
+let origReadFileSync: typeof fs.readFileSync | null = null;
+let origReadFileCb: typeof fs.readFile | null = null;
 
 const INTERCEPTED_METHODS = [
   'readFile',
@@ -58,6 +60,13 @@ export function installFsInterceptor(): void {
     originals[method] = (fsp as any)[method];
     (fsp as any)[method] = createWrapper(method, originals[method]!);
   }
+
+  // Sync / Callback variants
+  origReadFileSync = fs.readFileSync;
+  (fs as any).readFileSync = createSyncWrapper('readFileSync', origReadFileSync!);
+
+  origReadFileCb = fs.readFile;
+  (fs as any).readFile = createCbWrapper('readFile', origReadFileCb!);
 }
 
 /**
@@ -74,6 +83,15 @@ export function uninstallFsInterceptor(): void {
       (fsp as any)[method] = originals[method];
       delete originals[method];
     }
+  }
+
+  if (origReadFileSync) {
+    (fs as any).readFileSync = origReadFileSync;
+    origReadFileSync = null;
+  }
+  if (origReadFileCb) {
+    (fs as any).readFile = origReadFileCb;
+    origReadFileCb = null;
   }
 }
 
@@ -128,6 +146,52 @@ function createWrapper(method: InterceptedMethod, original: Function): Function 
   };
 }
 
+function createSyncWrapper(method: string, original: Function): Function {
+  return function ergenekonFsSync(...args: unknown[]): unknown {
+    const session = getActiveSession();
+    if (!session) return original.apply(fs, args);
+
+    const filePath = typeof args[0] === 'string' ? args[0] : (args[0] instanceof URL ? args[0].pathname : String(args[0]));
+    session.record('fs_call', `fs.${method}(${filePath})`, { method, path: filePath, args: sanitizeArgs(args) });
+    const start = originalDateNow();
+    try {
+      const result = original.apply(fs, args);
+      const durationMs = originalDateNow() - start;
+      session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: filePath, durationMs, result: serializeResult('readFile', result) });
+      return result;
+    } catch (err) {
+      session.record('fs_error', `fs.${method} → error`, { method, path: filePath, durationMs: originalDateNow() - start, error: err instanceof Error ? { code: (err as any).code, message: err.message } : String(err) });
+      throw err;
+    }
+  };
+}
+
+function createCbWrapper(method: string, original: Function): Function {
+  return function ergenekonFsCb(...args: unknown[]): void {
+    const session = getActiveSession();
+    if (!session) return original.apply(fs, args);
+
+    const filePath = typeof args[0] === 'string' ? args[0] : (args[0] instanceof URL ? args[0].pathname : String(args[0]));
+    session.record('fs_call', `fs.${method}(${filePath})`, { method, path: filePath, args: sanitizeArgs(args) });
+    const start = originalDateNow();
+
+    const lastArg = args[args.length - 1];
+    if (typeof lastArg !== 'function') return original.apply(fs, args); // invalid signature
+
+    args[args.length - 1] = function wrappedCallback(err: NodeJS.ErrnoException | null, result: unknown) {
+      const durationMs = originalDateNow() - start;
+      if (err) {
+        session.record('fs_error', `fs.${method} → error`, { method, path: filePath, durationMs, error: { code: err.code, message: err.message } });
+      } else {
+        session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: filePath, durationMs, result: serializeResult('readFile', result) });
+      }
+      return lastArg.apply(this, arguments);
+    };
+
+    return original.apply(fs, args);
+  };
+}
+
 /** Sanitize arguments for recording (remove Buffer content, keep metadata) */
 function sanitizeArgs(args: unknown[]): unknown[] {
   return args.map((arg, i) => {
@@ -145,11 +209,11 @@ function serializeResult(method: InterceptedMethod, result: unknown): unknown {
   if (method === 'readFile') {
     if (Buffer.isBuffer(result)) {
       const size = result.length;
-      // Record size + first 256 bytes hash for replay matching
-      return { type: 'buffer', size, preview: result.subarray(0, 256).toString('base64') };
+      // Record size only to prevent leaking sensitive file contents (e.g. .env or keys)
+      return { type: 'buffer', size };
     }
     if (typeof result === 'string') {
-      return { type: 'string', size: result.length, preview: result.slice(0, 512) };
+      return { type: 'string', size: result.length };
     }
   }
   if (method === 'stat') {

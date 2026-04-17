@@ -35,7 +35,7 @@ echo -e "${GREEN}   ✅ Logged in as: ${NPMUSER}${NC}"
 
 # Build all packages
 echo -e "${CYAN}[2/7] Building all packages...${NC}"
-npm run build 2>/dev/null || true
+npm run build
 echo -e "${GREEN}   ✅ Build complete${NC}"
 
 # Publish in dependency order

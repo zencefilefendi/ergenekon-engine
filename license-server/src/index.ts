@@ -259,8 +259,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
           licenseId: license.payload.licenseId,
           tier: 'pro',
           expiresAt: license.payload.expiresAt,
-          // Include license in response as well (so user can download directly)
-          license: license,
+          // SECURITY: License is no longer returned inline
         });
       } catch (err) {
         console.error('[FREE] License generation failed:', err);

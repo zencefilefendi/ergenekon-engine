@@ -18,6 +18,7 @@ services:
     ports:
       - "127.0.0.1:4380:4380"
     environment:
+      NODE_ENV: production
       PORT: 4380
       STORAGE_DIR: /data/sessions
       LOG_LEVEL: info

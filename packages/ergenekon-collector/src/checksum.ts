@@ -54,8 +54,12 @@ export function verifyAndUnwrap<T>(content: string): T {
   // SECURITY (CRIT-10): Legacy files without checksum are NOT silently returned.
   // We log a warning and mark as unverified. Previously this was a silent bypass.
   if (parsed && typeof parsed === 'object' && !('_cksum' in parsed)) {
-    console.warn('[SECURITY] Loading legacy file without checksum — integrity NOT verified. Run migration to add checksums.');
-    return parsed as T;
+    if (process.env['ALLOW_LEGACY_SESSIONS'] === 'true') {
+      console.warn('[SECURITY] Loading legacy file without checksum — integrity NOT verified. Run migration to add checksums.');
+      return parsed as T;
+    } else {
+      throw new ChecksumError('Missing checksum. File is untrusted (ALLOW_LEGACY_SESSIONS=false).');
+    }
   }
 
   const wrapped = parsed as ChecksummedFile;

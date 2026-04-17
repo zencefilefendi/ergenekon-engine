@@ -24,6 +24,15 @@ import { originalDateNow } from '../internal-clock.js';
 
 let installed = false;
 
+// Basic tenant and internal DNS mask
+function maskHostname(hostname: string): string {
+  if (!hostname) return hostname;
+  if (/acct-[a-zA-Z0-9_-]+\.internal/i.test(hostname)) {
+    return '[REDACTED_TENANT_HOSTNAME]';
+  }
+  return hostname;
+}
+
 // Original function references — stored as `any` to avoid overload/signature issues
 let origLookup: typeof dns.lookup | null = null;
 let origResolve: typeof dnsPromises.resolve | null = null;
@@ -68,8 +77,8 @@ export function installDnsInterceptor(): void {
       return;
     }
 
-    session.record('dns_lookup', `dns.lookup(${hostname})`, {
-      hostname,
+    session.record('dns_lookup', `dns.lookup(${maskHostname(hostname)})`, {
+      hostname: maskHostname(hostname),
       options: options ?? {},
     });
 
@@ -85,12 +94,10 @@ export function installDnsInterceptor(): void {
           error: { code: err.code, message: err.message },
         });
       } else {
-        const addr = typeof address === 'string' ? address : JSON.stringify(address);
-        session.record('dns_result', `dns.lookup(${hostname}) → ${addr} (${durationMs}ms)`, {
-          hostname,
+        const addr = typeof address === 'string' ? '[REDACTED_IP]' : '[REDACTED_IPS]';
+        session.record('dns_result', `dns.lookup(${maskHostname(hostname)}) → ${addr} (${durationMs}ms)`, {
+          hostname: maskHostname(hostname),
           durationMs,
-          address,
-          family,
         });
       }
 
@@ -120,8 +127,8 @@ export function installDnsInterceptor(): void {
         : (savedResolve as any).call(dnsPromises, hostname);
     }
 
-    session.record('dns_resolve', `dns.resolve(${hostname}, ${rrtype ?? 'A'})`, {
-      hostname,
+    session.record('dns_resolve', `dns.resolve(${maskHostname(hostname)}, ${rrtype ?? 'A'})`, {
+      hostname: maskHostname(hostname),
       rrtype: rrtype ?? 'A',
     });
 
@@ -133,19 +140,18 @@ export function installDnsInterceptor(): void {
         : await (savedResolve as any).call(dnsPromises, hostname);
       const durationMs = originalDateNow() - start;
 
-      session.record('dns_result', `dns.resolve(${hostname}) → ${JSON.stringify(result).slice(0, 200)} (${durationMs}ms)`, {
-        hostname,
+      session.record('dns_result', `dns.resolve(${maskHostname(hostname)}) → [REDACTED_RECORD] (${durationMs}ms)`, {
+        hostname: maskHostname(hostname),
         rrtype: rrtype ?? 'A',
         durationMs,
-        result,
       });
 
       return result;
     } catch (err) {
       const durationMs = originalDateNow() - start;
 
-      session.record('dns_error', `dns.resolve(${hostname}) → error`, {
-        hostname,
+      session.record('dns_error', `dns.resolve(${maskHostname(hostname)}) → error`, {
+        hostname: maskHostname(hostname),
         rrtype: rrtype ?? 'A',
         durationMs,
         error: err instanceof Error ? { code: (err as any).code, message: err.message } : String(err),

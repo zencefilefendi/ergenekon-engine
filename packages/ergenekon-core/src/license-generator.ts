@@ -115,6 +115,8 @@ export function generateLicense(
   return {
     payload,
     signature: signature.toString('base64'),
+    alg: 'Ed25519',
+    kid: 'key-v1'
   };
 }
 

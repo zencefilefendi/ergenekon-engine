@@ -172,8 +172,12 @@ export interface LicenseToken {
 export interface SignedLicense {
   /** The license payload */
   payload: LicenseToken;
-  /** Base64-encoded Ed25519 signature of JSON.stringify(payload) */
+  /** Base64-encoded Ed25519 signature of Canonical JSON string */
   signature: string;
+  /** Cryptographic algorithm used (e.g. Ed25519) */
+  alg?: string;
+  /** Key ID for rotation support */
+  kid?: string;
 }
 
 // ── Validation Result ──────────────────────────────────────────────

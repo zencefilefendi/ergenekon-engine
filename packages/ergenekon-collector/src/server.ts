@@ -54,6 +54,11 @@ export class CollectorServer {
   private readonly rateLimiter: RateLimiter;
 
   constructor(config: CollectorServerConfig) {
+    if (process.env['NODE_ENV'] === 'production' && !process.env['ERGENEKON_COLLECTOR_TOKEN']) {
+      console.error('[SECURITY FATAL] ERGENEKON_COLLECTOR_TOKEN is required in production.');
+      process.exit(1);
+    }
+    
     this.config = config;
     this.storage = new FileStorage(config.storageDir);
     this.license = loadLicense();
@@ -343,6 +348,11 @@ export class CollectorServer {
 
     // ── GET /api/v1/stats — Collector statistics ──────────────────
     if (req.method === 'GET' && path === '/api/v1/stats') {
+      if (collectorToken && !requireAuth()) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
       const sessions = await this.storage.listSessions();
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
@@ -362,6 +372,11 @@ export class CollectorServer {
 
     // ── GET /api/v1/license — License information ─────────────────
     if (req.method === 'GET' && path === '/api/v1/license') {
+      if (collectorToken && !requireAuth()) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         tier: this.license.tier,
