@@ -634,8 +634,12 @@ function renderEventBreakdown() {
 // ── JSON Syntax Highlighting ─────────────────────────────────────
 
 function syntaxHighlight(obj) {
-  const json = JSON.stringify(obj, null, 2);
+  let json = JSON.stringify(obj, null, 2);
   if (!json) return '';
+
+  // SECURITY: JSON.stringify does NOT escape HTML tags.
+  // We MUST escape &, <, > before injecting into innerHTML.
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   return json.replace(/(\"(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\\"])*\"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
     let cls = 'json-number';
