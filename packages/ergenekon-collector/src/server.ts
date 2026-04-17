@@ -119,8 +119,9 @@ export class CollectorServer {
 
     // Host header validation — reject DNS rebinding
     const host = req.headers.host || '';
-    const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', 'collector'];
-    const hostName = host.split(':')[0];
+    const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', 'collector', '::1'];
+    // Handle IPv6 bracket format: [::1]:4380 → ::1
+    const hostName = host.replace(/^\[|\]$/g, '').split(':')[0] || host.replace(/^\[([^\]]+)\].*/, '$1');
     if (!allowedHosts.includes(hostName)) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Forbidden: invalid Host header' }));
@@ -134,8 +135,10 @@ export class CollectorServer {
     res.setHeader('Vary', 'Origin');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('X-XSS-Protection', '0'); // deprecated, use CSP instead
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store'); // session data must not be cached
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);

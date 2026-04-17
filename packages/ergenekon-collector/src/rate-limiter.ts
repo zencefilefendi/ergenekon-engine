@@ -65,6 +65,11 @@ export class RateLimiter {
     );
     bucket.lastRefill = now;
 
+    // SECURITY: NaN/Infinity would bypass rate limiting entirely
+    if (!Number.isFinite(bucket.tokens)) {
+      bucket.tokens = 0;
+    }
+
     if (bucket.tokens >= 1) {
       bucket.tokens -= 1;
       return true;

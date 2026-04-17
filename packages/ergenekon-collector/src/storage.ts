@@ -16,7 +16,7 @@
 // ============================================================================
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, rename as fsRename } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename as fsRename, lstat } from 'node:fs/promises';
 import { join, resolve, relative } from 'node:path';
 import type { RecordingSession } from '@ergenekon/core';
 import { durableWrite } from './durable-writer.js';
@@ -126,8 +126,16 @@ export class FileStorage {
     if (!filename) return null;
 
     const filepath = join(this.sessionsDir, filename);
+    assertWithinDir(filepath, this.sessionsDir);
 
     try {
+      // SECURITY: Reject symlinks — prevents arbitrary file read via crafted symlink
+      const stat = await lstat(filepath);
+      if (stat.isSymbolicLink()) {
+        console.error(`[SECURITY] Symlink detected in session storage: ${filename}. Refusing to read.`);
+        this.sessionIndex.delete(sessionId);
+        return null;
+      }
       const data = await readFile(filepath, 'utf-8');
       return verifyAndUnwrap<RecordingSession>(data);
     } catch (err) {
@@ -232,8 +240,20 @@ export class FileStorage {
       const files = await readdir(this.sessionsDir);
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
+        const filepath = join(this.sessionsDir, file);
         try {
-          const data = await readFile(join(this.sessionsDir, file), 'utf-8');
+          // SECURITY: Skip symlinks — never follow symlinks in session storage
+          const stat = await lstat(filepath);
+          if (stat.isSymbolicLink()) {
+            console.error(`[SECURITY] Symlink skipped during index rebuild: ${file}`);
+            continue;
+          }
+          // SECURITY: Skip oversized files — prevent OOM during rebuild
+          if (stat.size > 64 * 1024 * 1024) { // 64MB cap per file
+            console.warn(`[SECURITY] Skipping oversized file during rebuild: ${file} (${stat.size} bytes)`);
+            continue;
+          }
+          const data = await readFile(filepath, 'utf-8');
           const session = verifyAndUnwrap<RecordingSession>(data);
           this.sessionIndex.set(session.id, file);
           const traceIds = this.traceIndex.get(session.traceId) ?? [];

@@ -35,8 +35,14 @@ export async function durableWrite(path: string, data: string | Buffer): Promise
     await fh.writeFile(data);
     // Step 2: fsync the file — data is now on disk
     await fh.sync();
-  } finally {
+  } catch (err) {
+    // SECURITY: Clean up temp file on failure — don't leave partial data on disk
     await fh.close();
+    try { const { unlink } = await import('node:fs/promises'); await unlink(tmp); } catch { /* best effort */ }
+    throw err;
+  } finally {
+    // close is idempotent in modern Node — safe to call twice
+    await fh.close().catch(() => {});
   }
 
   // Step 3: Atomic rename (on POSIX, rename is atomic)

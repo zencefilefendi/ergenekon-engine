@@ -39,18 +39,18 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
   // SECURITY (HIGH-13): Host header validation — reject DNS rebinding
   const host = req.headers.host || '';
-  const hostName = host.split(':')[0];
-  const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
+  const hostName = host.replace(/^\[|\]$/g, '').split(':')[0]; // handle IPv6 [::1]:3000
+  const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
   if (!allowedHosts.includes(hostName)) {
     res.writeHead(403, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Forbidden: invalid Host header' }));
     return;
   }
 
-  // SECURITY: Restricted CORS instead of wildcard
+  // SECURITY: Restricted CORS — empty for unknown origins (no leak)
   const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
   const origin = req.headers.origin || '';
-  const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
 
   // ── Inject license info endpoint (local, no collector needed) ──
   if (url.pathname === '/api/v1/ui-license') {

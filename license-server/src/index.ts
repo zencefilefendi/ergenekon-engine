@@ -190,11 +190,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         return;
       }
 
-      const email = data.email?.trim().toLowerCase();
+      const email = data.email?.trim().toLowerCase().slice(0, 254); // RFC 5321 max
       const name = sanitizeName(data.name?.trim() || email?.split('@')[0] || 'User');
 
-      // SECURITY: Strict email validation (regex + disposable blocklist)
-      if (!email || !EMAIL_REGEX.test(email)) {
+      // SECURITY: Strict email validation (length + regex + disposable blocklist)
+      if (!email || email.length < 5 || email.length > 254 || !EMAIL_REGEX.test(email)) {
         json(res, 400, { error: 'Valid email address is required' });
         return;
       }
