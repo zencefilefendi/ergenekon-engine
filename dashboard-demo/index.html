@@ -38,8 +38,26 @@
 
     <div class="upgrade-banner" style="display:flex;background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(16,185,129,0.08));border:1px solid rgba(99,102,241,0.2);padding:10px 20px;align-items:center;gap:12px;font-size:13px">
       <span>🐺</span>
-      <span style="flex:1"><strong>Live Demo</strong> — This dashboard shows realistic mock data. <a href="https://ergenekon.dev/#pricing" target="_blank" style="color:#818cf8">Get your free license</a> to connect your own services.</span>
+      <span style="flex:1"><strong>Demo Mode</strong> — Showing sample data. Connect your collector below to see real recordings.</span>
       <a href="https://ergenekon.dev" target="_blank" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a78bfa;padding:6px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">ergenekon.dev →</a>
+    </div>
+
+    <!-- Connect to Collector -->
+    <div class="connect-panel" style="display:flex;align-items:center;gap:10px;padding:8px 20px;background:rgba(0,0,0,0.15);border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px">
+      <span style="color:var(--text-muted);font-weight:600;white-space:nowrap">🔌 Collector:</span>
+      <input type="text" id="collector-url-input" placeholder="http://localhost:4380" 
+        style="flex:1;max-width:320px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 12px;color:#e2e8f0;font-size:13px;font-family:JetBrains Mono,monospace;outline:none"
+        onkeydown="if(event.key==='Enter')connectToCollector(this.value)" />
+      <button onclick="connectToCollector(document.getElementById('collector-url-input').value)"
+        style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#10b981;padding:6px 16px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;white-space:nowrap">
+        Connect
+      </button>
+      <button onclick="disconnectCollector()"
+        style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-muted);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;white-space:nowrap"
+        title="Disconnect and return to demo mode">
+        Demo
+      </button>
+      <span id="connect-status" class="connect-status" style="font-size:12px;color:var(--text-muted)"></span>
     </div>
 
     <!-- Main Layout -->
@@ -273,8 +291,16 @@
   <script src="/app.js"></script>
   <script src="/demo-data.js"></script>
   <script>
-    // Re-init with demo data
-    setTimeout(() => { loadSessions(); loadMetrics(); }, 500);
+    // Initialize connector
+    initCollectorUrl();
+    
+    // If we have a saved collector URL, try to connect
+    if (collectorUrl) {
+      setTimeout(() => connectToCollector(collectorUrl), 300);
+    } else {
+      // Demo mode
+      setTimeout(() => { loadSessions(); loadMetrics(); }, 500);
+    }
   </script>
 </body>
 </html>

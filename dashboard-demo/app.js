@@ -1,6 +1,6 @@
 // ============================================================================
 // ERGENEKON UI — Time-Travel Debugger Application Logic
-// Premium Dashboard — Phase 1 Upgrade
+// Premium Dashboard — Supports both Demo Mode + Live Collector Connection
 // ============================================================================
 
 let sessions = [];
@@ -12,11 +12,137 @@ let playInterval = null;
 let currentTier = 'community';
 let currentEventRef = null; // for copy
 
+// ── Collector Connection ─────────────────────────────────────────
+let collectorUrl = ''; // empty = demo mode
+let isLiveMode = false;
+let pollInterval = null;
+
+function initCollectorUrl() {
+  // Priority: URL param > localStorage > demo mode
+  const params = new URLSearchParams(window.location.search);
+  const paramUrl = params.get('collector');
+  const savedUrl = localStorage.getItem('ergenekon_collector_url');
+
+  if (paramUrl) {
+    collectorUrl = paramUrl.replace(/\/+$/, '');
+    localStorage.setItem('ergenekon_collector_url', collectorUrl);
+  } else if (savedUrl) {
+    collectorUrl = savedUrl;
+  }
+
+  // Update UI
+  const input = document.getElementById('collector-url-input');
+  if (input && collectorUrl) input.value = collectorUrl;
+}
+
+async function connectToCollector(url) {
+  if (!url) {
+    disconnectCollector();
+    return;
+  }
+  url = url.replace(/\/+$/, '');
+  const statusEl = document.getElementById('connect-status');
+  statusEl.textContent = 'Connecting...';
+  statusEl.className = 'connect-status connecting';
+
+  try {
+    const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error('Invalid collector');
+
+    // Success!
+    collectorUrl = url;
+    isLiveMode = true;
+    localStorage.setItem('ergenekon_collector_url', url);
+    statusEl.textContent = `✅ Connected to collector`;
+    statusEl.className = 'connect-status connected';
+
+    // Update banner
+    updateModeBanner(true);
+
+    // Load real data
+    await loadSessions();
+    await loadMetrics();
+    await loadLicenseFromCollector();
+
+    // Start polling for new sessions
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => { loadSessions(); loadMetrics(); }, 5000);
+
+  } catch (err) {
+    statusEl.textContent = `❌ Cannot reach ${url} — ${err.message}`;
+    statusEl.className = 'connect-status error';
+    collectorUrl = '';
+    isLiveMode = false;
+  }
+}
+
+function disconnectCollector() {
+  collectorUrl = '';
+  isLiveMode = false;
+  localStorage.removeItem('ergenekon_collector_url');
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  document.getElementById('collector-url-input').value = '';
+  document.getElementById('connect-status').textContent = '';
+  updateModeBanner(false);
+  // Reload demo data
+  loadSessions();
+  loadMetrics();
+}
+
+function updateModeBanner(live) {
+  const banner = document.querySelector('.upgrade-banner');
+  if (!banner) return;
+  if (live) {
+    banner.style.background = 'linear-gradient(135deg,rgba(16,185,129,0.08),rgba(52,211,153,0.08))';
+    banner.style.borderColor = 'rgba(16,185,129,0.3)';
+    banner.innerHTML = `
+      <span>🐺</span>
+      <span style="flex:1"><strong>Live Mode</strong> — Connected to <code style="background:rgba(16,185,129,0.15);padding:2px 6px;border-radius:4px;font-size:12px">${collectorUrl}</code>. Data refreshes every 5s.</span>
+      <button onclick="disconnectCollector()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:6px 16px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px">Disconnect</button>
+    `;
+  } else {
+    banner.style.background = 'linear-gradient(135deg,rgba(99,102,241,0.08),rgba(16,185,129,0.08))';
+    banner.style.borderColor = 'rgba(99,102,241,0.2)';
+    banner.innerHTML = `
+      <span>🐺</span>
+      <span style="flex:1"><strong>Demo Mode</strong> — Showing sample data. Connect your collector below to see real recordings.</span>
+      <a href="https://ergenekon.dev" target="_blank" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#a78bfa;padding:6px 16px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px">ergenekon.dev →</a>
+    `;
+  }
+}
+
+async function loadLicenseFromCollector() {
+  if (!collectorUrl) return;
+  try {
+    const res = await fetch(`${collectorUrl}/api/v1/license`);
+    if (!res.ok) return;
+    const data = await res.json();
+    currentTier = data.tier || 'community';
+    const badge = document.getElementById('tier-badge');
+    const tierName = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
+    badge.textContent = currentTier === 'pro' ? '⚡ Pro' : currentTier === 'enterprise' ? '👑 Enterprise' : '🌐 Community';
+    badge.className = `tier-badge tier-${currentTier}`;
+    if (currentTier === 'pro') {
+      badge.style.background = 'linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15))';
+      badge.style.borderColor = 'rgba(99,102,241,0.3)';
+      badge.style.color = '#a78bfa';
+    } else if (currentTier === 'enterprise') {
+      badge.style.background = 'linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.15))';
+      badge.style.borderColor = 'rgba(245,158,11,0.3)';
+      badge.style.color = '#fbbf24';
+    }
+  } catch {}
+}
+
 // ── API Calls ────────────────────────────────────────────────────
 
 async function api(path) {
+  // If connected to a live collector, use it
+  const baseUrl = collectorUrl || '';
   try {
-    const res = await fetch(`/api/v1${path}`);
+    const res = await fetch(`${baseUrl}/api/v1${path}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

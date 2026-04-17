@@ -106,11 +106,16 @@ function generateDemoEvents(session) {
   }));
 }
 
-// Override the api() function for demo mode
+// Override the api() function for demo mode (only when not connected to live collector)
 const _originalApi = api;
 
 async function api(path) {
-  // Simulate network delay
+  // If connected to live collector, use the real API
+  if (isLiveMode && collectorUrl) {
+    return _originalApi(path);
+  }
+
+  // Demo mode: simulate with mock data
   await new Promise(r => setTimeout(r, 100 + Math.random() * 150));
 
   if (path === '/sessions') {
