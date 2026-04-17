@@ -63,8 +63,24 @@ export async function handleStripeWebhook(
 
 // ── Event Processing ────────────────────────────────────────────
 
+// SECURITY: Idempotency — prevent duplicate license generation on Stripe retries
+const processedEventIds = new Set<string>();
+const MAX_IDEMPOTENCY_SET = 10_000;
+
 async function processEvent(event: StripeEvent): Promise<WebhookResult> {
   console.log(`[WEBHOOK] Received event: ${event.type} (${event.id})`);
+
+  // Idempotency check: skip already-processed events
+  if (processedEventIds.has(event.id)) {
+    console.log(`[WEBHOOK] Duplicate event ${event.id} — skipping`);
+    return { received: true, action: 'duplicate_skipped' };
+  }
+  // Prevent unbounded Set growth
+  if (processedEventIds.size >= MAX_IDEMPOTENCY_SET) {
+    const first = processedEventIds.values().next().value;
+    if (first) processedEventIds.delete(first);
+  }
+  processedEventIds.add(event.id);
 
   switch (event.type) {
     case 'checkout.session.completed':
@@ -87,9 +103,14 @@ async function handleCheckoutCompleted(
   const customerId = (session.customer as string) || `cus_${Date.now()}`;
   const customerName = (session.customer_details as any)?.name || customerEmail.split('@')[0];
 
-  // Determine tier from metadata or line items
+  // Determine tier from metadata — SECURITY: reject unknown tiers
   const metadata = session.metadata as Record<string, string> | undefined;
-  const tier = (metadata?.tier as 'pro' | 'enterprise') || 'pro';
+  const rawTier = metadata?.tier;
+  if (rawTier && !['pro', 'enterprise'].includes(rawTier)) {
+    console.error(`[SECURITY] Unknown tier in checkout metadata: ${rawTier}`);
+    return { received: false, error: `Invalid tier: ${rawTier}` };
+  }
+  const tier = (rawTier as 'pro' | 'enterprise') || 'pro';
 
   console.log(`[WEBHOOK] Generating ${tier} license for ${customerEmail}`);
 
@@ -128,7 +149,9 @@ async function handleCheckoutCompleted(
     };
   } catch (err) {
     console.error('[WEBHOOK] License generation failed:', err);
-    return { received: true, action: 'generation_failed', error: String(err) };
+    // SECURITY: Return received:false so Stripe retries on transient failures
+    // (H5: returning 200 on failure prevented Stripe's retry logic)
+    return { received: false, error: 'License generation failed — will retry' };
   }
 }
 

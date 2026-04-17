@@ -32,6 +32,12 @@ export async function sendLicenseEmail(payload: EmailPayload): Promise<boolean> 
   const tierLabel = payload.tier === 'enterprise' ? 'Enterprise' : 'Pro';
   const tierColor = payload.tier === 'enterprise' ? '#f59e0b' : '#6366f1';
 
+  // SECURITY: Escape all user-supplied data before interpolating into HTML
+  // Prevents HTML injection → phishing via DKIM-signed emails
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const safeName = esc(payload.customerName);
+  const safeId = esc(payload.licenseId);
+
   const htmlBody = `
 <!DOCTYPE html>
 <html>
@@ -53,7 +59,7 @@ export async function sendLicenseEmail(payload: EmailPayload): Promise<boolean> 
 
     <!-- Main Card -->
     <div style="background:#0b0c12;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:32px;margin-bottom:24px;">
-      <h2 style="color:#eaecf0;font-size:20px;margin:0 0 8px;">Welcome, ${payload.customerName}! 🎉</h2>
+      <h2 style="color:#eaecf0;font-size:20px;margin:0 0 8px;">Welcome, ${safeName}! 🎉</h2>
       <p style="color:#8891a4;font-size:14px;line-height:1.6;margin:0 0 24px;">
         Your <span style="color:${tierColor};font-weight:700;">${tierLabel}</span> license is ready.
         Attach the license file below to your project and unlock all features.
@@ -63,7 +69,7 @@ export async function sendLicenseEmail(payload: EmailPayload): Promise<boolean> 
       <div style="background:#12141c;border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:16px;margin-bottom:24px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
           <span style="color:#505872;font-size:11px;text-transform:uppercase;letter-spacing:1px;">License ID</span>
-          <span style="color:#6366f1;font-size:12px;font-family:monospace;">${payload.licenseId}</span>
+          <span style="color:#6366f1;font-size:12px;font-family:monospace;">${safeId}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span style="color:#505872;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Tier</span>

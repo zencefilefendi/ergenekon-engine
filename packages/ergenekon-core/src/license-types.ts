@@ -205,11 +205,15 @@ export interface LicenseValidation {
 // ── License File Search Paths ──────────────────────────────────────
 
 /** Ordered list of paths where the license file is searched */
+import { homedir } from 'node:os';
 export const LICENSE_FILE_SEARCH_PATHS = [
   '.ergenekon-license.json',                   // Current directory
   'ergenekon-license.json',                    // Current directory (alt)
-  `${process.env.HOME || '~'}/.ergenekon-license.json`,  // Home directory
+  `${homedir()}/.ergenekon-license.json`,      // Home directory (cross-platform)
 ];
+
+/** Maximum license file size — prevents OOM on hostile files (L3) */
+export const MAX_LICENSE_FILE_BYTES = 64 * 1024; // 64 KB
 
 /** Environment variable for license file path override */
 export const LICENSE_ENV_VAR = 'ERGENEKON_LICENSE';

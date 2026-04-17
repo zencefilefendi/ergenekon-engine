@@ -54,7 +54,10 @@ const ENTERPRISE_FEATURES = [
 
 function generateId(): string {
   const time = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 10);
+  // SECURITY: Use crypto.randomBytes instead of Math.random (M2)
+  // Math.random is NOT cryptographically secure and can be predicted
+  const { randomBytes } = require('node:crypto');
+  const rand = randomBytes(8).toString('base64url');
   return `lic_${time}${rand}`;
 }
 

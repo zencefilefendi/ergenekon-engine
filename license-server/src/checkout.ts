@@ -47,13 +47,27 @@ export async function handleCreateCheckout(data: CheckoutRequest): Promise<Check
     throw new Error(`No Stripe price configured for plan: ${data.plan}`);
   }
 
+  // SECURITY: Never trust client-supplied redirect URLs (open redirect risk).
+  // Only allow redirects to our own domain.
+  const ALLOWED_REDIRECT_HOST = 'ergenekon.dev';
+  let successUrl = 'https://ergenekon.dev/success?session_id={CHECKOUT_SESSION_ID}';
+  let cancelUrl = 'https://ergenekon.dev/pricing';
+  try {
+    if (data.successUrl && new URL(data.successUrl).hostname === ALLOWED_REDIRECT_HOST) {
+      successUrl = data.successUrl;
+    }
+    if (data.cancelUrl && new URL(data.cancelUrl).hostname === ALLOWED_REDIRECT_HOST) {
+      cancelUrl = data.cancelUrl;
+    }
+  } catch { /* invalid URL → use safe defaults */ }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     customer_email: data.customerEmail,
-    success_url: data.successUrl || 'https://ergenekon.dev/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: data.cancelUrl || 'https://ergenekon.dev/pricing',
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     metadata: { tier },
     subscription_data: {
       metadata: { tier },

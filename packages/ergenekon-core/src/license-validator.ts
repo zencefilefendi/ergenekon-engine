@@ -17,7 +17,7 @@
 // ============================================================================
 
 import { createPublicKey, verify } from 'node:crypto';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type {
   LicenseToken,
@@ -33,6 +33,7 @@ import {
   LICENSE_FILE_SEARCH_PATHS,
   LICENSE_ENV_VAR,
   LICENSE_INLINE_ENV_VAR,
+  MAX_LICENSE_FILE_BYTES,
 } from './license-types.js';
 
 // ── Embedded Ed25519 Public Key ────────────────────────────────────
@@ -213,6 +214,11 @@ export function loadLicense(publicKeyPem?: string): LicenseValidation {
     try {
       const resolved = resolve(envPath);
       if (existsSync(resolved)) {
+        // SECURITY: Size cap prevents OOM on hostile license files (L3)
+        const stat = statSync(resolved);
+        if (stat.size > MAX_LICENSE_FILE_BYTES) {
+          return communityFallback(`License file too large: ${stat.size} bytes (max ${MAX_LICENSE_FILE_BYTES})`);
+        }
         const content = readFileSync(resolved, 'utf-8');
         return validateLicense(content, publicKeyPem);
       }
@@ -227,6 +233,8 @@ export function loadLicense(publicKeyPem?: string): LicenseValidation {
     try {
       const resolved = resolve(searchPath);
       if (existsSync(resolved)) {
+        const stat = statSync(resolved);
+        if (stat.size > MAX_LICENSE_FILE_BYTES) continue;
         const content = readFileSync(resolved, 'utf-8');
         return validateLicense(content, publicKeyPem);
       }

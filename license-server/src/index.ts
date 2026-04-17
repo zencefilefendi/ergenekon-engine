@@ -166,6 +166,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       console.log(`[FREE] Generating free Pro license for: ${maskedEmail}`);
 
       try {
+        // SECURITY: Increment counter BEFORE the await to prevent race condition (H7)
+        // Without this, N concurrent requests all see count=0 and pass the gate
+        const existing = freeRegistrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
+        freeRegistrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
+
         const license = generateLicenseForCustomer({
           customerId: `free_${Date.now().toString(36)}`,
           customerEmail: email,
@@ -184,10 +189,6 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
           licenseId: license.payload.licenseId,
           licenseJSON,
         });
-
-        // Track registration (using normalized key)
-        const existing = freeRegistrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
-        freeRegistrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
 
         console.log(`[FREE] ✅ License generated: ${license.payload.licenseId} → ${maskedEmail} (email: ${emailSent ? 'sent' : 'failed'})`);
 
