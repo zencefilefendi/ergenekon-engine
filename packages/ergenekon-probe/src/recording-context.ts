@@ -48,13 +48,50 @@ export class RecordingSession {
   /**
    * Record an event into this session.
    * Events are automatically assigned a sequence number and HLC timestamp.
+   *
+   * Safety limits:
+   *   - Max 10,000 events per session (prevents unbounded memory growth)
+   *   - Data keys truncated to 1KB string values (prevents huge response bodies from OOMing)
    */
+  private static readonly MAX_EVENTS = 10_000;
+  private static readonly MAX_VALUE_LENGTH = 1024;
+  private _overflowed = false;
+
   record(
     type: ErgenekonEvent['type'],
     operationName: string,
     data: Record<string, unknown>,
     opts?: { durationMs?: number; error?: ErgenekonEvent['error']; tags?: Record<string, string> }
-  ): ErgenekonEvent {
+  ): ErgenekonEvent | null {
+    // Guard: prevent unbounded event growth from crashing host app
+    if (this.events.length >= RecordingSession.MAX_EVENTS) {
+      if (!this._overflowed) {
+        this._overflowed = true;
+        // Record ONE overflow marker event, skip all further events
+        const marker: ErgenekonEvent = {
+          id: ulid(),
+          traceId: this.traceId,
+          spanId: this.spanId,
+          parentSpanId: this.parentSpanId,
+          hlc: this.hlc.now(),
+          wallClock: originalDateNow(),
+          type: 'custom',
+          serviceName: this.serviceName,
+          operationName: '[ERGENEKON] Event limit reached (10,000)',
+          sequence: this.sequence++,
+          data: { warning: 'Session truncated — event limit reached' },
+          durationMs: 0,
+          error: null,
+          tags: {},
+        };
+        this.events.push(marker);
+      }
+      return null;
+    }
+
+    // Truncate large string values in data to prevent OOM
+    const safeData = this.truncateData(data);
+
     const now = this.hlc.now();
     const event: ErgenekonEvent = {
       id: ulid(),
@@ -65,9 +102,9 @@ export class RecordingSession {
       wallClock: originalDateNow(),
       type,
       serviceName: this.serviceName,
-      operationName,
+      operationName: operationName.length > 256 ? operationName.slice(0, 256) + '…' : operationName,
       sequence: this.sequence++,
-      data,
+      data: safeData,
       durationMs: opts?.durationMs ?? 0,
       error: opts?.error ?? null,
       tags: opts?.tags ?? {},
@@ -75,6 +112,24 @@ export class RecordingSession {
 
     this.events.push(event);
     return event;
+  }
+
+  /** Truncate large string values to prevent memory exhaustion */
+  private truncateData(data: Record<string, unknown>, depth = 0): Record<string, unknown> {
+    if (depth > 5) return { _truncated: 'max depth exceeded' };
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'string' && value.length > RecordingSession.MAX_VALUE_LENGTH) {
+        result[key] = value.slice(0, RecordingSession.MAX_VALUE_LENGTH) + `… [truncated ${value.length} chars]`;
+      } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+        result[key] = this.truncateData(value as Record<string, unknown>, depth + 1);
+      } else if (Array.isArray(value) && value.length > 100) {
+        result[key] = value.slice(0, 100);
+      } else {
+        result[key] = value;
+      }
+    }
+    return result;
   }
 
   /** Get all recorded events (immutable copy) */

@@ -48,13 +48,22 @@ export function readBody(
       }
     }
 
-    // Layer 2: Streaming byte count
+    // Layer 2: Read timeout — prevents Slowloris attacks
+    // Attacker sends 1 byte/second to tie up all connections
+    const READ_TIMEOUT_MS = 30_000; // 30 seconds max to read entire body
+    const timer = setTimeout(() => {
+      req.destroy();
+      reject(new Error('Request body read timeout (30s) — possible Slowloris attack'));
+    }, READ_TIMEOUT_MS);
+
+    // Layer 3: Streaming byte count
     const chunks: Buffer[] = [];
     let totalBytes = 0;
 
     req.on('data', (chunk: Buffer) => {
       totalBytes += chunk.length;
       if (totalBytes > maxBytes) {
+        clearTimeout(timer);
         req.destroy();
         return reject(new PayloadTooLargeError(maxBytes, totalBytes));
       }
@@ -62,9 +71,13 @@ export function readBody(
     });
 
     req.on('end', () => {
+      clearTimeout(timer);
       resolve(Buffer.concat(chunks).toString('utf-8'));
     });
 
-    req.on('error', reject);
+    req.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
   });
 }

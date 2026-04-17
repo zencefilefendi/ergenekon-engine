@@ -135,7 +135,13 @@ export class CollectorServer {
     }
 
     // Rate limiting
-    const clientIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || 'unknown';
+    // SECURITY: Use rightmost x-forwarded-for IP (set by the LAST proxy, hardest to spoof).
+    // Never trust the leftmost value — attacker controls it.
+    // If no proxy, use socket.remoteAddress (cannot be spoofed over TCP).
+    const forwardedFor = req.headers['x-forwarded-for'] as string | undefined;
+    const clientIp = forwardedFor
+      ? forwardedFor.split(',').pop()!.trim()
+      : req.socket.remoteAddress || 'unknown';
     if (!this.rateLimiter.consume(clientIp)) {
       res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
       res.end(JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }));
