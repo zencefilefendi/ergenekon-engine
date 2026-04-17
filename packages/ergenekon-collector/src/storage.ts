@@ -17,10 +17,38 @@
 
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, rename as fsRename } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, relative } from 'node:path';
 import type { RecordingSession } from '@ergenekon/core';
 import { durableWrite } from './durable-writer.js';
 import { wrapWithChecksum, verifyAndUnwrap, ChecksumError } from './checksum.js';
+
+// ── Security: Session ID validation ──────────────────────────────
+// Prevents path traversal attacks (e.g. id="../../package.json")
+const SAFE_SESSION_ID = /^[a-zA-Z0-9_\-]{1,128}$/;
+
+function validateSessionId(id: string): void {
+  if (!id || typeof id !== 'string') {
+    throw new SessionIdError('Session ID is required');
+  }
+  if (!SAFE_SESSION_ID.test(id)) {
+    throw new SessionIdError(`Invalid session ID: contains illegal characters or exceeds 128 chars`);
+  }
+}
+
+function assertWithinDir(filepath: string, baseDir: string): void {
+  const resolved = resolve(filepath);
+  const resolvedBase = resolve(baseDir);
+  if (!resolved.startsWith(resolvedBase)) {
+    throw new SessionIdError(`Path traversal detected: ${filepath}`);
+  }
+}
+
+export class SessionIdError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'SessionIdError';
+  }
+}
 
 export class FileStorage {
   private readonly baseDir: string;
@@ -60,8 +88,11 @@ export class FileStorage {
    *   4. fsync directory
    */
   async store(session: RecordingSession): Promise<string> {
+    // SECURITY: Validate session ID to prevent path traversal
+    validateSessionId(session.id);
     const filename = `${session.id}.json`;
     const filepath = join(this.sessionsDir, filename);
+    assertWithinDir(filepath, this.sessionsDir);
 
     // Wrap with checksum for integrity verification on load
     const content = wrapWithChecksum(session);

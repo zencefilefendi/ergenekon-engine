@@ -102,6 +102,7 @@ describe('CollectorServer', () => {
       sessions: [{
         id: 'test-session-1',
         traceId: 'trace-1',
+        serviceName: 'test-service',
         events: [
           { id: 'e1', type: 'timestamp', timestamp: '2024-01-01T00:00:00.000Z', data: { value: 1704067200000 } },
         ],
@@ -140,6 +141,7 @@ describe('CollectorServer', () => {
     // Create 101 empty sessions (limit is 100)
     const sessions = Array.from({ length: 101 }, (_, i) => ({
       id: `batch-${i}`,
+      serviceName: 'test',
       events: [],
       metadata: {},
     }));
@@ -147,6 +149,25 @@ describe('CollectorServer', () => {
     expect(res.status).toBe(400);
     const body = JSON.parse(res.body);
     expect(body.error).toContain('Too many sessions');
+  });
+
+  it('rejects path traversal in session ID', async () => {
+    const payload = JSON.stringify({
+      sessions: [{
+        id: '../../package',
+        serviceName: 'evil',
+        events: [],
+        metadata: {},
+      }],
+    });
+    const res = await request('POST', '/api/v1/sessions', payload);
+    expect(res.status).toBe(400);
+    expect(JSON.parse(res.body).error).toContain('Invalid session ID');
+  });
+
+  it('rejects path traversal in GET session ID', async () => {
+    const res = await request('GET', '/api/v1/sessions/..%2F..%2Fpackage');
+    expect(res.status).toBe(400);
   });
 
   it('server survives oversized Content-Length without crashing', async () => {

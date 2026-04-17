@@ -1,6 +1,6 @@
 version: '3.9'
 
-# ERGENEKON Engine — Docker Compose
+# ERGENEKON Engine — Docker Compose (Hardened)
 # Usage:
 #   docker-compose up              # Start collector + UI
 #   docker-compose up -d           # Background mode
@@ -30,6 +30,21 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+    networks:
+      - backend
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    cap_drop:
+      - ALL
 
   # ─────────────────────────────────────────────
   # ERGENEKON UI — Time-Travel visual debugger
@@ -46,6 +61,21 @@ services:
       collector:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - frontend
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    cap_drop:
+      - ALL
 
   # ─────────────────────────────────────────────
   # Example App — your service with ERGENEKON probe
@@ -66,6 +96,27 @@ services:
       collector:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    cap_drop:
+      - ALL
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true  # No external access — containers only
 
 volumes:
   ergenekon-data:

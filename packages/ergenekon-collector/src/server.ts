@@ -15,7 +15,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { RecordingSession, LicenseValidation } from '@ergenekon/core';
-import { FileStorage } from './storage.js';
+import { FileStorage, SessionIdError } from './storage.js';
 import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
 import { loadLicense, getTierDisplay } from '@ergenekon/core';
 import { RateLimiter } from './rate-limiter.js';
@@ -155,6 +155,20 @@ export class CollectorServer {
       }
 
       for (const session of payload.sessions) {
+        // Layer 4: Session ID validation (prevent path traversal)
+        if (!session.id || typeof session.id !== 'string' || !/^[a-zA-Z0-9_\-]{1,128}$/.test(session.id)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Invalid session ID: must be 1-128 alphanumeric characters` }));
+          return;
+        }
+
+        // Layer 5: Required field validation
+        if (!session.serviceName || typeof session.serviceName !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: `Session ${session.id}: missing required field 'serviceName'` }));
+          return;
+        }
+
         if (session.events && session.events.length > MAX_EVENTS_PER_SESSION) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
@@ -163,7 +177,16 @@ export class CollectorServer {
           return;
         }
 
-        await this.storage.store(session);
+        try {
+          await this.storage.store(session);
+        } catch (err) {
+          if (err instanceof SessionIdError) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+            return;
+          }
+          throw err;
+        }
         this.sessionsReceived++;
         this.eventsReceived += (session.events?.length ?? 0);
       }
@@ -188,6 +211,12 @@ export class CollectorServer {
     // ── GET /api/v1/sessions/:id — Get a specific session ─────────
     if (req.method === 'GET' && path.startsWith('/api/v1/sessions/')) {
       const sessionId = path.split('/').pop()!;
+      // SECURITY: Validate session ID from URL to prevent path traversal
+      if (!/^[a-zA-Z0-9_\-]{1,128}$/.test(sessionId)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid session ID' }));
+        return;
+      }
       const session = await this.storage.load(sessionId);
 
       if (!session) {
