@@ -300,6 +300,7 @@
 
     <div class="sidebar-group">
       <div class="sidebar-group-label">CLI</div>
+      <a href="#dashboard"      class="sidebar-link"><span class="icon">📊</span> Dashboard</a>
       <a href="#cli"           class="sidebar-link"><span class="icon">💻</span> CLI Reference</a>
     </div>
 
@@ -755,6 +756,39 @@ Response:
     <hr>
 
     <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- Dashboard -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="dashboard">
+      <h2>📊 Dashboard</h2>
+
+      <p>The Time-Travel Debugger dashboard gives you a visual interface to browse recordings, inspect events, and debug issues.</p>
+
+      <h3>Connect to Your Collector</h3>
+      <p>Open the dashboard and enter your collector URL in the connection panel:</p>
+
+      <pre><code><span class="cmt"># Option 1: Use the UI</span>
+1. Open <a href="https://ergenekon-dashboard.vercel.app" target="_blank" style="color:#818cf8">ergenekon-dashboard.vercel.app</a>
+2. Enter <span class="str">http://localhost:4380</span> in the Collector field
+3. Click <span class="key">Connect</span>
+
+<span class="cmt"># Option 2: URL parameter</span>
+https://ergenekon-dashboard.vercel.app?collector=http://localhost:4380
+
+<span class="cmt"># Option 3: Self-host the dashboard</span>
+cd dashboard-demo && npx serve .</code></pre>
+
+      <h3>Features</h3>
+      <ul>
+        <li><strong>Live Mode</strong> — Polls your collector every 5s for new recordings</li>
+        <li><strong>Session List</strong> — Browse all recorded sessions with method, path, status</li>
+        <li><strong>Event Timeline</strong> — Scrub through events with the timeline slider</li>
+        <li><strong>Event Inspector</strong> — View full request/response data, DB queries, etc.</li>
+        <li><strong>Keyboard Shortcuts</strong> — ← → navigate, Space play/pause, ? help</li>
+        <li><strong>Search</strong> — Filter sessions by path, method, or service name</li>
+        <li><strong>Auto-reconnect</strong> — Saves your collector URL in localStorage</li>
+      </ul>
+    </section>
+
     <!-- CLI -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section class="doc-section" id="cli">
