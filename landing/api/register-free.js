@@ -151,6 +151,20 @@ export default async function handler(req, res) {
       return res.status(413).json({ error: 'Request too large' });
     }
 
+    // ── Client IP (Vercel x-real-ip cannot be spoofed) ──────
+    const clientIp = req.headers['x-real-ip']
+      || (req.headers['x-forwarded-for'] || '').split(',').pop()?.trim()
+      || 'unknown';
+
+    // ── Per-IP rate limit (5 registrations/hour) ────────────
+    const ipKey = `ip:${clientIp}`;
+    const ipReg = registrations.get(ipKey);
+    const IP_LIMIT = 5;
+    if (ipReg && ipReg.count >= IP_LIMIT && (Date.now() - ipReg.lastAt) < RATE_LIMIT_TTL) {
+      console.warn(`[SECURITY] Per-IP rate limit hit: ${clientIp}`);
+      return res.status(429).json({ error: 'Too many requests from this address. Please try again later.' });
+    }
+
     // ── Global rate limit ────────────────────────────────────
     if (Date.now() > globalResetTime) {
       globalRequestCount = 0;
@@ -208,9 +222,11 @@ export default async function handler(req, res) {
     // ── Generate license ─────────────────────────────────────
     const license = generateLicense(cleanEmail, cleanName, tier);
 
-    // ── Track registration ───────────────────────────────────
+    // ── Track registration (email + IP) ───────────────────────
     const existing = registrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
     registrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
+    const existingIp = registrations.get(ipKey) || { count: 0, lastAt: 0 };
+    registrations.set(ipKey, { count: existingIp.count + 1, lastAt: Date.now() });
 
     // ── Log (no PII in production logs) ──────────────────────
     console.log(`[REGISTER] ${license.payload.licenseId} tier=${tier}`);
