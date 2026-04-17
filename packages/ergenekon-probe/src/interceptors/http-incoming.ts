@@ -143,7 +143,8 @@ export function createHttpIncomingMiddleware(
       query: redactDeep(req.query, { fieldNames: config.redactFields }),
       headers: redactHeaders(req.headers as Record<string, string>, config.redactHeaders),
       body: redactDeep(req.body, { fieldNames: config.redactFields }),
-      ip: req.ip,
+      // SECURITY: IP addresses are PII — redact to prevent data exposure
+      ip: '[REDACTED]',
     });
 
     // Set trace context headers on response (for downstream propagation)
@@ -162,13 +163,20 @@ export function createHttpIncomingMiddleware(
       if (chunk) {
         if (typeof chunk === 'string') {
           try {
-            responseBody = JSON.parse(chunk);
+            // SECURITY: Prototype pollution guard on response body
+            responseBody = JSON.parse(chunk, (key, value) => {
+              if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+              return value;
+            });
           } catch {
             responseBody = chunk;
           }
         } else if (Buffer.isBuffer(chunk)) {
           try {
-            responseBody = JSON.parse(chunk.toString('utf-8'));
+            responseBody = JSON.parse(chunk.toString('utf-8'), (key, value) => {
+              if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+              return value;
+            });
           } catch {
             responseBody = chunk.toString('utf-8');
           }

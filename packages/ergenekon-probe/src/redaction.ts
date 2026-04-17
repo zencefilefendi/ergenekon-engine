@@ -101,11 +101,14 @@ function getPatternRegex(pattern: string): RegExp {
   let cached = _patternCache.get(pattern);
   if (!cached) {
     if (_patternCache.size >= 1000) _patternCache.clear();
+    // SECURITY: Proper escape + glob conversion
+    // Use non-printable chars as placeholders (won't be touched by regex escaper)
     const regexStr = '^' + pattern
-      .replace(/\./g, '\\.')
-      .replace(/\*\*/g, '{{GLOBSTAR}}')
-      .replace(/\*/g, '[^.]+')
-      .replace(/\{\{GLOBSTAR\}\}/g, '.*')
+      .replace(/\*\*/g, '\x00')                    // ** → placeholder
+      .replace(/\*/g, '\x01')                       // * → placeholder
+      .replace(/[.+?^${}()|[\]\\]/g, '\\$&')       // escape all regex specials
+      .replace(/\x00/g, '.*')                       // restore ** → any depth
+      .replace(/\x01/g, '[^.]+')                    // restore * → one segment
     + '$';
     cached = new RegExp(regexStr, 'i');
     _patternCache.set(pattern, cached);
@@ -129,6 +132,8 @@ export function redactDeep(
 ): unknown {
   const cfg: RedactionConfig = { ...DEFAULT_REDACTION_CONFIG, ...config };
   const fieldNamesLower = new Set(cfg.fieldNames.map(f => f.toLowerCase()));
+  // SECURITY: Track visited objects to prevent circular reference → stack overflow
+  const visited = new WeakSet<object>();
 
   function walk(value: unknown, path: string, depth: number): unknown {
     // Depth limit
@@ -147,6 +152,14 @@ export function redactDeep(
 
     if (typeof value === 'number' || typeof value === 'boolean') {
       return value;
+    }
+
+    // SECURITY: Circular reference guard — prevent stack overflow crash
+    if (typeof value === 'object' && value !== null) {
+      if (visited.has(value)) {
+        return '[CIRCULAR]';
+      }
+      visited.add(value);
     }
 
     // Arrays: walk each element
@@ -202,16 +215,20 @@ export function redactHeaders(
   redactList: string[]
 ): Record<string, string | string[] | undefined> {
   const redactSet = new Set(redactList.map(h => h.toLowerCase()));
+  // SECURITY: Always redact session/auth headers regardless of config
+  const ALWAYS_REDACT = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
   const result: Record<string, string | string[] | undefined> = {};
 
   for (const [key, value] of Object.entries(headers)) {
-    if (redactSet.has(key.toLowerCase())) {
+    const lowerKey = key.toLowerCase();
+    if (redactSet.has(lowerKey) || ALWAYS_REDACT.has(lowerKey) || lowerKey.startsWith('x-api-key')) {
       result[key] = '[REDACTED]';
-    } else if (key.toLowerCase() === 'authorization' || key.toLowerCase().startsWith('x-api-key')) {
-      // SECURITY: Treat ANY authorization header as secret regardless of scheme
-      result[key] = '[REDACTED]';
-    } else if (typeof value === 'string' && (BEARER_RE.test(value) || BASIC_AUTH_RE.test(value))) {
-      // Auto-detect Bearer and Basic tokens in any header
+    } else if (typeof value === 'string' && (
+      BEARER_RE.test(value) ||
+      BASIC_AUTH_RE.test(value) ||
+      PRIVATE_KEY_RE.test(value)
+    )) {
+      // Auto-detect Bearer, Basic, and private key material in any header
       result[key] = '[REDACTED]';
     } else {
       result[key] = value;
