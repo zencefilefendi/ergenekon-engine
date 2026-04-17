@@ -151,6 +151,18 @@ async function api(path) {
   }
 }
 
+// ── HTML Escape (XSS Protection) ─────────────────────────────────
+// All collector-supplied data MUST be escaped before innerHTML insertion
+function escapeHtml(str) {
+  if (typeof str !== 'string') str = String(str ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Session List ─────────────────────────────────────────────────
 
 async function loadSessions() {
@@ -190,21 +202,22 @@ function renderSessionList(list) {
     const errorDot = s.hasError ? '<span class="error-dot">&#9679;</span>' : '';
 
     // Extract method and path from first event or session metadata
-    const method = s.method || s.httpMethod || 'GET';
-    const path = s.path || s.url || s.id.slice(0, 12);
+    const method = escapeHtml(s.method || s.httpMethod || 'GET');
+    const path = escapeHtml(s.path || s.url || s.id.slice(0, 12));
     const statusCode = s.statusCode || s.httpStatus || null;
-    const methodLower = method.toLowerCase();
+    const methodLower = (s.method || 'get').toLowerCase().replace(/[^a-z]/g, '');
     const statusClass = getStatusClass(statusCode);
+    const safeId = escapeHtml(s.id);
 
     return `
-      <div class="session-item ${active}" onclick="selectSession('${s.id}')">
+      <div class="session-item ${active}" onclick="selectSession('${safeId}')">
         <div class="session-item-top">
           <span class="session-method m-${methodLower}">${method}</span>
           <span class="session-path">${path}</span>
           ${statusCode ? `<span class="session-status-code ${statusClass}">${statusCode}</span>` : ''}
         </div>
         <div class="session-item-meta">
-          <span class="session-service-name">${s.serviceName}</span>
+          <span class="session-service-name">${escapeHtml(s.serviceName)}</span>
           <span>${relativeTime(s.startedAt)}</span>
           <span>${s.eventCount} events</span>
           ${errorDot}
@@ -492,14 +505,14 @@ function renderEventList() {
   container.innerHTML = filtered.map((event, idx) => {
     const originalIdx = currentEvents.indexOf(event);
     const durStr = event.durationMs > 0 ? `${event.durationMs}ms` : '';
-    const typeShort = event.type.replace('http_', '').replace('_in', '↓').replace('_out', '↑');
+    const typeShort = escapeHtml(event.type.replace('http_', '').replace('_in', '↓').replace('_out', '↑'));
 
     return `
       <div class="event-item ${originalIdx === currentCursor ? 'current' : ''}"
            onclick="seekTo(${originalIdx})">
         <span class="event-seq">#${event.sequence}</span>
-        <span class="event-type-badge type-${event.type}">${typeShort}</span>
-        <span class="event-op">${event.operationName}</span>
+        <span class="event-type-badge type-${escapeHtml(event.type)}">${typeShort}</span>
+        <span class="event-op">${escapeHtml(event.operationName)}</span>
         ${durStr ? `<span class="event-dur">${durStr}</span>` : ''}
       </div>`;
   }).join('');

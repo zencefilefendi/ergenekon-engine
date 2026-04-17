@@ -200,9 +200,10 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
     }
 
-    // ── Tier validation (only allow pro/enterprise) ──────────
-    const requestedTier = req.body?.tier;
-    const tier = requestedTier === 'enterprise' ? 'enterprise' : 'pro';
+    // SECURITY: Free trial is ALWAYS Pro tier.
+    // Enterprise licenses are only issued through the paid Stripe checkout flow.
+    // Never trust client-supplied tier — ignore req.body.tier entirely.
+    const tier = 'pro';
 
     // ── Generate license ─────────────────────────────────────
     const license = generateLicense(cleanEmail, cleanName, tier);
