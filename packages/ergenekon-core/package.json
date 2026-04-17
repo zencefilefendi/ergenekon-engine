@@ -20,7 +20,7 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
-  "license": "BSL-1.1",
+  "license": "BUSL-1.1",
   "keywords": [
     "ergenekon",
     "debugging",
