@@ -1607,6 +1607,15 @@
   function toggleBilling() { /* coming soon */ }
   // ── Free License Registration ──────────────────────────────
   const LICENSE_SERVER = ''; // same domain — Vercel serverless API
+  // Client-side rate limit — prevent button spam
+  const _lastSubmit = {};
+  const SUBMIT_COOLDOWN_MS = 10000; // 10 seconds between submissions
+
+  function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
 
   async function registerFree(tier) {
     const prefix = tier === 'enterprise' ? 'ent' : tier === 'cta' ? 'cta' : 'pro';
@@ -1617,12 +1626,21 @@
     const email = emailInput.value.trim();
 
     // Validate
-    if (!email || !email.includes('@') || !email.includes('.')) {
+     if (!email || !email.includes('@') || !email.includes('.')) {
       msgEl.className = 'register-msg error';
       msgEl.textContent = 'Please enter a valid email address.';
       emailInput.focus();
       return;
     }
+
+    // Client-side rate limit
+    const now = Date.now();
+    if (_lastSubmit[prefix] && (now - _lastSubmit[prefix]) < SUBMIT_COOLDOWN_MS) {
+      msgEl.className = 'register-msg error';
+      msgEl.textContent = 'Please wait before trying again.';
+      return;
+    }
+    _lastSubmit[prefix] = now;
 
     // Loading state
     btn.disabled = true;
@@ -1662,7 +1680,7 @@
         URL.revokeObjectURL(url);
 
         const trialEnd = new Date(data.expiresAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
-        msgEl.innerHTML = `✅ License downloaded! Trial valid until <strong>${trialEnd}</strong>. Install now:
+        msgEl.innerHTML = `✅ License downloaded! Trial valid until <strong>${escHtml(trialEnd)}</strong>. Install now:
           <pre style="background:rgba(0,0,0,0.4);padding:12px;border-radius:8px;margin-top:10px;font-size:13px;overflow-x:auto;text-align:left;color:#e2e8f0">
 <span style="color:#10b981">$</span> npm install @ergenekon/probe @ergenekon/collector
 <span style="color:#10b981">$</span> mv ~/Downloads/.ergenekon-license.json ./
@@ -1671,7 +1689,10 @@
     } catch (err) {
       console.error('Registration error:', err);
       msgEl.className = 'register-msg error';
-      msgEl.textContent = err.message || 'Something went wrong. Please try again.';
+      // Never render raw error messages as HTML — use textContent
+      msgEl.textContent = (typeof err.message === 'string' && err.message.length < 200)
+        ? err.message
+        : 'Something went wrong. Please try again.';
       btn.textContent = '🐺 Start Free Trial';
       btn.disabled = false;
     }
