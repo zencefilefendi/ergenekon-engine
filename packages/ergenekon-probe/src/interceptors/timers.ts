@@ -151,6 +151,7 @@ export function installTimerInterceptors(): void {
         writable: true,
         configurable: true
       });
+      require('node:module').syncBuiltinESMExports();
     }
   } catch {
     // crypto not available
