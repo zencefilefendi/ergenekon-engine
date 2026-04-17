@@ -100,7 +100,10 @@ export function createHttpIncomingMiddleware(
     const remoteHlcHeader = req.headers[ERGENEKON_HLC_HEADER] as string | undefined;
     if (remoteHlcHeader && remoteHlcHeader.length < 256) { // hard limit on header size
       try {
-        const remoteHlc = JSON.parse(remoteHlcHeader);
+        const remoteHlc = JSON.parse(remoteHlcHeader, (key, value) => {
+          if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+          return value;
+        });
         // SECURITY: Validate HLC structure to prevent clock manipulation
         // and prototype pollution attacks
         if (

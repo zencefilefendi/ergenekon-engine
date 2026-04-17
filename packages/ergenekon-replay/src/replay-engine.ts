@@ -82,7 +82,10 @@ export class ReplayEngine {
   /** Load a recording from a file */
   async loadFromFile(path: string): Promise<RecordingSession> {
     const data = await readFile(path, 'utf-8');
-    this.session = JSON.parse(data) as RecordingSession;
+    this.session = JSON.parse(data, (key, value) => {
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+      return value;
+    }) as RecordingSession;
     this.mockLayer = new MockLayer(this.session);
     return this.session;
   }

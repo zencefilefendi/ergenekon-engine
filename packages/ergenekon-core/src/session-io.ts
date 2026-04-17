@@ -191,7 +191,10 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
   }
   const metadataGzip = buf.subarray(offset, offset + metadataLen); offset += metadataLen;
   const metadataJson = gunzipSync(metadataGzip, { maxOutputLength: MAX_METADATA_DECOMPRESSED }).toString('utf-8');
-  const meta = JSON.parse(metadataJson);
+  const meta = JSON.parse(metadataJson, (key, value) => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+    return value;
+  });
 
   // Events count
   const eventsCount = buf.readUInt32BE(offset); offset += 4;
@@ -203,7 +206,10 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
   }
   const eventsGzip = buf.subarray(offset, offset + eventsLen); offset += eventsLen;
   const eventsJson = gunzipSync(eventsGzip, { maxOutputLength: MAX_EVENTS_DECOMPRESSED }).toString('utf-8');
-  const events: ErgenekonEvent[] = JSON.parse(eventsJson);
+  const events: ErgenekonEvent[] = JSON.parse(eventsJson, (key, value) => {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+    return value;
+  });
 
   // Verify CRC32
   const storedChecksum = buf.readUInt32BE(offset);
