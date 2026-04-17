@@ -22,6 +22,26 @@ const PORT = parseInt(process.env.LICENSE_SERVER_PORT ?? '4400', 10);
 // Track free registrations to prevent abuse (in-memory, reset on restart)
 const freeRegistrations = new Map<string, { count: number; lastAt: number }>();
 const MAX_FREE_PER_EMAIL = 3; // max 3 registrations per email
+const RATE_LIMIT_TTL = 60 * 60 * 1000; // 1 hour TTL
+const MAX_MAP_SIZE = 10_000; // Hard cap to prevent OOM
+
+// Periodic cleanup: evict expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of freeRegistrations) {
+    if (now - val.lastAt > RATE_LIMIT_TTL) freeRegistrations.delete(key);
+  }
+}, 5 * 60 * 1000);
+
+// Normalize email: strip +tags and Gmail dots
+function normalizeEmail(email: string): string {
+  let [local, domain] = email.split('@');
+  local = local.split('+')[0];
+  if (['gmail.com', 'googlemail.com'].includes(domain)) {
+    local = local.replace(/\./g, '');
+  }
+  return `${local}@${domain}`;
+}
 
 // ── Load env from .env file if present ──────────────────────────
 try {
@@ -126,8 +146,16 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         return;
       }
 
-      // Rate limit per email
-      const reg = freeRegistrations.get(email);
+      // Rate limit per email (normalized to prevent +tag bypass)
+      const rateLimitKey = normalizeEmail(email);
+      
+      // Hard cap: prevent OOM from script abuse
+      if (freeRegistrations.size >= MAX_MAP_SIZE && !freeRegistrations.has(rateLimitKey)) {
+        json(res, 503, { error: 'Service temporarily unavailable. Please try again later.' });
+        return;
+      }
+      
+      const reg = freeRegistrations.get(rateLimitKey);
       if (reg && reg.count >= MAX_FREE_PER_EMAIL) {
         json(res, 429, { error: 'License already sent to this email. Check your inbox (and spam folder).' });
         return;
@@ -155,9 +183,9 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
           licenseJSON,
         });
 
-        // Track registration
-        const existing = freeRegistrations.get(email) || { count: 0, lastAt: 0 };
-        freeRegistrations.set(email, { count: existing.count + 1, lastAt: Date.now() });
+        // Track registration (using normalized key)
+        const existing = freeRegistrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
+        freeRegistrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
 
         console.log(`[FREE] ✅ License generated: ${license.payload.licenseId} → ${email} (email: ${emailSent ? 'sent' : 'failed'})`);
 
@@ -182,16 +210,29 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     // ── POST /api/generate-license — Direct License Generation ──
     // (For manual issuance / admin use)
     if (req.method === 'POST' && path === '/api/generate-license') {
-      const body = await readBody(req);
-      const data: LicenseRequest = JSON.parse(body.toString('utf-8'));
+      // SECURITY: Fail-closed — if ADMIN_API_KEY is not configured, reject everything
+      const configuredKey = process.env.ADMIN_API_KEY;
+      if (!configuredKey) {
+        console.error('[SECURITY] /api/generate-license called but ADMIN_API_KEY is not configured. Rejecting.');
+        json(res, 503, { error: 'Admin endpoint not configured' });
+        return;
+      }
 
-      // Simple admin auth (replace with proper auth in production)
-      const adminKey = req.headers['x-admin-key'];
-      if (adminKey !== process.env.ADMIN_API_KEY && process.env.ADMIN_API_KEY) {
+      const adminKey = (req.headers['x-admin-key'] as string) || '';
+      // Timing-safe comparison to prevent timing attacks
+      const keyBuffer = Buffer.from(adminKey);
+      const configBuffer = Buffer.from(configuredKey);
+      const isValid = keyBuffer.length === configBuffer.length &&
+        (await import('node:crypto')).then(c => c.timingSafeEqual(keyBuffer, configBuffer)).catch(() => false);
+
+      if (!await isValid) {
+        console.warn(`[SECURITY] Unauthorized /api/generate-license attempt from ${req.socket.remoteAddress}`);
         json(res, 401, { error: 'Unauthorized' });
         return;
       }
 
+      const body = await readBody(req);
+      const data: LicenseRequest = JSON.parse(body.toString('utf-8'));
       const license = generateLicenseForCustomer(data);
       json(res, 200, { success: true, license });
       return;

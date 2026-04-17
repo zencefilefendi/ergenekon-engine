@@ -27,6 +27,22 @@ const ALLOWED_ORIGINS = [
 
 // ── Rate Limiting (in-memory, resets on cold start) ────────
 const registrations = new Map();
+const RATE_LIMIT_TTL = 60 * 60 * 1000; // 1 hour TTL for rate limit entries
+const MAX_MAP_SIZE = 10_000; // Hard cap to prevent memory exhaustion
+
+// Periodic cleanup: evict expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  let evicted = 0;
+  for (const [key, val] of registrations) {
+    if (now - val.lastAt > RATE_LIMIT_TTL) {
+      registrations.delete(key);
+      evicted++;
+    }
+  }
+  if (evicted > 0) console.log(`[SECURITY] Rate limit cleanup: evicted ${evicted} stale entries, ${registrations.size} remaining`);
+}, 5 * 60 * 1000);
+
 // Global rate limit: max 30 requests per minute across all IPs
 let globalRequestCount = 0;
 let globalResetTime = Date.now() + 60000;
@@ -42,11 +58,31 @@ function sanitizeEmail(raw) {
   if (!emailRegex.test(email)) return null;
 
   // Block disposable email providers
-  const disposable = ['tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator', 'trashmail', 'fakeinbox'];
+  const disposable = ['tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator', 'trashmail', 'fakeinbox',
+    '10minutemail', 'temp-mail', 'dispostable', 'sharklasers', 'grr.la', 'guerrillamailblock',
+    'maildrop', 'mailnesia', 'getairmail', 'minutemail', 'tempinbox', 'mohmal', 'burpcollaborator'];
   const domain = email.split('@')[1];
   if (disposable.some(d => domain.includes(d))) return null;
 
   return email;
+}
+
+// Normalize email for rate limiting: strips +tags and Gmail dots
+// user+promo@gmail.com → user@gmail.com
+// u.s.e.r@gmail.com → user@gmail.com  
+function normalizeEmailForRateLimit(email) {
+  let [local, domain] = email.split('@');
+  
+  // Strip +tag (works for Gmail, Outlook, ProtonMail, etc.)
+  local = local.split('+')[0];
+  
+  // Gmail ignores dots in local part
+  const gmailDomains = ['gmail.com', 'googlemail.com'];
+  if (gmailDomains.includes(domain)) {
+    local = local.replace(/\./g, '');
+  }
+  
+  return `${local}@${domain}`;
 }
 
 function sanitizeName(raw) {
@@ -149,8 +185,16 @@ export default async function handler(req, res) {
     }
     const cleanName = sanitizeName(name || cleanEmail.split('@')[0]);
 
-    // ── Per-email rate limit ─────────────────────────────────
-    const reg = registrations.get(cleanEmail);
+    // ── Per-email rate limit (normalized to prevent +tag bypass) ──
+    const rateLimitKey = normalizeEmailForRateLimit(cleanEmail);
+    
+    // Hard cap: if map is too large, reject to prevent OOM
+    if (registrations.size >= MAX_MAP_SIZE && !registrations.has(rateLimitKey)) {
+      console.error(`[SECURITY] Rate limit map at capacity (${MAX_MAP_SIZE}). Rejecting new registration.`);
+      return res.status(503).json({ error: 'Service temporarily unavailable. Please try again later.' });
+    }
+    
+    const reg = registrations.get(rateLimitKey);
     if (reg && reg.count >= MAX_PER_EMAIL) {
       // Don't reveal if email exists (timing-safe)
       return res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
@@ -164,8 +208,8 @@ export default async function handler(req, res) {
     const license = generateLicense(cleanEmail, cleanName, tier);
 
     // ── Track registration ───────────────────────────────────
-    const existing = registrations.get(cleanEmail) || { count: 0 };
-    registrations.set(cleanEmail, { count: existing.count + 1, lastAt: Date.now() });
+    const existing = registrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
+    registrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
 
     // ── Log (no PII in production logs) ──────────────────────
     console.log(`[REGISTER] ${license.payload.licenseId} tier=${tier}`);
