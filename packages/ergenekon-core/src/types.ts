@@ -26,6 +26,8 @@ export type EventType =
   | 'dns_resolve'           // DNS resolve initiated
   | 'dns_result'            // DNS resolution result
   | 'dns_error'             // DNS resolution error
+  | 'timer_clear'           // clearTimeout/clearInterval called
+  | 'http_response_in_body' // Deferred background fetch stream consumption
   | 'custom';               // User-defined event
 
 /**
