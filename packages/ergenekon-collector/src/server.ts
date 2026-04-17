@@ -267,6 +267,12 @@ export class CollectorServer {
     // ── GET /api/v1/traces/:traceId — Get all sessions for a trace ─
     if (req.method === 'GET' && path.startsWith('/api/v1/traces/')) {
       const traceId = path.split('/').pop()!;
+      // SECURITY: Validate trace ID
+      if (!/^[a-zA-Z0-9_\-]{1,128}$/.test(traceId)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid trace ID' }));
+        return;
+      }
       const sessions = await this.storage.findByTraceId(traceId);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });

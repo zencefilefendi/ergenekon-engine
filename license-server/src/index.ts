@@ -161,7 +161,9 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         return;
       }
 
-      console.log(`[FREE] Generating free Pro license for: ${email}`);
+      // Log without full PII (GDPR safe)
+      const maskedEmail = email.slice(0, 3) + '***@' + email.split('@')[1];
+      console.log(`[FREE] Generating free Pro license for: ${maskedEmail}`);
 
       try {
         const license = generateLicenseForCustomer({
@@ -187,7 +189,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
         const existing = freeRegistrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
         freeRegistrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
 
-        console.log(`[FREE] ✅ License generated: ${license.payload.licenseId} → ${email} (email: ${emailSent ? 'sent' : 'failed'})`);
+        console.log(`[FREE] ✅ License generated: ${license.payload.licenseId} → ${maskedEmail} (email: ${emailSent ? 'sent' : 'failed'})`);
 
         json(res, 200, {
           success: true,
