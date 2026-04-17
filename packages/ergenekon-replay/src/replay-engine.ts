@@ -114,7 +114,7 @@ export class ReplayEngine {
   getTimeline(): TimelineSnapshot[] {
     if (!this.session) throw new Error('No recording loaded');
 
-    return this.session.events.map((event) => ({
+    return this.session.events.map((event: ErgenekonEvent) => ({
       sequence: event.sequence,
       type: event.type,
       operation: event.operationName,
@@ -135,8 +135,8 @@ export class ReplayEngine {
   } {
     if (!this.session) throw new Error('No recording loaded');
 
-    const events = this.session.events.filter((e) => e.sequence <= sequence);
-    const currentEvent = this.session.events.find((e) => e.sequence === sequence) ?? null;
+    const events = this.session.events.filter((e: ErgenekonEvent) => e.sequence <= sequence);
+    const currentEvent = this.session.events.find((e: ErgenekonEvent) => e.sequence === sequence) ?? null;
 
     return {
       events,
@@ -157,7 +157,7 @@ export class ReplayEngine {
     if (!this.session) throw new Error('No recording loaded');
 
     const added = this.session.events.filter(
-      (e) => e.sequence > fromSequence && e.sequence <= toSequence
+      (e: ErgenekonEvent) => e.sequence > fromSequence && e.sequence <= toSequence
     );
 
     return { added, range: [fromSequence, toSequence] };

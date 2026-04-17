@@ -19,7 +19,7 @@
     "ergenekon": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },

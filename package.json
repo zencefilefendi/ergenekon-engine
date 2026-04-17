@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=packages/ergenekon-core && npm run build --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "demo": "npx tsx demo/app.ts",
     "demo:replay": "npx tsx demo/replay-demo.ts",
