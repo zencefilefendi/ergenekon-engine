@@ -2,6 +2,12 @@
 # Override any value with: helm install ergenekon ./helm/ergenekon --set collector.replicas=2
 
 # ─────────────────────────────────────────────
+# Global Configuration
+# ─────────────────────────────────────────────
+networkPolicy:
+  enabled: true
+
+# ─────────────────────────────────────────────
 # Collector
 # ─────────────────────────────────────────────
 collector:

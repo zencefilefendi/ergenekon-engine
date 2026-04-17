@@ -1,0 +1,31 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ergenekon.fullname" . }}-collector
+  labels:
+    {{- include "ergenekon.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ergenekon.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: collector
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from other pods in the same namespace (probe SDKs)
+    - from:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.collector.service.port }}
+  egress:
+    # Allow standard DNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Deny all other outbound traffic from the collector
+{{- end }}
