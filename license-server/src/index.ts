@@ -43,6 +43,36 @@ function normalizeEmail(email: string): string {
   return `${local}@${domain}`;
 }
 
+// SECURITY: Strict email validation (matches landing page)
+const EMAIL_REGEX = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
+
+// SECURITY: Disposable email blocklist (must match landing page)
+const DISPOSABLE_DOMAINS = [
+  'tempmail', 'throwaway', 'guerrillamail', 'yopmail', 'mailinator',
+  'trashmail', 'fakeinbox', '10minutemail', 'temp-mail', 'dispostable',
+  'sharklasers', 'grr.la', 'guerrillamailblock', 'maildrop', 'mailnesia',
+  'getairmail', 'minutemail', 'tempinbox', 'mohmal', 'burpcollaborator',
+];
+
+// SECURITY: Body size limit (prevent DoS via oversized payloads)
+const MAX_BODY_BYTES = 32 * 1024; // 32 KB
+
+// SECURITY: Strip __proto__ and constructor from parsed JSON (prototype pollution)
+function safeParse(str: string): Record<string, unknown> {
+  const obj = JSON.parse(str);
+  if (typeof obj === 'object' && obj !== null) {
+    delete obj.__proto__;
+    delete obj.constructor;
+    delete obj.prototype;
+  }
+  return obj;
+}
+
+// SECURITY: Sanitize name — strip HTML tags and limit length
+function sanitizeName(raw: string): string {
+  return raw.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}\s._\-]/gu, '').trim().slice(0, 100) || 'User';
+}
+
 // ── Load env from .env file if present ──────────────────────────
 try {
   const { readFileSync } = await import('node:fs');
@@ -109,8 +139,12 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     // ── POST /api/checkout — Create Stripe Checkout Session ─────
     if (req.method === 'POST' && path === '/api/checkout') {
       const body = await readBody(req);
-      const data = JSON.parse(body.toString('utf-8'));
-      const result = await handleCreateCheckout(data);
+      if (body.length > MAX_BODY_BYTES) {
+        json(res, 413, { error: 'Request too large' });
+        return;
+      }
+      const data = safeParse(body.toString('utf-8'));
+      const result = await handleCreateCheckout(data as any);
       json(res, 200, result);
       return;
     }
@@ -120,7 +154,8 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       const body = await readBody(req);
       const sig = req.headers['stripe-signature'] as string;
       const result = await handleStripeWebhook(body, sig);
-      json(res, 200, result);
+      // SECURITY: Return 500 on failure so Stripe retries (H5)
+      json(res, result.received ? 200 : 500, result);
       return;
     }
 
@@ -129,19 +164,31 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     // Active only during the free launch period.
     if (req.method === 'POST' && path === '/api/register-free') {
       const body = await readBody(req);
+
+      // SECURITY: Body size limit
+      if (body.length > MAX_BODY_BYTES) {
+        json(res, 413, { error: 'Request too large' });
+        return;
+      }
+
       let data: { email?: string; name?: string };
       try {
-        data = JSON.parse(body.toString('utf-8'));
+        data = safeParse(body.toString('utf-8'));
       } catch {
         json(res, 400, { error: 'Invalid JSON body' });
         return;
       }
 
       const email = data.email?.trim().toLowerCase();
-      const name = data.name?.trim() || email?.split('@')[0] || 'User';
+      const name = sanitizeName(data.name?.trim() || email?.split('@')[0] || 'User');
 
-      // Validate email
-      if (!email || !email.includes('@') || !email.includes('.')) {
+      // SECURITY: Strict email validation (regex + disposable blocklist)
+      if (!email || !EMAIL_REGEX.test(email)) {
+        json(res, 400, { error: 'Valid email address is required' });
+        return;
+      }
+      const domain = email.split('@')[1];
+      if (DISPOSABLE_DOMAINS.some(d => domain.includes(d))) {
         json(res, 400, { error: 'Valid email address is required' });
         return;
       }
@@ -245,7 +292,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       }
 
       const body = await readBody(req);
-      const data: LicenseRequest = JSON.parse(body.toString('utf-8'));
+      if (body.length > MAX_BODY_BYTES) {
+        json(res, 413, { error: 'Request too large' });
+        return;
+      }
+      const data: LicenseRequest = safeParse(body.toString('utf-8')) as any;
       const license = generateLicenseForCustomer(data);
       json(res, 200, { success: true, license });
       return;

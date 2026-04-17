@@ -46,8 +46,13 @@ export async function handleStripeWebhook(
 
   // Verify the Stripe signature
   try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      console.error('[SECURITY] STRIPE_SECRET_KEY is not configured. Cannot verify webhooks.');
+      return { received: false, error: 'Stripe not configured' };
+    }
     const Stripe = (await import('stripe')).default;
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const stripe = new Stripe(stripeKey);
     const event = stripe.webhooks.constructEvent(
       body.toString('utf-8'),
       signature,

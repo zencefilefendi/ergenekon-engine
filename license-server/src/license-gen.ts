@@ -5,7 +5,7 @@
 // Uses the private key from ERGENEKON_SIGNING_KEY environment variable.
 // ============================================================================
 
-import { createPrivateKey, sign } from 'node:crypto';
+import { createPrivateKey, sign, randomBytes } from 'node:crypto';
 
 export interface LicenseRequest {
   customerId: string;
@@ -56,7 +56,6 @@ function generateId(): string {
   const time = Date.now().toString(36);
   // SECURITY: Use crypto.randomBytes instead of Math.random (M2)
   // Math.random is NOT cryptographically secure and can be predicted
-  const { randomBytes } = require('node:crypto');
   const rand = randomBytes(8).toString('base64url');
   return `lic_${time}${rand}`;
 }
