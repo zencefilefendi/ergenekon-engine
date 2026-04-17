@@ -57,32 +57,65 @@ export function installFetchInterceptor(): void {
       const response = await _originalFetch(input, { ...init, headers });
       const durationMs = originalDateNow() - start;
 
-      // Clone response to read body without consuming it
-      const cloned = response.clone();
-      let responseBody: unknown;
-      try {
-        responseBody = await cloned.json();
-      } catch {
-        try {
-          responseBody = await cloned.text();
-        } catch {
-          responseBody = null;
-        }
-      }
+      const safeHeaders = redactHeaders(Object.fromEntries(response.headers.entries()), []);
 
+      // Fast response head recording (doesn't block on body)
       session.record(
         'http_response_in',
         `${response.status} ${method} ${url}`,
         {
           status: response.status,
           statusText: response.statusText,
-          headers: redactHeaders(Object.fromEntries(response.headers.entries()), []),
-          body: redactDeep(responseBody),
+          headers: safeHeaders,
+          body: '[STREAMING]'
         },
         { durationMs }
       );
 
-      return response;
+      if (!response.body) {
+        return response;
+      }
+
+      // Tee the stream to avoid buffering unbounded payloads
+      const [userStream, probeStream] = response.body.tee();
+
+      // Background consume the body
+      (async () => {
+        try {
+          const reader = probeStream.getReader();
+          const chunks: Uint8Array[] = [];
+          let totalSize = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value && totalSize < 65536) { // max 64kb
+              chunks.push(value);
+              totalSize += value.length;
+            }
+          }
+          if (chunks.length > 0) {
+            const buffer = Buffer.concat(chunks);
+            let bodyData: unknown;
+            try {
+              bodyData = JSON.parse(buffer.toString('utf-8'));
+            } catch {
+              bodyData = buffer.toString('utf-8');
+            }
+            session.record('http_response_in_body', `Body: ${method} ${url}`, {
+              body: redactDeep(bodyData)
+            });
+          }
+        } catch {
+          // ignore stream read failures
+        }
+      })();
+
+      // Construct identical Response object replacing the body with user stream
+      return new Response(userStream, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      });
     } catch (err) {
       const durationMs = originalDateNow() - start;
       const error = err instanceof Error ? err : new Error(String(err));

@@ -150,36 +150,40 @@ export function createHttpIncomingMiddleware(
     // Set trace context headers on response (for downstream propagation)
     res.setHeader(TRACEPARENT_HEADER, `00-${traceId}-${spanId}-01`);
 
-    // Intercept response.end to capture outgoing response
+    // Intercept response.write and response.end to capture outgoing response stream
+    const originalWrite = res.write;
     const originalEnd = res.end;
     const requestStart = originalDateNow();
+    let responseChunks: Buffer[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    res.write = function (chunk: any, encodingOrCb?: any, cb?: any): boolean {
+      if (chunk) {
+        responseChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      return originalWrite.apply(this, arguments as any);
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     res.end = function (chunk?: any, encoding?: any, callback?: any): Response {
       const durationMs = originalDateNow() - requestStart;
 
-      // Capture response body
-      let responseBody: unknown = undefined;
       if (chunk) {
-        if (typeof chunk === 'string') {
-          try {
-            // SECURITY: Prototype pollution guard on response body
-            responseBody = JSON.parse(chunk, (key, value) => {
-              if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
-              return value;
-            });
-          } catch {
-            responseBody = chunk;
-          }
-        } else if (Buffer.isBuffer(chunk)) {
-          try {
-            responseBody = JSON.parse(chunk.toString('utf-8'), (key, value) => {
-              if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
-              return value;
-            });
-          } catch {
-            responseBody = chunk.toString('utf-8');
-          }
+        responseChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+
+      // Capture response body from buffered chunks
+      let responseBody: unknown = undefined;
+      if (responseChunks.length > 0) {
+        const fullBuffer = Buffer.concat(responseChunks);
+        try {
+          // SECURITY: Prototype pollution guard on response body
+          responseBody = JSON.parse(fullBuffer.toString('utf-8'), (key, value) => {
+            if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
+            return value;
+          });
+        } catch {
+          responseBody = fullBuffer.toString('utf-8');
         }
       }
 
