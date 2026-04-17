@@ -744,7 +744,8 @@ async function loadLicenseInfo() {
     const badge = document.getElementById('tier-badge');
     const banner = document.getElementById('upgrade-banner');
 
-    // Update tier badge
+    // Update tier badge — SECURITY: Type validation to prevent array coercion DoS
+    currentTier = typeof currentTier === 'string' ? currentTier : 'community';
     badge.textContent = currentTier.charAt(0).toUpperCase() + currentTier.slice(1);
     badge.className = `tier-badge tier-${currentTier}`;
 
