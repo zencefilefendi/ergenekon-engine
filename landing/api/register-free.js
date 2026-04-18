@@ -135,8 +135,10 @@ function generateLicense(email, name, tier) {
 // ── API Handler ────────────────────────────────────────────
 export default async function handler(req, res) {
   // ── CORS (restricted to our domains) ─────────────────────
+  // SECURITY: Mirror license-server/src/index.ts behavior — unknown origin gets
+  // empty string, never a leaked allowlist entry. Consistency with HIGH-21 fix.
   const origin = req.headers?.origin || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

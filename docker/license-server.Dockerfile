@@ -4,7 +4,8 @@ WORKDIR /app
 # Install dependencies
 COPY package.json package-lock.json* ./
 COPY license-server/package.json ./license-server/
-RUN npm install --workspace=license-server --production 2>/dev/null || npm install
+# SECURITY (MED-17): --ignore-scripts prevents postinstall supply-chain attacks
+RUN npm install --workspace=license-server --production --ignore-scripts 2>/dev/null || npm install --ignore-scripts
 
 # Copy source
 COPY license-server/ ./license-server/

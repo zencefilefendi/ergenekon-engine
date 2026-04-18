@@ -10,7 +10,8 @@ COPY packages/ergenekon-replay/package.json ./packages/ergenekon-replay/
 COPY packages/ergenekon-ui/package.json ./packages/ergenekon-ui/
 COPY packages/ergenekon-cli/package.json ./packages/ergenekon-cli/
 
-RUN npm ci
+# SECURITY (MED-17): --ignore-scripts prevents postinstall supply-chain attacks
+RUN npm ci --ignore-scripts
 
 COPY packages/ ./packages/
 

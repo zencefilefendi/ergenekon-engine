@@ -6,7 +6,8 @@ COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/ergenekon-core/package.json ./packages/ergenekon-core/
 COPY packages/ergenekon-ui/package.json ./packages/ergenekon-ui/
 
-RUN npm ci --workspace=packages/ergenekon-core --workspace=packages/ergenekon-ui
+# SECURITY (MED-17): --ignore-scripts prevents postinstall supply-chain attacks
+RUN npm ci --workspace=packages/ergenekon-core --workspace=packages/ergenekon-ui --ignore-scripts
 
 COPY packages/ergenekon-core/ ./packages/ergenekon-core/
 COPY packages/ergenekon-ui/ ./packages/ergenekon-ui/

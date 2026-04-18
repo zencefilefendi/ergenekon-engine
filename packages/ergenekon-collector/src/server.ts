@@ -390,9 +390,11 @@ export class CollectorServer {
     }
 
     // ── GET /health ───────────────────────────────────────────────
+    // SECURITY: Do NOT expose version on unauthenticated probe endpoint —
+    // aids CVE enumeration for anyone who can reach the collector.
     if (req.method === 'GET' && path === '/health') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', version: '0.4.0' }));
+      res.end(JSON.stringify({ status: 'ok' }));
       return;
     }
 
