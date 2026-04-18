@@ -316,14 +316,11 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
     }
 
     // ── GET /health ─────────────────────────────────────────────
+    // SECURITY: Minimal liveness probe — do not leak version or wiring state
+    // to anyone who can reach the endpoint. Readiness details belong on a
+    // separate, internally-scoped endpoint if needed.
     if (req.method === 'GET' && path === '/health') {
-      json(res, 200, {
-        status: 'ok',
-        service: 'ergenekon-license-server',
-        version: '0.1.0',
-        stripe: !!process.env.STRIPE_SECRET_KEY,
-        signingKey: !!process.env.ERGENEKON_SIGNING_KEY,
-      });
+      json(res, 200, { status: 'ok' });
       return;
     }
 
