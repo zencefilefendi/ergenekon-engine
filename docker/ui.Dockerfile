@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN npm run build --workspace=packages/ergenekon-core
 RUN npm run build --workspace=packages/ergenekon-ui
 
 # ─────────────────────────────────────────────
-FROM node:22-alpine AS runtime
+FROM node:25-alpine AS runtime
 
 WORKDIR /app
 
