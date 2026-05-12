@@ -46,3 +46,9 @@ export {
   isAtLeastTier,
   getTierDisplay,
 } from './license-validator.js';
+
+export {
+  generateLicense,
+  generateLicenseJSON,
+  type LicenseGenerateParams,
+} from './license-generator.js';

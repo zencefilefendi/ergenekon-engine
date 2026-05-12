@@ -144,7 +144,7 @@ export function installTimerInterceptors(): void {
           const value = _originalRandomUUID!();
           const session = getActiveSession();
           if (session) {
-            session.record('uuid', 'crypto.randomUUID()', { value });
+            session.record('uuid', 'crypto.randomUUID()', { value: '[REDACTED_UUID]' });
           }
           return value;
         },

@@ -566,7 +566,7 @@ body {
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-.detail-tab-content { }
+/* .detail-tab-content { } */
 
 .json-view {
   background: var(--bg-primary); border: 1px solid var(--border);

@@ -58,22 +58,24 @@ function sanitizeEmail(raw) {
   if (!emailRegex.test(email)) return null;
 
   // Block disposable email providers
-  // SECURITY (HIGH-16): Exact domain match via Set — NOT substring includes()
-  const disposable = new Set([
+  // SECURITY (HIGH-16 / H-19): Suffix match to catch subdomains
+  const disposable = [
     'tempmail.com', 'throwaway.email', 'guerrillamail.com', 'yopmail.com', 'mailinator.com',
     'trashmail.com', 'fakeinbox.com', '10minutemail.com', 'temp-mail.org', 'dispostable.com',
     'sharklasers.com', 'grr.la', 'guerrillamailblock.com', 'maildrop.cc', 'mailnesia.com',
     'getairmail.com', 'minutemail.com', 'tempinbox.com', 'mohmal.com', 'burpcollaborator.net',
     'tempmail.net', 'guerrillamail.info', 'guerrillamail.de', 'mailnull.com',
-    'mytemp.email', 'nada.email', 'dropmail.me', 'harakirimail.com',
-  ]);
+    'mytemp.email', 'nada.email', 'dropmail.me', 'harakirimail.com', 'mail.tm',
+    'getnada.com', 'mailcatch.com', 'inboxbear.com', 'reallymymail.com', 'simplelogin.io',
+    'addy.io', '33mail.com', 'spamgourmet.com', 'mail.gw', 'mailtm.com', 'firefox-relay.com', 'duck.com'
+  ];
   const domain = email.split('@')[1];
-  if (disposable.has(domain)) return null;
+  if (disposable.some(d => domain === d || domain.endsWith('.' + d))) return null;
 
   return email;
 }
 
-// Normalize email for rate limiting: strips +tags and Gmail dots
+// Normalize email for rate limiting: strips +tags and universally collapses dots
 // user+promo@gmail.com → user@gmail.com
 // u.s.e.r@gmail.com → user@gmail.com  
 function normalizeEmailForRateLimit(email) {
@@ -82,11 +84,8 @@ function normalizeEmailForRateLimit(email) {
   // Strip +tag (works for Gmail, Outlook, ProtonMail, etc.)
   local = local.split('+')[0];
   
-  // Gmail ignores dots in local part
-  const gmailDomains = ['gmail.com', 'googlemail.com'];
-  if (gmailDomains.includes(domain)) {
-    local = local.replace(/\./g, '');
-  }
+  // SECURITY (H-22): Universally collapse dots to prevent alias spam
+  local = local.replace(/\./g, '');
   
   return `${local}@${domain}`;
 }
@@ -95,6 +94,26 @@ function sanitizeName(raw) {
   if (!raw || typeof raw !== 'string') return 'User';
   // Strip HTML/script tags and limit to 100 chars
   return raw.replace(/<[^>]*>/g, '').replace(/[^\p{L}\p{N}\s._\-]/gu, '').trim().slice(0, 100) || 'User';
+}
+
+// ── Recursive Deterministic JSON ──────────────────────────────────
+// SECURITY (H-05/M-14): Recursively sorts keys to ensure canonical JSON
+function stringifyCanonical(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(stringifyCanonical).join(',') + ']';
+  }
+  const keys = Object.keys(obj).sort();
+  let str = '{';
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    if (i > 0) str += ',';
+    str += JSON.stringify(key) + ':' + stringifyCanonical(obj[key]);
+  }
+  str += '}';
+  return str;
 }
 
 // ── License Generator ──────────────────────────────────────
@@ -125,7 +144,7 @@ function generateLicense(email, name, tier) {
   };
 
   const privateKey = createPrivateKey(privateKeyPem);
-  const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+  const canonicalJson = stringifyCanonical(payload);
   const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
   const signature = sign(null, payloadBytes, privateKey);
 
@@ -136,7 +155,7 @@ function generateLicense(email, name, tier) {
 export default async function handler(req, res) {
   // ── CORS (restricted to our domains) ─────────────────────
   const origin = req.headers?.origin || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -152,17 +171,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    // ── Body size check ──────────────────────────────────────
-    const bodyStr = JSON.stringify(req.body || {});
-    if (bodyStr.length > MAX_BODY_SIZE) {
-      return res.status(413).json({ error: 'Request too large' });
-    }
+  // SECURITY (H-26): Body size must be checked BEFORE JSON parse if we controlled the stream,
+  // but in serverless we only get req.body. Checking JSON.stringify(req.body) is a fallback.
+  // We'll rely on the platform limits (Vercel maxes at 4MB), but enforce our own strict limit.
+  const bodyStr = JSON.stringify(req.body || {});
+  if (bodyStr.length > MAX_BODY_SIZE) {
+    return res.status(413).json({ error: 'Request too large' });
+  }
 
-    // ── Client IP (Vercel x-real-ip cannot be spoofed) ──────
-    const clientIp = req.headers['x-real-ip']
-      || (req.headers['x-forwarded-for'] || '').split(',').pop()?.trim()
-      || 'unknown';
+  try {
+    // ── Client IP (H-24) ─────────────────────────────────────
+    // Check if we are on Vercel. If not, don't blindly trust x-real-ip
+    const isVercel = !!process.env.VERCEL;
+    let clientIp = 'unknown';
+    if (isVercel) {
+      clientIp = req.headers['x-real-ip'] || 'unknown';
+    } else {
+      clientIp = req.headers['x-forwarded-for']?.split(',').pop()?.trim() || req.socket?.remoteAddress || 'unknown';
+    }
 
     // ── Per-IP rate limit (5 registrations/hour) ────────────
     const ipKey = `ip:${clientIp}`;
@@ -183,27 +209,6 @@ export default async function handler(req, res) {
       return res.status(429).json({ error: 'Too many requests. Please try again later.' });
     }
 
-    // ── Honeypot bot trap ────────────────────────────────────
-    // The 'website' field is hidden in the form — real users send ''
-    // Bots auto-fill it → instant reject (silent, returns success to confuse bot)
-    if (req.body?.website) {
-      // SECURITY (CRIT-05): These were previously undefined, causing ReferenceError
-      const honeypotRequestId = randomBytes(16).toString('hex');
-      const honeypotStart = Date.now();
-      console.warn(JSON.stringify({ event: 'honeypot_triggered', requestId: honeypotRequestId }));
-      // Timing-safe delay: always take at least 300ms to prevent timing oracle
-      const elapsed = Date.now() - honeypotStart;
-      if (elapsed < 300) await new Promise(r => setTimeout(r, 300 - elapsed));
-      return res.status(200).json({
-        success: true,
-        message: 'Registration received!',
-        // SECURITY: Return a clearly fake/non-functional license shape
-        licenseId: 'lic_' + randomBytes(8).toString('hex'),
-        tier: 'pro',
-        expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
-      });
-    }
-
     // ── Input validation ─────────────────────────────────────
     const { email, name } = req.body || {};
     const cleanEmail = sanitizeEmail(email);
@@ -215,8 +220,9 @@ export default async function handler(req, res) {
     // ── Per-email rate limit (normalized to prevent +tag bypass) ──
     const rateLimitKey = normalizeEmailForRateLimit(cleanEmail);
     
-    // Hard cap: if map is too large, reject to prevent OOM
-    if (registrations.size >= MAX_MAP_SIZE && !registrations.has(rateLimitKey)) {
+    // SECURITY (H-25): Max map size lockout fix
+    // Only lock out NEW IPs/Emails when map is full.
+    if (registrations.size >= MAX_MAP_SIZE && !registrations.has(rateLimitKey) && !registrations.has(ipKey)) {
       console.error(`[SECURITY] Rate limit map at capacity (${MAX_MAP_SIZE}). Rejecting new registration.`);
       return res.status(503).json({ error: 'Service temporarily unavailable. Please try again later.' });
     }
@@ -228,9 +234,32 @@ export default async function handler(req, res) {
     }
 
     // SECURITY: Free trial is ALWAYS Pro tier.
-    // Enterprise licenses are only issued through the paid Stripe checkout flow.
-    // Never trust client-supplied tier — ignore req.body.tier entirely.
     const tier = 'pro';
+
+    // ── Honeypot bot trap ────────────────────────────────────
+    // The 'website' field is hidden in the form — real users send ''
+    if (req.body?.website) {
+      const honeypotRequestId = randomBytes(16).toString('hex');
+      console.warn(JSON.stringify({ event: 'honeypot_triggered', requestId: honeypotRequestId }));
+      
+      // SECURITY (H-21): Make honeypot match real processing time (~30-50ms) instead of inverted 300ms
+      const honeypotStart = Date.now();
+      
+      // Simulate real processing: generate fake license but discard it
+      generateLicense(cleanEmail, cleanName, tier);
+      
+      const elapsed = Date.now() - honeypotStart;
+      if (elapsed < 35) await new Promise(r => setTimeout(r, 35 - elapsed));
+
+      return res.status(200).json({
+        success: true,
+        message: 'License generated! Download starting...',
+        // SECURITY (H-20): Make honeypot license ID structurally identical to real one
+        licenseId: `lic_${Date.now().toString(36)}${randomBytes(6).toString('base64url').slice(0, 8)}`,
+        tier: 'pro',
+        expiresAt: new Date(Date.now() + 90 * 86400000).toISOString(),
+      });
+    }
 
     // ── Generate license ─────────────────────────────────────
     const license = generateLicense(cleanEmail, cleanName, tier);
@@ -250,11 +279,9 @@ export default async function handler(req, res) {
       licenseId: license.payload.licenseId,
       tier,
       expiresAt: license.payload.expiresAt,
-      // SECURITY: License is no longer returned inline
     });
   } catch (err) {
     console.error('[REGISTER] Error:', err.message);
-    // Never expose internal error details to client
     return res.status(500).json({ error: 'Internal server error. Please try again.' });
   }
 }

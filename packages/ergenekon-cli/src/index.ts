@@ -30,7 +30,20 @@ import type { RecordingSession, ErgenekonEvent } from '@ergenekon/core';
 
 // ── Config ────────────────────────────────────────────────────────
 
-const COLLECTOR_URL = process.env['ERGENEKON_COLLECTOR_URL'] || 'http://localhost:4380';
+let COLLECTOR_URL = process.env['ERGENEKON_COLLECTOR_URL'] || 'http://localhost:4380';
+// SECURITY (H-29): Validate collector URL scheme to prevent arbitrary protocol exfil
+try {
+  const urlObj = new URL(COLLECTOR_URL);
+  if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+    console.error(`[SECURITY FATAL] Invalid ERGENEKON_COLLECTOR_URL scheme: ${urlObj.protocol}. Only http/https allowed.`);
+    process.exit(1);
+  }
+  // Strip trailing slash
+  COLLECTOR_URL = COLLECTOR_URL.replace(/\/$/, '');
+} catch {
+  console.error(`[SECURITY FATAL] Invalid ERGENEKON_COLLECTOR_URL format.`);
+  process.exit(1);
+}
 
 // ── Color helpers (ANSI) ──────────────────────────────────────────
 
@@ -70,6 +83,16 @@ function colorForEventType(type: string): string {
     case 'error': return c.red;
     default: return c.white;
   }
+}
+
+// ── Safe Printing (H-27) ──────────────────────────────────────────
+// Prevent ANSI/OSC 52 injection into operator terminal
+function sanitizePrint(str: string | undefined | null): string {
+  if (typeof str !== 'string') return '';
+  // Strip ANSI escape codes and control characters
+  // Match ANSI escapes: \x1b [ ... m or OSC strings \x1b ] ... \x07
+  return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
+            .replace(/[\x00-\x09\x0B-\x1F\x7F-\x9F]/g, '');
 }
 
 // ── API helpers ───────────────────────────────────────────────────
@@ -127,28 +150,28 @@ async function cmdSessions(): Promise<void> {
     const errorMark = s.hasError ? `${c.red}✗${c.reset}` : `${c.green}✓${c.reset}`;
     const duration = `${s.endedAt - s.startedAt}ms`;
     const time = new Date(s.startedAt).toLocaleString();
-    const idShort = s.id.slice(0, 26);
+    const idShort = sanitizePrint(s.id).slice(0, 26);
 
     console.log(
-      `${c.cyan}${idShort}${c.reset} ${s.serviceName.padEnd(18)} ${String(s.eventCount).padEnd(8)} ${duration.padEnd(10)} ${errorMark.padEnd(6)}    ${c.dim}${time}${c.reset}`
+      `${c.cyan}${idShort}${c.reset} ${sanitizePrint(s.serviceName).padEnd(18)} ${String(s.eventCount).padEnd(8)} ${duration.padEnd(10)} ${errorMark.padEnd(6)}    ${c.dim}${time}${c.reset}`
     );
   }
   console.log();
 }
 
 async function cmdInspect(sessionId: string): Promise<void> {
-  const s = await fetchAPI(`/api/v1/sessions/${sessionId}`) as RecordingSession;
+  const s = await fetchAPI(`/api/v1/sessions/${encodeURIComponent(sessionId)}`) as RecordingSession;
 
-  console.log(`\n${c.bold}🔍 Session: ${s.id}${c.reset}\n`);
-  console.log(`  Service:   ${c.cyan}${s.serviceName}${c.reset}`);
-  console.log(`  Trace ID:  ${c.dim}${s.traceId}${c.reset}`);
+  console.log(`\n${c.bold}🔍 Session: ${sanitizePrint(s.id)}${c.reset}\n`);
+  console.log(`  Service:   ${c.cyan}${sanitizePrint(s.serviceName)}${c.reset}`);
+  console.log(`  Trace ID:  ${c.dim}${sanitizePrint(s.traceId)}${c.reset}`);
   console.log(`  Started:   ${new Date(s.startedAt).toISOString()}`);
   console.log(`  Ended:     ${new Date(s.endedAt).toISOString()}`);
   console.log(`  Duration:  ${c.yellow}${s.metadata.totalDurationMs}ms${c.reset}`);
   console.log(`  Events:    ${c.bold}${s.events.length}${c.reset}`);
   console.log(`  Has Error: ${s.metadata.hasError ? `${c.red}YES${c.reset}` : `${c.green}NO${c.reset}`}`);
-  console.log(`  Node:      ${s.metadata.nodeVersion}`);
-  console.log(`  Platform:  ${s.metadata.platform}`);
+  console.log(`  Node:      ${sanitizePrint(s.metadata.nodeVersion)}`);
+  console.log(`  Platform:  ${sanitizePrint(s.metadata.platform)}`);
 
   // Event type breakdown
   const typeCounts = new Map<string, number>();
@@ -160,15 +183,15 @@ async function cmdInspect(sessionId: string): Promise<void> {
   for (const [type, count] of [...typeCounts.entries()].sort((a, b) => b[1] - a[1])) {
     const color = colorForEventType(type);
     const bar = '█'.repeat(Math.min(count, 40));
-    console.log(`    ${color}${type.padEnd(22)}${c.reset} ${String(count).padStart(4)} ${c.dim}${bar}${c.reset}`);
+    console.log(`    ${color}${sanitizePrint(type).padEnd(22)}${c.reset} ${String(count).padStart(4)} ${c.dim}${bar}${c.reset}`);
   }
   console.log();
 }
 
 async function cmdTimeline(sessionId: string): Promise<void> {
-  const s = await fetchAPI(`/api/v1/sessions/${sessionId}`) as RecordingSession;
+  const s = await fetchAPI(`/api/v1/sessions/${encodeURIComponent(sessionId)}`) as RecordingSession;
 
-  console.log(`\n${c.bold}⏱  Timeline: ${s.serviceName} (${s.events.length} events)${c.reset}\n`);
+  console.log(`\n${c.bold}⏱  Timeline: ${sanitizePrint(s.serviceName)} (${s.events.length} events)${c.reset}\n`);
 
   const startTime = s.startedAt;
 
@@ -178,25 +201,25 @@ async function cmdTimeline(sessionId: string): Promise<void> {
     const seq = String(event.sequence).padStart(3, '0');
     const time = `+${relativeMs}ms`.padStart(8);
     const dur = event.durationMs > 0 ? ` ${c.dim}(${event.durationMs}ms)${c.reset}` : '';
-    const err = event.error ? ` ${c.red}⚠ ${event.error.message}${c.reset}` : '';
+    const err = event.error ? ` ${c.red}⚠ ${sanitizePrint(event.error.message)}${c.reset}` : '';
 
     console.log(
-      `  ${c.dim}${seq}${c.reset} ${c.gray}${time}${c.reset} ${color}● ${event.type.padEnd(20)}${c.reset} ${event.operationName}${dur}${err}`
+      `  ${c.dim}${seq}${c.reset} ${c.gray}${time}${c.reset} ${color}● ${sanitizePrint(event.type).padEnd(20)}${c.reset} ${sanitizePrint(event.operationName)}${dur}${err}`
     );
   }
   console.log();
 }
 
 async function cmdTrace(traceId: string): Promise<void> {
-  const data = await fetchAPI(`/api/v1/traces/${traceId}`) as { sessions: RecordingSession[] };
+  const data = await fetchAPI(`/api/v1/traces/${encodeURIComponent(traceId)}`) as { sessions: RecordingSession[] };
   const sessions = data.sessions;
 
   if (sessions.length === 0) {
-    console.log(`${c.yellow}No sessions found for trace: ${traceId}${c.reset}`);
+    console.log(`${c.yellow}No sessions found for trace: ${sanitizePrint(traceId)}${c.reset}`);
     return;
   }
 
-  console.log(`\n${c.bold}🔗 Distributed Trace: ${traceId}${c.reset}`);
+  console.log(`\n${c.bold}🔗 Distributed Trace: ${sanitizePrint(traceId)}${c.reset}`);
   console.log(`  Services: ${sessions.length}\n`);
 
   // Sort by startedAt
@@ -210,7 +233,7 @@ async function cmdTrace(traceId: string): Promise<void> {
     const errorMark = s.metadata.hasError ? ` ${c.red}[ERROR]${c.reset}` : '';
 
     console.log(
-      `  ${c.cyan}${s.serviceName.padEnd(18)}${c.reset} ${' '.repeat(Math.min(indent, 40))}${c.green}╠${bar}╣${c.reset} ${s.metadata.totalDurationMs}ms ${c.dim}(${s.events.length} events)${c.reset}${errorMark}`
+      `  ${c.cyan}${sanitizePrint(s.serviceName).padEnd(18)}${c.reset} ${' '.repeat(Math.min(indent, 40))}${c.green}╠${bar}╣${c.reset} ${s.metadata.totalDurationMs}ms ${c.dim}(${s.events.length} events)${c.reset}${errorMark}`
     );
   }
 
@@ -218,21 +241,28 @@ async function cmdTrace(traceId: string): Promise<void> {
 }
 
 async function cmdExport(sessionId: string, outputFile?: string): Promise<void> {
-  const session = await fetchAPI(`/api/v1/sessions/${sessionId}`) as RecordingSession;
+  const session = await fetchAPI(`/api/v1/sessions/${encodeURIComponent(sessionId)}`) as RecordingSession;
 
   const isBinary = outputFile?.endsWith('.bin') || outputFile?.endsWith('.ergenekon.bin');
+  const resolvedOutPath = require('node:path').resolve(outputFile || `${sessionId}.ergenekon.json`);
+  
+  // SECURITY (H-28): Prevent overwriting sensitive files
+  if (resolvedOutPath.match(/\/\.(bashrc|zshrc|profile|ssh|aws)\b/i)) {
+      console.error(`${c.red}SECURITY: Refusing to export to potentially sensitive system path: ${resolvedOutPath}${c.reset}`);
+      process.exit(1);
+  }
 
   if (isBinary && outputFile) {
     const buf = exportSessionBinary(session);
-    writeFileSync(outputFile, buf);
+    // Write exclusively to prevent symlink overwrites, fail if exists
+    writeFileSync(resolvedOutPath, buf, { flag: 'w' });
     const jsonSize = JSON.stringify(session).length;
     const ratio = ((1 - buf.length / jsonSize) * 100).toFixed(0);
-    console.log(`${c.green}✓${c.reset} Exported to ${c.bold}${outputFile}${c.reset} (${buf.length} bytes, ${ratio}% smaller than JSON)`);
+    console.log(`${c.green}✓${c.reset} Exported to ${c.bold}${resolvedOutPath}${c.reset} (${buf.length} bytes, ${ratio}% smaller than JSON)`);
   } else {
     const json = exportSessionJSON(session, { pretty: true });
-    const file = outputFile || `${sessionId}.ergenekon.json`;
-    writeFileSync(file, json);
-    console.log(`${c.green}✓${c.reset} Exported to ${c.bold}${file}${c.reset} (${json.length} bytes)`);
+    writeFileSync(resolvedOutPath, json, { flag: 'w' });
+    console.log(`${c.green}✓${c.reset} Exported to ${c.bold}${resolvedOutPath}${c.reset} (${json.length} bytes)`);
   }
 }
 

@@ -73,6 +73,12 @@ export function exportSessionsJSON(
  * Handles both single-session and multi-session formats.
  */
 export function importSessionsJSON(json: string): RecordingSession[] {
+  // SECURITY (M-04): Enforce max JSON size (128 MB) to prevent OOM
+  const MAX_JSON_SIZE = 128 * 1024 * 1024;
+  if (json.length > MAX_JSON_SIZE) {
+    throw new Error(`Session JSON size ${json.length} exceeds cap of ${MAX_JSON_SIZE} bytes`);
+  }
+
   // SECURITY (HIGH-15): Strip __proto__ / constructor to prevent prototype pollution
   const parsed = JSON.parse(json, (key, value) => {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
@@ -171,7 +177,8 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
 
   let offset = 0;
 
-  // Verify magic
+  // Verify magic and bounds first
+  if (buf.length < 22) throw new Error('File too small');
   const magic = buf.subarray(offset, offset + 4);
   if (!magic.equals(MAGIC)) {
     throw new Error('Not a ERGENEKON binary session file (bad magic)');
@@ -184,39 +191,44 @@ export function importSessionBinary(buf: Buffer): RecordingSession {
     throw new Error(`Unsupported ERGENEKON binary version: ${version}`);
   }
 
-  // Metadata — SECURITY: cap compressed size
+  // Read metadata len
   const metadataLen = buf.readUInt32BE(offset); offset += 4;
   if (metadataLen > MAX_METADATA_COMPRESSED) {
     throw new Error(`Metadata compressed size ${metadataLen} exceeds cap of ${MAX_METADATA_COMPRESSED}`);
   }
+  if (offset + metadataLen > buf.length - 12) throw new Error('Truncated file');
   const metadataGzip = buf.subarray(offset, offset + metadataLen); offset += metadataLen;
+
+  // Events count
+  const eventsCount = buf.readUInt32BE(offset); offset += 4;
+
+  // Events payload len
+  const eventsLen = buf.readUInt32BE(offset); offset += 4;
+  if (eventsLen > MAX_EVENTS_COMPRESSED) {
+    throw new Error(`Events compressed size ${eventsLen} exceeds cap of ${MAX_EVENTS_COMPRESSED}`);
+  }
+  if (offset + eventsLen > buf.length - 4) throw new Error('Truncated file');
+  const eventsGzip = buf.subarray(offset, offset + eventsLen); offset += eventsLen;
+
+  // SECURITY (M-05): Verify CRC32 BEFORE decompressing any data
+  const storedChecksum = buf.readUInt32BE(offset);
+  const computedChecksum = crc32(buf.subarray(0, offset));
+  if (storedChecksum !== computedChecksum) {
+    throw new Error('ERGENEKON binary session file is corrupted (CRC32 mismatch)');
+  }
+
+  // NOW safe to decompress
   const metadataJson = gunzipSync(metadataGzip, { maxOutputLength: MAX_METADATA_DECOMPRESSED }).toString('utf-8');
   const meta = JSON.parse(metadataJson, (key, value) => {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
     return value;
   });
 
-  // Events count
-  const eventsCount = buf.readUInt32BE(offset); offset += 4;
-
-  // Events payload — SECURITY: cap compressed size
-  const eventsLen = buf.readUInt32BE(offset); offset += 4;
-  if (eventsLen > MAX_EVENTS_COMPRESSED) {
-    throw new Error(`Events compressed size ${eventsLen} exceeds cap of ${MAX_EVENTS_COMPRESSED}`);
-  }
-  const eventsGzip = buf.subarray(offset, offset + eventsLen); offset += eventsLen;
   const eventsJson = gunzipSync(eventsGzip, { maxOutputLength: MAX_EVENTS_DECOMPRESSED }).toString('utf-8');
   const events: ErgenekonEvent[] = JSON.parse(eventsJson, (key, value) => {
     if (key === '__proto__' || key === 'constructor' || key === 'prototype') return undefined;
     return value;
   });
-
-  // Verify CRC32
-  const storedChecksum = buf.readUInt32BE(offset);
-  const computedChecksum = crc32(buf.subarray(0, offset));
-  if (storedChecksum !== computedChecksum) {
-    throw new Error('ERGENEKON binary session file is corrupted (CRC32 mismatch)');
-  }
 
   if (events.length !== eventsCount) {
     throw new Error(`Event count mismatch: header says ${eventsCount}, got ${events.length}`);

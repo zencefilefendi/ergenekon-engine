@@ -25,6 +25,7 @@
 import fs from 'node:fs';
 import { getActiveSession } from '../recording-context.js';
 import { originalDateNow } from '../internal-clock.js';
+import { redactDeep } from '../redaction.js';
 
 let installed = false;
 
@@ -109,10 +110,12 @@ function createWrapper(method: InterceptedMethod, original: Function): Function 
       ? args[0]
       : (args[0] instanceof URL ? args[0].pathname : String(args[0]));
 
+    const redactedFilePath = String(redactDeep(filePath));
+
     // Record the outgoing fs call
-    session.record('fs_call', `fs.${method}(${filePath})`, {
+    session.record('fs_call', `fs.${method}(${redactedFilePath})`, {
       method,
-      path: filePath,
+      path: redactedFilePath,
       args: sanitizeArgs(args),
     });
 
@@ -125,7 +128,7 @@ function createWrapper(method: InterceptedMethod, original: Function): Function 
       // Record the result
       session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, {
         method,
-        path: filePath,
+        path: redactedFilePath,
         durationMs,
         result: serializeResult(method, result),
       });
@@ -136,9 +139,9 @@ function createWrapper(method: InterceptedMethod, original: Function): Function 
 
       session.record('fs_error', `fs.${method} → error`, {
         method,
-        path: filePath,
+        path: redactedFilePath,
         durationMs,
-        error: err instanceof Error ? { code: (err as any).code, message: err.message } : String(err),
+        error: err instanceof Error ? { code: (err as any).code, message: String(redactDeep(err.message)) } : String(redactDeep(String(err))),
       });
 
       throw err;
@@ -152,15 +155,16 @@ function createSyncWrapper(method: string, original: Function): Function {
     if (!session) return original.apply(fs, args);
 
     const filePath = typeof args[0] === 'string' ? args[0] : (args[0] instanceof URL ? args[0].pathname : String(args[0]));
-    session.record('fs_call', `fs.${method}(${filePath})`, { method, path: filePath, args: sanitizeArgs(args) });
+    const redactedFilePath = String(redactDeep(filePath));
+    session.record('fs_call', `fs.${method}(${redactedFilePath})`, { method, path: redactedFilePath, args: sanitizeArgs(args) });
     const start = originalDateNow();
     try {
       const result = original.apply(fs, args);
       const durationMs = originalDateNow() - start;
-      session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: filePath, durationMs, result: serializeResult('readFile', result) });
+      session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: redactedFilePath, durationMs, result: serializeResult('readFile', result) });
       return result;
     } catch (err) {
-      session.record('fs_error', `fs.${method} → error`, { method, path: filePath, durationMs: originalDateNow() - start, error: err instanceof Error ? { code: (err as any).code, message: err.message } : String(err) });
+      session.record('fs_error', `fs.${method} → error`, { method, path: redactedFilePath, durationMs: originalDateNow() - start, error: err instanceof Error ? { code: (err as any).code, message: String(redactDeep(err.message)) } : String(redactDeep(String(err))) });
       throw err;
     }
   };
@@ -172,7 +176,8 @@ function createCbWrapper(method: string, original: Function): Function {
     if (!session) return original.apply(fs, args);
 
     const filePath = typeof args[0] === 'string' ? args[0] : (args[0] instanceof URL ? args[0].pathname : String(args[0]));
-    session.record('fs_call', `fs.${method}(${filePath})`, { method, path: filePath, args: sanitizeArgs(args) });
+    const redactedFilePath = String(redactDeep(filePath));
+    session.record('fs_call', `fs.${method}(${redactedFilePath})`, { method, path: redactedFilePath, args: sanitizeArgs(args) });
     const start = originalDateNow();
 
     const lastArg = args[args.length - 1];
@@ -181,9 +186,9 @@ function createCbWrapper(method: string, original: Function): Function {
     args[args.length - 1] = function wrappedCallback(err: NodeJS.ErrnoException | null, result: unknown) {
       const durationMs = originalDateNow() - start;
       if (err) {
-        session.record('fs_error', `fs.${method} → error`, { method, path: filePath, durationMs, error: { code: err.code, message: err.message } });
+        session.record('fs_error', `fs.${method} → error`, { method, path: redactedFilePath, durationMs, error: { code: err.code, message: String(redactDeep(err.message)) } });
       } else {
-        session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: filePath, durationMs, result: serializeResult('readFile', result) });
+        session.record('fs_result', `fs.${method} → ok (${durationMs}ms)`, { method, path: redactedFilePath, durationMs, result: serializeResult('readFile', result) });
       }
       return lastArg.apply(this, arguments);
     };

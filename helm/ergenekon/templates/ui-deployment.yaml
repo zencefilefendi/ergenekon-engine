@@ -19,6 +19,10 @@ spec:
         app.kubernetes.io/component: ui
     spec:
       serviceAccountName: {{ include "ergenekon.serviceAccountName" . }}
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
       containers:
         - name: ui
           image: "{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"

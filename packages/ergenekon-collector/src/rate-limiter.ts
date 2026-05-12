@@ -48,9 +48,22 @@ export class RateLimiter {
 
     if (!bucket) {
       // SECURITY (HIGH-25): evict oldest entry if at cap
+      // Fix M-02: Map iteration order is insertion. To avoid evicting active users,
+      // we check for stale entries first, then fallback to arbitrary eviction.
       if (this.buckets.size >= MAX_BUCKETS) {
-        const oldestKey = this.buckets.keys().next().value;
-        if (oldestKey) this.buckets.delete(oldestKey);
+        let deleted = false;
+        const cutoff = now - 60_000;
+        for (const [k, b] of this.buckets) {
+          if (b.lastRefill < cutoff) {
+            this.buckets.delete(k);
+            deleted = true;
+            break;
+          }
+        }
+        if (!deleted) {
+          const firstKey = this.buckets.keys().next().value;
+          if (firstKey) this.buckets.delete(firstKey);
+        }
       }
       bucket = { tokens: this.config.maxTokens, lastRefill: now };
       this.buckets.set(key, bucket);

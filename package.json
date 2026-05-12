@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Deterministic Record & Replay for Distributed Systems",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "license-server"
   ],
   "scripts": {
     "build": "npm run build --workspace=packages/ergenekon-core && npm run build --workspaces --if-present",

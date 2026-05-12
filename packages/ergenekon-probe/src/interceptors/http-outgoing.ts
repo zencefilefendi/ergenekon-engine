@@ -43,12 +43,24 @@ export function installFetchInterceptor(): void {
     headers.set('traceparent', `00-${session.traceId}-${session.spanId}-01`);
     headers.set('x-ergenekon-hlc', JSON.stringify(session['hlc'].peek()));
 
+    let parsedBody: unknown = init?.body;
+    if (init?.body) {
+      if (typeof init.body === 'string') {
+        try { parsedBody = JSON.parse(init.body); } catch { parsedBody = init.body; }
+      } else if (init.body instanceof URLSearchParams) {
+        parsedBody = Object.fromEntries(init.body.entries());
+      } else if (Buffer.isBuffer(init.body) || init.body instanceof Uint8Array) {
+        try { parsedBody = JSON.parse(Buffer.from(init.body).toString('utf-8')); }
+        catch { parsedBody = Buffer.from(init.body).toString('utf-8'); }
+      }
+    }
+
     // Record outgoing request — SECURITY (CRIT-03): redact secrets
     session.record('http_request_out', `${method} ${url}`, {
       url,
       method,
       headers: redactHeaders(Object.fromEntries(headers.entries()), []),
-      body: init?.body ? redactDeep(String(init.body)) : null,
+      body: parsedBody ? redactDeep(parsedBody) : null,
     });
 
     const start = originalDateNow();

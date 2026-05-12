@@ -51,7 +51,7 @@ export function installGlobalInterceptors(): void {
     if (session) {
       _recording = true;
       try {
-        session.record('random', 'Math.random()', { value });
+        session.record('random', 'Math.random()', { value: '[REDACTED_RANDOM_VALUE]' });
       } finally {
         _recording = false;
       }

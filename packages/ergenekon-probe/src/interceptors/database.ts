@@ -81,9 +81,9 @@ export function installPgInterceptor(): boolean {
     const queryText = queryConfig?.text ?? String(args[0]);
     const queryValues = queryConfig?.values;
 
-    session.record('db_query', `PG: ${queryText.slice(0, 80)}`, {
+    session.record('db_query', `PG: ${String(redactDeep(queryText)).slice(0, 80)}`, {
       engine: 'postgresql',
-      query: queryText,
+      query: redactDeep(queryText),
       values: redactDeep(queryValues ?? null),
     });
 
@@ -131,9 +131,9 @@ export function installPgInterceptor(): boolean {
     const queryText = queryConfig?.text ?? String(args[0]);
     const queryValues = queryConfig?.values;
 
-    session.record('db_query', `PG Pool: ${queryText.slice(0, 80)}`, {
+    session.record('db_query', `PG Pool: ${String(redactDeep(queryText)).slice(0, 80)}`, {
       engine: 'postgresql',
-      query: queryText,
+      query: redactDeep(queryText),
       values: redactDeep(queryValues ?? null),
     });
 
@@ -199,10 +199,10 @@ export function installRedisInterceptor(): boolean {
     const cmdName = command?.name?.toUpperCase() ?? 'UNKNOWN';
     const cmdArgs = command?.args ?? [];
 
-    session.record('cache_get', `REDIS: ${cmdName} ${String(cmdArgs[0] ?? '').slice(0, 60)}`, {
+    session.record('cache_get', `REDIS: ${cmdName} ${String(redactDeep(String(cmdArgs[0] ?? ''))).slice(0, 60)}`, {
       engine: 'redis',
       command: cmdName,
-      args: cmdArgs.map(a => String(a).slice(0, 200)), // Truncate large values
+      args: redactDeep(cmdArgs), // Fix M-10/C-04: Use deep redaction for args instead of plain truncation
     });
 
     const start = originalDateNow();

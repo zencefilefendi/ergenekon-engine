@@ -21,7 +21,9 @@ const PORT = parseInt(process.env.LICENSE_SERVER_PORT ?? '4400', 10);
 
 // Track free registrations to prevent abuse (in-memory, reset on restart)
 const freeRegistrations = new Map<string, { count: number; lastAt: number }>();
+const ipRegistrations = new Map<string, { count: number; lastAt: number }>();
 const MAX_FREE_PER_EMAIL = 3; // max 3 registrations per email
+const MAX_FREE_PER_IP = 5; // max 5 registrations per IP
 const RATE_LIMIT_TTL = 60 * 60 * 1000; // 1 hour TTL
 const MAX_MAP_SIZE = 10_000; // Hard cap to prevent OOM
 
@@ -31,15 +33,16 @@ setInterval(() => {
   for (const [key, val] of freeRegistrations) {
     if (now - val.lastAt > RATE_LIMIT_TTL) freeRegistrations.delete(key);
   }
+  for (const [key, val] of ipRegistrations) {
+    if (now - val.lastAt > RATE_LIMIT_TTL) ipRegistrations.delete(key);
+  }
 }, 5 * 60 * 1000);
 
-// Normalize email: strip +tags and Gmail dots
+// Normalize email: strip +tags and universally collapse dots
 function normalizeEmail(email: string): string {
   let [local, domain] = email.split('@');
   local = local.split('+')[0];
-  if (['gmail.com', 'googlemail.com'].includes(domain)) {
-    local = local.replace(/\./g, '');
-  }
+  local = local.replace(/\./g, '');
   return `${local}@${domain}`;
 }
 
@@ -207,13 +210,26 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
       // Rate limit per email (normalized to prevent +tag bypass)
       const rateLimitKey = normalizeEmail(email);
+
+      // Extract client IP (H-07: don't trust leftmost XFF, use rightmost or socket)
+      const forwardedFor = req.headers['x-forwarded-for'] as string | undefined;
+      const clientIp = forwardedFor
+        ? forwardedFor.split(',').pop()!.trim()
+        : req.socket.remoteAddress || 'unknown';
       
       // Hard cap: prevent OOM from script abuse
-      if (freeRegistrations.size >= MAX_MAP_SIZE && !freeRegistrations.has(rateLimitKey)) {
+      if ((freeRegistrations.size >= MAX_MAP_SIZE && !freeRegistrations.has(rateLimitKey)) ||
+          (ipRegistrations.size >= MAX_MAP_SIZE && !ipRegistrations.has(clientIp))) {
         json(res, 503, { error: 'Service temporarily unavailable. Please try again later.' });
         return;
       }
       
+      const ipReg = ipRegistrations.get(clientIp);
+      if (ipReg && ipReg.count >= MAX_FREE_PER_IP) {
+        json(res, 429, { error: 'Too many registrations from this IP address.' });
+        return;
+      }
+
       const reg = freeRegistrations.get(rateLimitKey);
       if (reg && reg.count >= MAX_FREE_PER_EMAIL) {
         json(res, 429, { error: 'License already sent to this email. Check your inbox (and spam folder).' });
@@ -222,13 +238,16 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
 
       // Log without full PII (GDPR safe)
       const maskedEmail = email.slice(0, 3) + '***@' + email.split('@')[1];
-      console.log(`[FREE] Generating free Pro license for: ${maskedEmail}`);
+      console.log(`[FREE] Generating free Pro license for: ${maskedEmail} (IP: ${clientIp})`);
 
       try {
         // SECURITY: Increment counter BEFORE the await to prevent race condition (H7)
         // Without this, N concurrent requests all see count=0 and pass the gate
         const existing = freeRegistrations.get(rateLimitKey) || { count: 0, lastAt: 0 };
         freeRegistrations.set(rateLimitKey, { count: existing.count + 1, lastAt: Date.now() });
+
+        const existingIp = ipRegistrations.get(clientIp) || { count: 0, lastAt: 0 };
+        ipRegistrations.set(clientIp, { count: existingIp.count + 1, lastAt: Date.now() });
 
         const license = generateLicenseForCustomer({
           customerId: `free_${Date.now().toString(36)}`,
@@ -320,9 +339,7 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       json(res, 200, {
         status: 'ok',
         service: 'ergenekon-license-server',
-        version: '0.1.0',
-        stripe: !!process.env.STRIPE_SECRET_KEY,
-        signingKey: !!process.env.ERGENEKON_SIGNING_KEY,
+        version: '0.1.0'
       });
       return;
     }

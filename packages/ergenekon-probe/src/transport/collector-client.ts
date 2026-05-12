@@ -80,6 +80,22 @@ export class CollectorClient extends EventEmitter {
 
   constructor(config: CollectorClientConfig) {
     super();
+
+    // SECURITY (H-14): Reject plain http:// for collector URL unless localhost
+    try {
+      const urlObj = new URL(config.collectorUrl);
+      if (urlObj.protocol === 'http:' && urlObj.hostname !== 'localhost' && urlObj.hostname !== '127.0.0.1') {
+        if (config.strict || process.env['NODE_ENV'] === 'production') {
+          throw new Error(`[SECURITY FATAL] ERGENEKON_COLLECTOR_URL must use https:// in production. Found: ${config.collectorUrl}`);
+        } else {
+          console.warn(`[SECURITY WARNING] ERGENEKON_COLLECTOR_URL is using plain http:// for a remote host. This risks leaking sensitive data.`);
+        }
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('[SECURITY FATAL]')) throw err;
+      // Invalid URL format will be caught by fetch
+    }
+
     this.config = {
       collectorUrl: config.collectorUrl,
       flushIntervalMs: config.flushIntervalMs,

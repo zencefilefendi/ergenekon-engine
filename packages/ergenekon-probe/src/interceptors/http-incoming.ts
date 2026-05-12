@@ -155,11 +155,17 @@ export function createHttpIncomingMiddleware(
     const originalEnd = res.end;
     const requestStart = originalDateNow();
     let responseChunks: Buffer[] = [];
+    let responseChunksSize = 0;
+    const MAX_BUFFER_SIZE = 16 * 1024 * 1024; // 16 MB
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     res.write = function (chunk: any, encodingOrCb?: any, cb?: any): boolean {
-      if (chunk) {
-        responseChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      if (chunk && responseChunksSize < MAX_BUFFER_SIZE) {
+        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        responseChunksSize += buf.length;
+        if (responseChunksSize <= MAX_BUFFER_SIZE) {
+          responseChunks.push(buf);
+        }
       }
       return originalWrite.apply(this, arguments as any);
     };
@@ -168,8 +174,12 @@ export function createHttpIncomingMiddleware(
     res.end = function (chunk?: any, encoding?: any, callback?: any): Response {
       const durationMs = originalDateNow() - requestStart;
 
-      if (chunk) {
-        responseChunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      if (chunk && responseChunksSize < MAX_BUFFER_SIZE) {
+        const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        responseChunksSize += buf.length;
+        if (responseChunksSize <= MAX_BUFFER_SIZE) {
+          responseChunks.push(buf);
+        }
       }
 
       // Capture response body from buffered chunks
@@ -192,7 +202,7 @@ export function createHttpIncomingMiddleware(
         `${res.statusCode} ${req.method} ${req.path}`,
         {
           statusCode: res.statusCode,
-          headers: res.getHeaders(),
+          headers: redactHeaders(res.getHeaders() as Record<string, string>, config.redactHeaders),
           body: redactDeep(responseBody, { fieldNames: config.redactFields }),
         },
         { durationMs }

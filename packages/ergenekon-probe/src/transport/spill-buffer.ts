@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import type { RecordingSession } from '@ergenekon/core';
+import { redactDeep } from '../redaction.js';
 
 // Safe JSON.stringify that handles circular references without crashing
 // Circular refs in Express req/res, socket handles etc. would throw TypeError
@@ -48,7 +49,8 @@ export class SpillBuffer {
     this.maxLinesPerFile = config.maxLinesPerFile ?? 1000;
 
     try {
-      mkdirSync(this.spillDir, { recursive: true });
+      // SECURITY: 0o700 prevents other users from accessing the spill directory
+      mkdirSync(this.spillDir, { recursive: true, mode: 0o700 });
     } catch {
       // Best effort — if we can't write, we'll catch in append
     }
@@ -59,10 +61,13 @@ export class SpillBuffer {
   /** Append a session to the spill file (fsync'd) */
   append(session: RecordingSession): boolean {
     try {
-      const line = safeStringify(session) + '\n';
+      // SECURITY (H-13): Last-mile redaction before writing to disk
+      const redactedSession = redactDeep(session);
+      const line = safeStringify(redactedSession) + '\n';
       const filePath = join(this.spillDir, this.currentFile);
 
-      appendFileSync(filePath, line, 'utf-8');
+      // SECURITY: 0o600 restricts read/write to the owner only
+      appendFileSync(filePath, line, { encoding: 'utf-8', mode: 0o600 });
 
       // fsync the file for durability
       const fd = openSync(filePath, 'r+');

@@ -152,7 +152,7 @@ async function handleCheckoutCompleted(
     });
 
     if (!emailSent) {
-      console.log(`[WEBHOOK] Email not sent — license JSON:\n${licenseJSON}`);
+      console.log(`[WEBHOOK] Email not sent for license: ${license.payload.licenseId} (Customer: ${customerEmail})`);
     }
 
     return {

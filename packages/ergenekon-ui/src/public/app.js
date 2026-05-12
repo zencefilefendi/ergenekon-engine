@@ -7,7 +7,7 @@
 // (service names, operation names, URLs, paths, query text, etc.)
 // ============================================================================
 
-// SECURITY: HTML escape helper — prevents XSS on all probe-captured data
+// SECURITY (C-02): HTML escape helper — strictly escapes all dangerous characters
 function escapeHtml(str) {
   if (typeof str !== 'string') return String(str ?? '');
   return str
@@ -15,7 +15,10 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/'/g, '&#039;')
+    .replace(/`/g, '&#x60;')
+    .replace(/=/g, '&#x3D;')
+    .replace(/\\/g, '&#x5C;');
 }
 
 let sessions = [];
@@ -26,6 +29,49 @@ let currentFilter = 'all';
 let playInterval = null;
 let currentTier = 'community';
 let currentEventRef = null; // for copy
+
+// ── Global Event Delegation ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Bind input manually
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.addEventListener('input', filterSessions);
+
+  // Bind track click
+  const track = document.getElementById('timeline-track');
+  if (track) track.addEventListener('click', onTimelineClick);
+
+  // Global action dispatcher
+  document.body.addEventListener('click', (e) => {
+    // Find closest element with data-action or data-session-id or data-event-index
+    let el = e.target.closest('[data-action], [data-session-id], [data-event-index]');
+    if (!el) return;
+
+    // Handle standard actions
+    const action = el.getAttribute('data-action');
+    if (action) {
+      if (action === 'stopPropagation') {
+        e.stopPropagation();
+        return;
+      }
+      
+      const handlers = {
+        toggleKeyboardHelp, loadSessions, dismissUpgrade, seekFirst,
+        seekPrev, togglePlay, seekNext, seekLast, copyEventJSON
+      };
+      if (handlers[action]) handlers[action]();
+
+      if (action === 'filterEvents') filterEvents(el.getAttribute('data-type'));
+      if (action === 'switchTab') switchTab(el.getAttribute('data-tab'));
+    }
+
+    // Handle dynamic list clicks
+    const sid = el.getAttribute('data-session-id');
+    if (sid) selectSession(sid);
+
+    const eid = el.getAttribute('data-event-index');
+    if (eid) seekTo(parseInt(eid, 10));
+  });
+});
 
 // ── API Calls ────────────────────────────────────────────────────
 
@@ -88,7 +134,7 @@ function renderSessionList(list) {
     const serviceName = escapeHtml(s.serviceName);
 
     return `
-      <div class="session-item ${active}" onclick="selectSession('${safeId}')">
+      <div class="session-item ${active}" data-session-id="${safeId}">
         <div class="session-item-top">
           <span class="session-method m-${escapeHtml(methodLower)}">${method}</span>
           <span class="session-path">${path}</span>
@@ -391,7 +437,7 @@ function renderEventList() {
 
     return `
       <div class="event-item ${originalIdx === currentCursor ? 'current' : ''}"
-           onclick="seekTo(${originalIdx})">
+           data-event-index="${originalIdx}">
         <span class="event-seq">#${event.sequence}</span>
         <span class="event-type-badge type-${escapeHtml(event.type)}">${escapeHtml(typeShort)}</span>
         <span class="event-op">${escapeHtml(event.operationName)}</span>
@@ -474,7 +520,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.detail-tab-content').forEach(el => el.style.display = 'none');
 
-  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
   document.getElementById(`tab-${tab}`).style.display = '';
 }
 

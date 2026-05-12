@@ -13,8 +13,6 @@ export default function handler(req, res) {
     status: 'ok',
     service: 'ergenekon-license-api',
     version: '0.4.1',
-    // Don't reveal internal config details — just boolean
-    ready: !!process.env.ERGENEKON_SIGNING_KEY,
     timestamp: new Date().toISOString(),
   });
 }

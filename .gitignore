@@ -2,6 +2,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 .env
+.env.*
+*.key
+id_*
+*.sqlite
 .ergenekon-recordings/
 coverage/
 **/.DS_Store
@@ -18,6 +22,4 @@ license-server/.env
 CLAUDE.md
 .claude/
 STRIPE_SETUP.md
-.ergenekon-recordings/
-.ergenekon-recordings/
 recordings/

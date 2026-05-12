@@ -9,6 +9,7 @@
 
 import { getActiveSession } from '../recording-context.js';
 import { originalDateNow } from '../internal-clock.js';
+import { redactDeep } from '../redaction.js';
 
 // Safe JSON.stringify — prevents crash on circular references (Express req/res, sockets)
 function safeStringify(obj: unknown): string {
@@ -43,16 +44,18 @@ export function installErrorInterceptors(): void {
   uncaughtHandler = (err: Error) => {
     const session = getActiveSession();
     if (session) {
-      session.record('error', `UNCAUGHT: ${err.message}`, {
+      const msg = typeof err.message === 'string' ? String(redactDeep(err.message)) : err.message;
+      const stack = typeof err.stack === 'string' ? String(redactDeep(err.stack)) : err.stack;
+      session.record('error', `UNCAUGHT: ${msg}`, {
         type: 'uncaughtException',
         name: err.name,
-        message: err.message,
-        stack: err.stack ?? null,
+        message: msg,
+        stack: stack ?? null,
       }, {
         error: {
           name: err.name,
-          message: err.message,
-          stack: err.stack ?? null,
+          message: msg,
+          stack: stack ?? null,
         },
       });
     }
@@ -65,16 +68,18 @@ export function installErrorInterceptors(): void {
     const session = getActiveSession();
     if (session) {
       const err = reason instanceof Error ? reason : new Error(String(reason));
-      session.record('error', `UNHANDLED REJECTION: ${err.message}`, {
+      const msg = typeof err.message === 'string' ? String(redactDeep(err.message)) : err.message;
+      const stack = typeof err.stack === 'string' ? String(redactDeep(err.stack)) : err.stack;
+      session.record('error', `UNHANDLED REJECTION: ${msg}`, {
         type: 'unhandledRejection',
         name: err.name,
-        message: err.message,
-        stack: err.stack ?? null,
+        message: msg,
+        stack: stack ?? null,
       }, {
         error: {
           name: err.name,
-          message: err.message,
-          stack: err.stack ?? null,
+          message: msg,
+          stack: stack ?? null,
         },
       });
     }
@@ -88,7 +93,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.log', {
         level: 'log',
-        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? redactDeep(a) : redactDeep(String(a))),
         timestamp: originalDateNow(),
       });
     }
@@ -100,7 +105,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.warn', {
         level: 'warn',
-        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? redactDeep(a) : redactDeep(String(a))),
         timestamp: originalDateNow(),
       });
     }
@@ -112,7 +117,7 @@ export function installErrorInterceptors(): void {
     if (session) {
       session.record('custom', 'console.error', {
         level: 'error',
-        args: args.map(a => typeof a === 'object' ? safeStringify(a) : String(a)),
+        args: args.map(a => typeof a === 'object' ? redactDeep(a) : redactDeep(String(a))),
         timestamp: originalDateNow(),
       });
     }

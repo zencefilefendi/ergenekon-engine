@@ -46,6 +46,26 @@ export interface LicenseGenerateParams {
   features?: LicenseFeature[];
 }
 
+// ── Recursive Deterministic JSON ──────────────────────────────────
+// SECURITY (H-05): Recursively sorts keys to ensure canonical JSON
+function stringifyCanonical(obj: unknown): string {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(stringifyCanonical).join(',') + ']';
+  }
+  const keys = Object.keys(obj).sort();
+  let str = '{';
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i] as keyof typeof obj;
+    if (i > 0) str += ',';
+    str += JSON.stringify(key) + ':' + stringifyCanonical(obj[key]);
+  }
+  str += '}';
+  return str;
+}
+
 // ── Generator ──────────────────────────────────────────────────────
 
 /**
@@ -103,9 +123,9 @@ export function generateLicense(
     expiresAt: expiresAt.toISOString(),
   };
 
-  // SECURITY (CRIT-06): Sort keys for canonical JSON before signing
+  // SECURITY (CRIT-06/H-05): Sort keys for canonical JSON before signing
   // This ensures signature verification is deterministic regardless of key insertion order
-  const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+  const canonicalJson = stringifyCanonical(payload);
 
   // Sign the canonical payload with Ed25519
   const privateKey = createPrivateKey(keyPem);

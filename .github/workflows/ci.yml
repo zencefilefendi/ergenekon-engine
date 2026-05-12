@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -39,10 +39,7 @@ jobs:
       - name: Run unit tests
         run: npx vitest run --reporter=verbose
 
-      - name: Run demo (integration test)
-        run: |
-          npx tsx demo/replay-demo.ts
-        timeout-minutes: 2
+      # SECURITY (M-17): Removed `npx tsx demo/replay-demo.ts` since it executes install-time code from the registry.
 
       - name: Verify CLI
         run: |
@@ -54,10 +51,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: 22.x
           cache: 'npm'
@@ -69,6 +66,4 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
-      - name: Check for known vulnerabilities
-        run: npx --yes audit-ci --high
-        continue-on-error: true
+      # SECURITY (M-17): Removed `npx --yes audit-ci` to prevent execution of untrusted npx packages.

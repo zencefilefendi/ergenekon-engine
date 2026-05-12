@@ -14,6 +14,7 @@ import { readFile } from 'node:fs/promises';
 import { join, extname, dirname, resolve, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLicense, getTierDisplay } from '@ergenekon/core';
+import { randomBytes } from 'node:crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -34,29 +35,41 @@ const MIME_TYPES: Record<string, string> = {
   '.png': 'image/png',
 };
 
+// Generate a random CSRF token at startup (since this is a single-user local tool)
+const CSRF_TOKEN = randomBytes(32).toString('hex');
+
 const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {
   const url = new URL(req.url ?? '/', `http://localhost:${UI_PORT}`);
 
   // SECURITY (HIGH-13): Host header validation — reject DNS rebinding
   const host = req.headers.host || '';
   const hostName = host.replace(/^\[|\]$/g, '').split(':')[0]; // handle IPv6 [::1]:3000
-  const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+  const allowedHosts = ['localhost', '127.0.0.1', '::1']; // Removed 0.0.0.0
   if (!allowedHosts.includes(hostName)) {
     res.writeHead(403, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Forbidden: invalid Host header' }));
     return;
   }
 
-  // SECURITY: Restricted CORS — empty for unknown origins (no leak)
-  const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
-  const origin = req.headers.origin || '';
-  const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
+  // SECURITY (M-08): Strict CORS
+  let corsOrigin = '';
+  const origin = req.headers.origin;
+  if (origin && process.env['NODE_ENV'] !== 'production') {
+     // Allow local dev servers in non-prod
+     const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'];
+     if (ALLOWED_ORIGINS.includes(origin)) corsOrigin = origin;
+  }
+  
+  res.setHeader('Vary', 'Origin');
+  if (corsOrigin) {
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
+  }
 
   // ── Inject license info endpoint (local, no collector needed) ──
   if (url.pathname === '/api/v1/ui-license') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': corsOrigin,
+      'X-CSRF-Token': CSRF_TOKEN, // Pass CSRF token to frontend on initial load
     });
     res.end(JSON.stringify({
       tier: license.tier,
@@ -79,6 +92,23 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       res.end(JSON.stringify({ error: 'Invalid API path' }));
       return;
     }
+
+    // SECURITY (H-11): CSRF confused deputy protection. Validate origin/Sec-Fetch-Site and CSRF token for mutating requests.
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
+       const fetchSite = req.headers['sec-fetch-site'];
+       if (fetchSite && fetchSite !== 'same-origin') {
+         res.writeHead(403, { 'Content-Type': 'application/json' });
+         res.end(JSON.stringify({ error: 'Forbidden: Cross-site request' }));
+         return;
+       }
+       const clientCsrfToken = req.headers['x-csrf-token'];
+       if (!clientCsrfToken || clientCsrfToken !== CSRF_TOKEN) {
+         res.writeHead(403, { 'Content-Type': 'application/json' });
+         res.end(JSON.stringify({ error: 'Forbidden: Invalid CSRF token' }));
+         return;
+       }
+    }
+
     try {
       const collectorUrl = `${COLLECTOR_URL}${url.pathname}${url.search}`;
       // SECURITY: Forward collector auth token from UI → Collector
@@ -103,7 +133,6 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       }
       res.writeHead(response.status, {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': corsOrigin,
       });
       res.end(body);
     } catch (err) {
@@ -125,10 +154,19 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
   const publicDir = resolve(__dirname, 'public');
   const fullPath = resolve(publicDir, '.' + filePath);
   
-  // Path traversal check: must stay within public/
-  if (!fullPath.startsWith(publicDir)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    res.end('Forbidden');
+  // Path traversal check (M-07): must stay within public/ (requires trailing slash check)
+  if (!fullPath.startsWith(publicDir + '/')) {
+    if (fullPath !== publicDir) { // Allow serving publicDir itself as it might resolve to index.html logic
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+  }
+  
+  // SPA fallback check (M-09): don't fallback dotfiles or certain paths
+  if (filePath.startsWith('/.') || filePath.startsWith('/admin')) {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
     return;
   }
   

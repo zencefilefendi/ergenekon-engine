@@ -68,6 +68,8 @@ export interface TimelineSnapshot {
   durationMs: number;
 }
 
+let isReplaying = false;
+
 /**
  * The ERGENEKON Replay Engine.
  *
@@ -181,11 +183,18 @@ export class ReplayEngine {
       throw new Error('No recording loaded');
     }
 
+    // SECURITY (CRIT-21): Prevent concurrent execution since we use global mocks
+    if (isReplaying) {
+      throw new Error('[SECURITY] Concurrent replay detected. ReplayEngine modifies global environment and cannot be run in parallel within the same process.');
+    }
+    isReplaying = true;
+
     const startTime = Date.now();
     const requestEvent = this.mockLayer.getRequestEvent();
     const responseEvent = this.mockLayer.getResponseEvent();
 
     if (!requestEvent) {
+      isReplaying = false;
       return {
         success: false,
         replayedResponse: null,
@@ -263,6 +272,8 @@ export class ReplayEngine {
         replayDurationMs: Date.now() - startTime,
         error: error.message,
       };
+    } finally {
+      isReplaying = false;
     }
   }
 
@@ -276,7 +287,26 @@ export class ReplayEngine {
     const origMathRandom = Math.random;
     const origFetch = globalThis.fetch;
 
+    // SECURITY (H-30): Aggressive I/O sandboxing in replay mode.
+    // We must block modules that could leak secrets or execute arbitrary code
+    // if an attacker provides a malicious recording.
+    const Module = require('node:module');
+    const originalRequire = Module.prototype.require;
+
     try {
+      // Sandbox requires
+      Module.prototype.require = function(id: string) {
+        if (id === 'fs' || id === 'node:fs' || id === 'fs/promises' || id === 'node:fs/promises' ||
+            id === 'child_process' || id === 'node:child_process' ||
+            id === 'net' || id === 'node:net' ||
+            id === 'dns' || id === 'node:dns' ||
+            id === 'http' || id === 'node:http' ||
+            id === 'https' || id === 'node:https') {
+          throw new Error(`[SECURITY] Replay Engine blocked access to sensitive module '${id}' to prevent I/O or execution escape.`);
+        }
+        return originalRequire.apply(this, arguments);
+      };
+
       // Install mocks
       Date.now = () => mock.mockDateNow();
       Math.random = () => mock.mockMathRandom();
@@ -303,6 +333,7 @@ export class ReplayEngine {
       Date.now = origDateNow;
       Math.random = origMathRandom;
       globalThis.fetch = origFetch;
+      Module.prototype.require = originalRequire;
     }
   }
 }

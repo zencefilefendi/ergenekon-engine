@@ -29,8 +29,8 @@
           <span class="pulse-dot"></span>
           <span class="pulse-label" id="live-label">LIVE</span>
         </div>
-        <button class="btn btn-ghost" onclick="toggleKeyboardHelp()" title="Keyboard shortcuts (?)">⌨</button>
-        <button class="btn btn-ghost" onclick="loadSessions()" title="Refresh">↻</button>
+        <button class="btn btn-ghost" data-action="toggleKeyboardHelp" title="Keyboard shortcuts (?)">⌨</button>
+        <button class="btn btn-ghost" data-action="loadSessions" title="Refresh">↻</button>
         <span id="status-indicator" class="status-dot status-disconnected"></span>
         <span id="status-text" class="status-text">Disconnected</span>
       </div>
@@ -43,7 +43,7 @@
         <strong>ERGENEKON Community</strong> — upgrade to <strong>Pro</strong> for distributed replay, smart sampling, deep redaction, and more.
       </span>
       <a href="https://ergenekon.dev/#pricing" target="_blank" class="upgrade-btn">Upgrade to Pro →</a>
-      <button class="upgrade-close" onclick="dismissUpgrade()">×</button>
+      <button class="upgrade-close" data-action="dismissUpgrade">×</button>
     </div>
 
     <!-- Main Layout -->
@@ -56,7 +56,7 @@
         </div>
         <div class="search-box">
           <div class="search-icon">🔍</div>
-          <input type="text" id="search-input" placeholder="Search sessions..." oninput="filterSessions()">
+          <input type="text" id="search-input" placeholder="Search sessions...">
         </div>
         <div id="session-list" class="session-list">
           <div class="empty-state">
@@ -111,11 +111,11 @@
           <!-- Timeline Scrubber -->
           <div class="timeline-container">
             <div class="timeline-controls">
-              <button class="btn btn-icon" onclick="seekFirst()" title="First event (Home)">⏮</button>
-              <button class="btn btn-icon" onclick="seekPrev()" title="Previous (←)">◀</button>
-              <button id="btn-play" class="btn btn-icon btn-play" onclick="togglePlay()" title="Play/Pause (Space)">▶</button>
-              <button class="btn btn-icon" onclick="seekNext()" title="Next (→)">▶</button>
-              <button class="btn btn-icon" onclick="seekLast()" title="Last event (End)">⏭</button>
+              <button class="btn btn-icon" data-action="seekFirst" title="First event (Home)">⏮</button>
+              <button class="btn btn-icon" data-action="seekPrev" title="Previous (←)">◀</button>
+              <button id="btn-play" class="btn btn-icon btn-play" data-action="togglePlay" title="Play/Pause (Space)">▶</button>
+              <button class="btn btn-icon" data-action="seekNext" title="Next (→)">▶</button>
+              <button class="btn btn-icon" data-action="seekLast" title="Last event (End)">⏭</button>
               <span id="timeline-position" class="timeline-pos">0 / 0</span>
               <div class="timeline-legend">
                 <span class="legend-dot" style="background:var(--accent)"></span>HTTP
@@ -125,7 +125,7 @@
                 <span class="legend-dot" style="background:var(--accent-purple)"></span>Timer
               </div>
             </div>
-            <div class="timeline-track" id="timeline-track" onclick="onTimelineClick(event)">
+            <div class="timeline-track" id="timeline-track">
               <div class="timeline-progress" id="timeline-progress"></div>
               <div class="timeline-cursor" id="timeline-cursor"></div>
             </div>
@@ -147,13 +147,13 @@
             <div class="event-list-container">
               <h3>Events <span id="event-filter-count"></span></h3>
               <div class="event-filters">
-                <button class="filter-btn active" data-type="all" onclick="filterEvents('all')">All</button>
-                <button class="filter-btn" data-type="http" onclick="filterEvents('http')">HTTP</button>
-                <button class="filter-btn" data-type="db" onclick="filterEvents('db')">DB</button>
-                <button class="filter-btn" data-type="fs" onclick="filterEvents('fs')">FS</button>
-                <button class="filter-btn" data-type="dns" onclick="filterEvents('dns')">DNS</button>
-                <button class="filter-btn" data-type="random" onclick="filterEvents('random')">Non-det</button>
-                <button class="filter-btn" data-type="error" onclick="filterEvents('error')">Errors</button>
+                <button class="filter-btn active" data-type="all" data-action="filterEvents">All</button>
+                <button class="filter-btn" data-type="http" data-action="filterEvents">HTTP</button>
+                <button class="filter-btn" data-type="db" data-action="filterEvents">DB</button>
+                <button class="filter-btn" data-type="fs" data-action="filterEvents">FS</button>
+                <button class="filter-btn" data-type="dns" data-action="filterEvents">DNS</button>
+                <button class="filter-btn" data-type="random" data-action="filterEvents">Non-det</button>
+                <button class="filter-btn" data-type="error" data-action="filterEvents">Errors</button>
               </div>
               <div id="event-list" class="event-list"></div>
             </div>
@@ -167,7 +167,7 @@
                 <div class="detail-header">
                   <span id="detail-type" class="event-type-badge"></span>
                   <span id="detail-operation" class="detail-op"></span>
-                  <button class="btn btn-ghost btn-copy" onclick="copyEventJSON()" title="Copy JSON">📋</button>
+                  <button class="btn btn-ghost btn-copy" data-action="copyEventJSON" title="Copy JSON">📋</button>
                 </div>
                 <div class="detail-timing">
                   <span id="detail-sequence"></span>
@@ -175,9 +175,9 @@
                   <span id="detail-duration"></span>
                 </div>
                 <div class="detail-tabs">
-                  <button class="tab-btn active" onclick="switchTab('data')">Data</button>
-                  <button class="tab-btn" onclick="switchTab('meta')">Metadata</button>
-                  <button class="tab-btn" id="tab-error-btn" style="display:none" onclick="switchTab('error')">Error</button>
+                  <button class="tab-btn active" data-tab="data" data-action="switchTab">Data</button>
+                  <button class="tab-btn" data-tab="meta" data-action="switchTab">Metadata</button>
+                  <button class="tab-btn" id="tab-error-btn" style="display:none" data-tab="error" data-action="switchTab">Error</button>
                 </div>
                 <div class="detail-tab-content" id="tab-data">
                   <pre id="detail-data" class="json-view"></pre>
@@ -244,11 +244,11 @@
     </div>
 
     <!-- Keyboard Shortcuts Overlay -->
-    <div id="keyboard-overlay" class="keyboard-overlay" style="display:none" onclick="toggleKeyboardHelp()">
-      <div class="keyboard-modal" onclick="event.stopPropagation()">
+    <div id="keyboard-overlay" class="keyboard-overlay" style="display:none" data-action="toggleKeyboardHelp">
+      <div class="keyboard-modal" data-action="stopPropagation">
         <div class="keyboard-header">
           <h3>⌨ Keyboard Shortcuts</h3>
-          <button class="btn btn-ghost" onclick="toggleKeyboardHelp()">✕</button>
+          <button class="btn btn-ghost" data-action="toggleKeyboardHelp">✕</button>
         </div>
         <div class="keyboard-grid">
           <div class="kb-group">

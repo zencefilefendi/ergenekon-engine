@@ -37,10 +37,14 @@ export interface RedactionConfig {
 
 export const DEFAULT_REDACTION_CONFIG: RedactionConfig = {
   fieldNames: [
-    'password', 'passwd', 'pass', 'pwd',
+    'password', 'passwd', 'pass', 'pwd', 'passwordhash', 'password_hash', 'pwhash',
     'secret', 'token', 'apikey', 'api_key', 'apiKey',
     'authorization', 'auth',
     'cookie', 'session', 'sessionid', 'session_id', 'sessionId',
+    'clientsecret', 'client_secret', 'clientid', 'mfasecret', 'mfa_secret', 'totpsecret',
+    'recoverycodes', 'recovery_codes', 'backupcodes',
+    'email', 'phone', 'dateofbirth', 'dob', 'ssnlast4', 'taxid',
+    'iban', 'accountnumber', 'routingnumber', 'nonce', 'state', 'code', 'pin',
     'creditcard', 'credit_card', 'creditCard', 'cardnumber', 'card_number', 'cardNumber',
     'cvv', 'cvc', 'ccv',
     'ssn', 'social_security', 'socialSecurity',
@@ -99,6 +103,7 @@ function looksLikeSecret(value: unknown): boolean {
     SLACK_TOKEN_RE.test(value) ||
     GITHUB_TOKEN_RE.test(value) ||
     SSN_RE.test(value) ||
+    EMAIL_RE.test(value) ||
     GOOGLE_TOKEN_RE.test(value) ||
     OPENAI_TOKEN_RE.test(value) ||
     ANTHROPIC_TOKEN_RE.test(value) ||
@@ -189,6 +194,11 @@ export function redactDeep(
       visited.add(value);
     }
 
+    // Fix M-13: Do not walk Buffers or Uint8Arrays as numeric-indexed objects
+    if (Buffer.isBuffer(value) || value instanceof Uint8Array) {
+      return `[REDACTED_BINARY:${value.length}]`;
+    }
+
     // Arrays: walk each element
     if (Array.isArray(value)) {
       return value.map((item, i) => walk(item, `${path}[${i}]`, depth + 1));
@@ -200,25 +210,25 @@ export function redactDeep(
       for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
         const childPath = path ? `${path}.${key}` : key;
 
-        // Check 1: Field name match
-        if (fieldNamesLower.has(key.toLowerCase())) {
-          result[key] = cfg.replacement;
-          continue;
-        }
-
-        // Check 2: Path pattern match
-        if (cfg.pathPatterns.some(p => pathMatchesPattern(childPath, p))) {
-          result[key] = cfg.replacement;
-          continue;
-        }
-
-        // Check 3: Custom redactor
+        // Check 1: Custom redactor (highest priority)
         if (cfg.customRedactor) {
           const custom = cfg.customRedactor(key, val, childPath);
           if (custom !== undefined) {
             result[key] = custom;
             continue;
           }
+        }
+
+        // Check 2: Field name match
+        if (fieldNamesLower.has(key.toLowerCase())) {
+          result[key] = cfg.replacement;
+          continue;
+        }
+
+        // Check 3: Path pattern match
+        if (cfg.pathPatterns.some(p => pathMatchesPattern(childPath, p))) {
+          result[key] = cfg.replacement;
+          continue;
         }
 
         // Recurse

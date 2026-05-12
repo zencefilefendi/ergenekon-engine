@@ -25,7 +25,7 @@
 // ============================================================================
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual, createHash } from 'node:crypto';
 import type { RecordingSession, LicenseValidation } from '@ergenekon/core';
 import { FileStorage, SessionIdError } from './storage.js';
 import { readBody, PayloadTooLargeError, DEFAULT_MAX_BODY_BYTES } from './body-reader.js';
@@ -124,7 +124,7 @@ export class CollectorServer {
 
     // Host header validation — reject DNS rebinding
     const host = req.headers.host || '';
-    const allowedHosts = ['localhost', '127.0.0.1', '0.0.0.0', 'collector', '::1'];
+    const allowedHosts = ['localhost', '127.0.0.1', 'collector', '::1']; // Removed 0.0.0.0
     // Handle IPv6 bracket format: [::1]:4380 → ::1
     const hostName = host.replace(/^\[|\]$/g, '').split(':')[0] || host.replace(/^\[([^\]]+)\].*/, '$1');
     if (!allowedHosts.includes(hostName)) {
@@ -152,13 +152,18 @@ export class CollectorServer {
     }
 
     // Rate limiting
-    // SECURITY: Use rightmost x-forwarded-for IP (set by the LAST proxy, hardest to spoof).
-    // Never trust the leftmost value — attacker controls it.
-    // If no proxy, use socket.remoteAddress (cannot be spoofed over TCP).
-    const forwardedFor = req.headers['x-forwarded-for'] as string | undefined;
-    const clientIp = forwardedFor
-      ? forwardedFor.split(',').pop()!.trim()
-      : req.socket.remoteAddress || 'unknown';
+    // SECURITY (H-07): Use rightmost x-forwarded-for IP ONLY if the direct connection is from a trusted proxy
+    const TRUSTED_PROXIES = (process.env['TRUSTED_PROXY_IPS'] || '').split(',').map(s => s.trim()).filter(Boolean);
+    const remoteIp = req.socket.remoteAddress || 'unknown';
+    let clientIp = remoteIp;
+    
+    if (TRUSTED_PROXIES.includes(remoteIp)) {
+      const forwardedFor = req.headers['x-forwarded-for'] as string | undefined;
+      if (forwardedFor) {
+        clientIp = forwardedFor.split(',').pop()!.trim();
+      }
+    }
+
     if (!this.rateLimiter.consume(clientIp)) {
       res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': '60' });
       res.end(JSON.stringify({ error: 'Rate limit exceeded. Try again later.' }));
@@ -171,15 +176,18 @@ export class CollectorServer {
     // ── Auth helper — reused for both read and write operations ───
     const collectorToken = process.env['ERGENEKON_COLLECTOR_TOKEN'];
     const requireAuth = (): boolean => {
-      if (!collectorToken) return true; // no token configured = open
+      // SECURITY (M-01): Fail-closed if no token in production.
+      if (!collectorToken) {
+        if (process.env['NODE_ENV'] === 'production') return false; // MUST have token in prod
+        return true; // no token configured = open (dev only)
+      }
       const authHeader = req.headers['authorization'] || '';
       const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-      // SECURITY: timingSafeEqual with fixed 64-byte buffers to prevent timing + length oracle
-      const tokenBuf = Buffer.alloc(64, 0);
-      const inputBuf = Buffer.alloc(64, 0);
-      Buffer.from(collectorToken).copy(tokenBuf);
-      Buffer.from(bearerToken).copy(inputBuf);
-      return timingSafeEqual(tokenBuf, inputBuf) && bearerToken.length === collectorToken.length;
+      
+      const tokenHash = createHash('sha256').update(collectorToken).digest();
+      const inputHash = createHash('sha256').update(bearerToken).digest();
+      
+      return timingSafeEqual(tokenHash, inputHash);
     };
 
     // ── POST /api/v1/sessions — Receive recordings from probes ────

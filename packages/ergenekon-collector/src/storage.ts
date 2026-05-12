@@ -64,6 +64,8 @@ export class FileStorage {
   // In-memory index for fast lookups
   private traceIndex = new Map<string, string[]>(); // traceId → sessionIds
   private sessionIndex = new Map<string, string>();  // sessionId → filename
+  private sessionMetadata = new Map<string, { traceId: string, serviceName: string, startedAt: number, endedAt: number, eventCount: number, hasError: boolean }>();
+  private inFlightWrites = new Set<string>(); // SECURITY (H-06): TOCTOU prevention
 
   // Corruption tracking
   private _corruptCount = 0;
@@ -85,12 +87,6 @@ export class FileStorage {
 
   /**
    * Store a recording session durably.
-   *
-   * Uses the write-rename-fsync dance:
-   *   1. Serialize session + compute SHA-256 checksum
-   *   2. Write to temp file, fsync
-   *   3. Atomic rename to final path
-   *   4. fsync directory
    */
   async store(session: RecordingSession): Promise<string> {
     // SECURITY: Validate session ID to prevent path traversal
@@ -99,24 +95,45 @@ export class FileStorage {
     const filepath = join(this.sessionsDir, filename);
     assertWithinDir(filepath, this.sessionsDir);
 
-    // SECURITY (HIGH-09): Reject overwrites — session IDs are immutable
-    if (this.sessionIndex.has(session.id)) {
-      throw new Error(`[SECURITY] Session ${session.id} already exists. Overwrites are not allowed.`);
+    // SECURITY (HIGH-09, H-06): Reject overwrites and concurrent writes
+    if (this.sessionIndex.has(session.id) || this.inFlightWrites.has(session.id)) {
+      throw new Error(`[SECURITY] Session ${session.id} already exists or is being written. Overwrites are not allowed.`);
     }
 
-    // Wrap with checksum for integrity verification on load
-    const content = wrapWithChecksum(session);
-    await durableWrite(filepath, content);
-
-    // Update in-memory index
-    this.sessionIndex.set(session.id, filename);
-    // SECURITY (HIGH-28): Use Set to prevent duplicate trace index entries
-    if (!this.traceIndex.has(session.traceId)) {
-      this.traceIndex.set(session.traceId, []);
+    // SECURITY (H-08): Unbounded heap via Object traceId
+    if (typeof session.traceId !== 'string') {
+      throw new Error(`[SECURITY] Invalid traceId: must be a string`);
     }
-    const traceIds = this.traceIndex.get(session.traceId)!;
-    if (!traceIds.includes(session.id)) {
-      traceIds.push(session.id);
+
+    this.inFlightWrites.add(session.id);
+
+    try {
+      // Wrap with checksum for integrity verification on load
+      const content = wrapWithChecksum(session);
+      await durableWrite(filepath, content);
+
+      // Update in-memory index
+      this.sessionIndex.set(session.id, filename);
+      
+      this.sessionMetadata.set(session.id, {
+        traceId: session.traceId,
+        serviceName: session.serviceName,
+        startedAt: session.startedAt,
+        endedAt: session.endedAt,
+        eventCount: session.events?.length || 0,
+        hasError: session.metadata?.hasError || false,
+      });
+
+      // SECURITY (HIGH-28): Use Set to prevent duplicate trace index entries
+      if (!this.traceIndex.has(session.traceId)) {
+        this.traceIndex.set(session.traceId, []);
+      }
+      const traceIds = this.traceIndex.get(session.traceId)!;
+      if (!traceIds.includes(session.id)) {
+        traceIds.push(session.id);
+      }
+    } finally {
+      this.inFlightWrites.delete(session.id);
     }
 
     return session.id;
@@ -187,19 +204,12 @@ export class FileStorage {
       hasError: boolean;
     }> = [];
 
-    for (const sessionId of this.sessionIndex.keys()) {
-      const session = await this.load(sessionId);
-      if (session) {
-        sessions.push({
-          id: session.id,
-          traceId: session.traceId,
-          serviceName: session.serviceName,
-          startedAt: session.startedAt,
-          endedAt: session.endedAt,
-          eventCount: session.events.length,
-          hasError: session.metadata.hasError,
-        });
-      }
+    // SECURITY (H-09): Use in-memory metadata to prevent CPU DoS from re-reading and hashing all files on every GET /sessions request
+    for (const [sessionId, meta] of this.sessionMetadata.entries()) {
+      sessions.push({
+        id: sessionId,
+        ...meta
+      });
     }
 
     return sessions.sort((a, b) => b.startedAt - a.startedAt);
@@ -239,6 +249,7 @@ export class FileStorage {
   private async rebuildIndex(): Promise<void> {
     this.sessionIndex.clear();
     this.traceIndex.clear();
+    this.sessionMetadata.clear();
     this._corruptCount = 0;
 
     try {
@@ -261,6 +272,16 @@ export class FileStorage {
           const data = await readFile(filepath, 'utf-8');
           const session = verifyAndUnwrap<RecordingSession>(data);
           this.sessionIndex.set(session.id, file);
+          
+          this.sessionMetadata.set(session.id, {
+            traceId: session.traceId,
+            serviceName: session.serviceName,
+            startedAt: session.startedAt,
+            endedAt: session.endedAt,
+            eventCount: session.events?.length || 0,
+            hasError: session.metadata?.hasError || false,
+          });
+
           const traceIds = this.traceIndex.get(session.traceId) ?? [];
           traceIds.push(session.id);
           this.traceIndex.set(session.traceId, traceIds);

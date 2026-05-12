@@ -88,8 +88,8 @@ export function installDnsInterceptor(): void {
       const durationMs = originalDateNow() - start;
 
       if (err) {
-        session.record('dns_error', `dns.lookup(${hostname}) → ${err.code}`, {
-          hostname,
+        session.record('dns_error', `dns.lookup(${maskHostname(hostname)}) → ${err.code}`, {
+          hostname: maskHostname(hostname),
           durationMs,
           error: { code: err.code, message: err.message },
         });

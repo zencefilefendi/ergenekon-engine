@@ -58,6 +58,27 @@ function communityFallback(error: string | null = null): LicenseValidation {
   };
 }
 
+// ── Recursive Deterministic JSON ──────────────────────────────────
+// SECURITY (H-05): Recursively sorts keys to ensure canonical JSON
+// without silently dropping nested objects, compliant with signing.
+function stringifyCanonical(obj: unknown): string {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(stringifyCanonical).join(',') + ']';
+  }
+  const keys = Object.keys(obj).sort();
+  let str = '{';
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i] as keyof typeof obj;
+    if (i > 0) str += ',';
+    str += JSON.stringify(key) + ':' + stringifyCanonical(obj[key]);
+  }
+  str += '}';
+  return str;
+}
+
 // ── Core Validation ────────────────────────────────────────────────
 
 /**
@@ -73,7 +94,7 @@ function communityFallback(error: string | null = null): LicenseValidation {
  * @param signedLicenseJson - The raw JSON string of the .ergenekon-license.json file
  * @returns LicenseValidation — always returns a result, never throws
  */
-export function validateLicense(signedLicenseJson: string, publicKeyPem?: string): LicenseValidation {
+export function validateLicense(signedLicenseJson: string): LicenseValidation {
   // 1. Parse the signed license
   let signed: SignedLicense;
   try {
@@ -99,8 +120,8 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
   }
 
   // 4. Required fields
-  if (!payload.licenseId || !payload.tier || !payload.issuedAt || !payload.expiresAt) {
-    return communityFallback('Invalid license: missing required fields');
+  if (!payload.licenseId || !payload.tier || !payload.issuedAt || !payload.expiresAt || !Array.isArray(payload.features)) {
+    return communityFallback('Invalid license: missing required fields or features array');
   }
 
   // 5. Tier validity
@@ -110,30 +131,30 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
 
   // 6. Verify Ed25519 signature
   try {
-    const publicKey = createPublicKey(publicKeyPem ?? ERGENEKON_PUBLIC_KEY_PEM);
-    // SECURITY (CRIT-06): Verify against canonical JSON (sorted keys)
-    // This matches the generator which signs with sorted keys
-    const canonicalJson = JSON.stringify(payload, Object.keys(payload).sort());
+    // SECURITY (H-04): In a real implementation, 'kid' would map to multiple public keys here
+    const publicKeyPemToUse = process.env.NODE_ENV === 'test' && process.env.ERGENEKON_TEST_PUBLIC_KEY
+      ? process.env.ERGENEKON_TEST_PUBLIC_KEY
+      : ERGENEKON_PUBLIC_KEY_PEM;
+    const publicKey = createPublicKey(publicKeyPemToUse);
+    // SECURITY (CRIT-06/H-05): Verify against recursively sorted canonical JSON
+    const canonicalJson = stringifyCanonical(payload);
     const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
     const signatureBytes = Buffer.from(signature, 'base64');
 
     const isValid = verify(null, payloadBytes, publicKey, signatureBytes);
 
     if (!isValid) {
-      // SECURITY: Also try non-canonical verification for backwards compatibility
-      // with licenses signed before CRIT-06 fix
-      const legacyPayloadBytes = Buffer.from(JSON.stringify(payload), 'utf-8');
-      const isLegacyValid = verify(null, legacyPayloadBytes, publicKey, signatureBytes);
-      if (!isLegacyValid) {
-        return communityFallback('License signature verification failed — license may be tampered');
-      }
+      return communityFallback('License signature verification failed — license may be tampered');
     }
   } catch (err) {
     return communityFallback(`Signature verification error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   // 7. Expiration check
-  const expiresAt = new Date(payload.expiresAt);
+  const expMs = Date.parse(payload.expiresAt);
+  if (!Number.isFinite(expMs)) return communityFallback('Invalid expiresAt');
+  
+  const expiresAt = new Date(expMs);
   const now = new Date();
   const daysUntilExpiry = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -147,11 +168,21 @@ export function validateLicense(signedLicenseJson: string, publicKeyPem?: string
     ? payload.features.filter(f => tierAllowed.includes(f))
     : [...tierAllowed];
 
-  // 9. Resolve limits — use explicit values if provided (-1 means tier default)
+  // 9. Resolve limits — clamp overrides to tier ceilings
   const tierLimits = TIER_LIMITS[payload.tier];
+  
+  // Helper to clamp values. If tier default is -1 (unlimited), accept any positive override or -1.
+  // Otherwise, take the minimum of the requested value and the tier default.
+  const clampLimit = (requested: number | undefined, ceiling: number) => {
+    if (requested === undefined || requested === null) return ceiling;
+    if (ceiling === -1) return requested; // Unlimited tier allows any override
+    if (requested === -1) return ceiling; // Cannot ask for unlimited if tier has a limit
+    return Math.min(requested, ceiling);
+  };
+
   const limits: TierLimits = {
-    maxServices: payload.maxServices !== -1 ? payload.maxServices : tierLimits.maxServices,
-    maxEventsPerDay: payload.maxEventsPerDay !== -1 ? payload.maxEventsPerDay : tierLimits.maxEventsPerDay,
+    maxServices: clampLimit(payload.maxServices, tierLimits.maxServices),
+    maxEventsPerDay: clampLimit(payload.maxEventsPerDay, tierLimits.maxEventsPerDay),
     maxRetentionHours: tierLimits.maxRetentionHours,
     maxSessions: tierLimits.maxSessions,
     rateLimitPerMinute: tierLimits.rateLimitPerMinute,
@@ -215,11 +246,11 @@ export function getTierDisplay(tier: LicenseTier): string {
  *
  * If no license is found, returns Community-tier validation (not an error).
  */
-export function loadLicense(publicKeyPem?: string): LicenseValidation {
+export function loadLicense(): LicenseValidation {
   // 1. Check inline env var first
   const inlineKey = process.env[LICENSE_INLINE_ENV_VAR];
   if (inlineKey) {
-    return validateLicense(inlineKey, publicKeyPem);
+    return validateLicense(inlineKey);
   }
 
   // 2. Check explicit file path env var
@@ -234,7 +265,7 @@ export function loadLicense(publicKeyPem?: string): LicenseValidation {
           return communityFallback(`License file too large: ${stat.size} bytes (max ${MAX_LICENSE_FILE_BYTES})`);
         }
         const content = readFileSync(resolved, 'utf-8');
-        return validateLicense(content, publicKeyPem);
+        return validateLicense(content);
       }
       return communityFallback(`License file not found at ERGENEKON_LICENSE path: ${envPath}`);
     } catch (err) {
@@ -250,7 +281,7 @@ export function loadLicense(publicKeyPem?: string): LicenseValidation {
         const stat = statSync(resolved);
         if (stat.size > MAX_LICENSE_FILE_BYTES) continue;
         const content = readFileSync(resolved, 'utf-8');
-        return validateLicense(content, publicKeyPem);
+        return validateLicense(content);
       }
     } catch {
       // Continue to next path

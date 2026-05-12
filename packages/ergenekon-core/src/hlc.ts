@@ -69,11 +69,20 @@ export class HybridLogicalClock {
   receive(remote: HLCTimestamp): HLCTimestamp {
     const physicalNow = this.getPhysicalTime();
 
-    // SECURITY (CRIT-08): Reject remote timestamps that are too far in the future
-    // This prevents a malicious node from advancing our clock arbitrarily
+    // SECURITY (CRIT-08 / M-03): Reject remote timestamps that are too far in the future or past
+    // This prevents a malicious node from advancing our clock arbitrarily or breaking monotonicity
     const maxAcceptable = physicalNow + MAX_DRIFT_MS;
-    const safeRemoteWall = Math.min(remote.wallTime, maxAcceptable);
-    const safeRemoteLogical = Math.min(remote.logical, MAX_LOGICAL);
+    const minAcceptable = physicalNow - MAX_DRIFT_MS;
+    
+    // Clamp wallTime to valid bounds
+    let safeRemoteWall = remote.wallTime;
+    if (safeRemoteWall < 0) safeRemoteWall = 0; // Prevent negative time
+    if (safeRemoteWall > maxAcceptable) safeRemoteWall = maxAcceptable;
+    if (safeRemoteWall < minAcceptable) safeRemoteWall = minAcceptable;
+
+    let safeRemoteLogical = remote.logical;
+    if (safeRemoteLogical < 0) safeRemoteLogical = 0;
+    if (safeRemoteLogical > MAX_LOGICAL) safeRemoteLogical = MAX_LOGICAL;
 
     if (physicalNow > this.wallTime && physicalNow > safeRemoteWall) {
       this.wallTime = physicalNow;
