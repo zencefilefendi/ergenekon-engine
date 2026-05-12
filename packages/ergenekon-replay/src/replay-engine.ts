@@ -292,6 +292,7 @@ export class ReplayEngine {
     // if an attacker provides a malicious recording.
     const Module = require('node:module');
     const originalRequire = Module.prototype.require;
+    const originalMainModule = process.mainModule;
 
     try {
       // Sandbox requires
@@ -301,11 +302,21 @@ export class ReplayEngine {
             id === 'net' || id === 'node:net' ||
             id === 'dns' || id === 'node:dns' ||
             id === 'http' || id === 'node:http' ||
-            id === 'https' || id === 'node:https') {
+            id === 'https' || id === 'node:https' ||
+            id === 'vm' || id === 'node:vm' ||
+            id === 'worker_threads' || id === 'node:worker_threads' ||
+            id === 'os' || id === 'node:os' ||
+            id === 'module' || id === 'node:module') {
           throw new Error(`[SECURITY] Replay Engine blocked access to sensitive module '${id}' to prevent I/O or execution escape.`);
         }
         return originalRequire.apply(this, arguments);
       };
+
+      // Neuter process.mainModule to prevent it from being used to bypass the require hook
+      Object.defineProperty(process, 'mainModule', {
+        get: () => undefined,
+        configurable: true
+      });
 
       // Install mocks
       Date.now = () => mock.mockDateNow();
@@ -334,6 +345,15 @@ export class ReplayEngine {
       Math.random = origMathRandom;
       globalThis.fetch = origFetch;
       Module.prototype.require = originalRequire;
+      if (originalMainModule !== undefined) {
+        Object.defineProperty(process, 'mainModule', {
+          value: originalMainModule,
+          configurable: true,
+          writable: true
+        });
+      } else {
+        delete (process as any).mainModule;
+      }
     }
   }
 }
