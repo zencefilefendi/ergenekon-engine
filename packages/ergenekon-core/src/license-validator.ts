@@ -132,10 +132,10 @@ export function validateLicense(signedLicenseJson: string): LicenseValidation {
   // 6. Verify Ed25519 signature
   try {
     // SECURITY (H-04): In a real implementation, 'kid' would map to multiple public keys here
-    const publicKeyPemToUse = process.env.NODE_ENV === 'test' && process.env.ERGENEKON_TEST_PUBLIC_KEY
-      ? process.env.ERGENEKON_TEST_PUBLIC_KEY
+    const keyToUse = process.env.NODE_ENV === 'test' && __testing_override_public_key
+      ? __testing_override_public_key
       : ERGENEKON_PUBLIC_KEY_PEM;
-    const publicKey = createPublicKey(publicKeyPemToUse);
+    const publicKey = createPublicKey(keyToUse);
     // SECURITY (CRIT-06/H-05): Verify against recursively sorted canonical JSON
     const canonicalJson = stringifyCanonical(payload);
     const payloadBytes = Buffer.from(canonicalJson, 'utf-8');
@@ -233,6 +233,15 @@ export function getTierDisplay(tier: LicenseTier): string {
 }
 
 // ── License File Discovery ─────────────────────────────────────────
+
+export let __testing_override_public_key: string | null = null;
+
+/**
+ * For internal test use only.
+ */
+export function __test_setPublicKey(key: string | null) {
+  __testing_override_public_key = key;
+}
 
 /**
  * Search for and load a license file from standard locations.

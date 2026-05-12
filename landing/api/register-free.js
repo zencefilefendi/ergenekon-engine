@@ -171,12 +171,31 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // SECURITY (H-26): Body size must be checked BEFORE JSON parse if we controlled the stream,
-  // but in serverless we only get req.body. Checking JSON.stringify(req.body) is a fallback.
-  // We'll rely on the platform limits (Vercel maxes at 4MB), but enforce our own strict limit.
-  const bodyStr = JSON.stringify(req.body || {});
-  if (bodyStr.length > MAX_BODY_SIZE) {
-    return res.status(413).json({ error: 'Request too large' });
+  // SECURITY (H-26 & ZAFİYET 3): Prevent Event Loop Starvation DoS.
+  // JSON.stringify on deeply nested objects is synchronous and blocks the event loop.
+  // Instead of stringifying the entire parsed body, we strictly validate Content-Length.
+  // (Vercel limits payloads, but this adds defense-in-depth).
+  const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+  if (contentLength > MAX_BODY_SIZE) {
+    return res.status(413).json({ error: 'Payload too large' });
+  }
+
+  // Fast depth check to prevent prototype/nested JSON traversal attacks
+  function checkDepth(obj, currentDepth = 0) {
+    if (currentDepth > 20) throw new Error('Payload too deep');
+    if (obj !== null && typeof obj === 'object') {
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          checkDepth(obj[key], currentDepth + 1);
+        }
+      }
+    }
+  }
+
+  try {
+    checkDepth(req.body);
+  } catch (err) {
+    return res.status(400).json({ error: 'Invalid payload structure' });
   }
 
   try {

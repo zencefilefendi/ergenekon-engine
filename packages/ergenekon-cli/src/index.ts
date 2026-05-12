@@ -246,8 +246,8 @@ async function cmdExport(sessionId: string, outputFile?: string): Promise<void> 
   const isBinary = outputFile?.endsWith('.bin') || outputFile?.endsWith('.ergenekon.bin');
   const resolvedOutPath = require('node:path').resolve(outputFile || `${sessionId}.ergenekon.json`);
   
-  // SECURITY (H-28): Prevent overwriting sensitive files
-  if (resolvedOutPath.match(/\/\.(bashrc|zshrc|profile|ssh|aws)\b/i)) {
+  // SECURITY (H-28): Prevent overwriting sensitive files (Unix and Windows paths)
+  if (resolvedOutPath.match(/[\/\\]\.(bashrc|zshrc|profile|ssh|aws)\b/i)) {
       console.error(`${c.red}SECURITY: Refusing to export to potentially sensitive system path: ${resolvedOutPath}${c.reset}`);
       process.exit(1);
   }

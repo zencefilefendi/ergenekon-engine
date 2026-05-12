@@ -16,7 +16,8 @@
 // ============================================================================
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, rename as fsRename, lstat } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename as fsRename, lstat, open } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import type { RecordingSession } from '@ergenekon/core';
 import { durableWrite } from './durable-writer.js';
@@ -150,17 +151,24 @@ export class FileStorage {
     const filepath = join(this.sessionsDir, filename);
     assertWithinDir(filepath, this.sessionsDir);
 
+    let fileHandle = null;
     try {
-      // SECURITY: Reject symlinks — prevents arbitrary file read via crafted symlink
-      const stat = await lstat(filepath);
-      if (stat.isSymbolicLink()) {
+      // SECURITY (ZAFİYET 4): Avoid TOCTOU race condition
+      fileHandle = await open(filepath, constants.O_RDONLY | constants.O_NOFOLLOW);
+      const data = await fileHandle.readFile('utf-8');
+      await fileHandle.close();
+      fileHandle = null;
+      
+      return verifyAndUnwrap<RecordingSession>(data);
+    } catch (err: any) {
+      if (fileHandle) {
+         try { await fileHandle.close(); } catch {}
+      }
+      if (err.code === 'ELOOP') {
         console.error(`[SECURITY] Symlink detected in session storage: ${filename}. Refusing to read.`);
         this.sessionIndex.delete(sessionId);
         return null;
       }
-      const data = await readFile(filepath, 'utf-8');
-      return verifyAndUnwrap<RecordingSession>(data);
-    } catch (err) {
       if (err instanceof ChecksumError) {
         // Quarantine the corrupt file
         await this.quarantine(filename, err.message);
@@ -257,19 +265,24 @@ export class FileStorage {
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         const filepath = join(this.sessionsDir, file);
+        let fileHandle = null;
         try {
-          // SECURITY: Skip symlinks — never follow symlinks in session storage
-          const stat = await lstat(filepath);
-          if (stat.isSymbolicLink()) {
-            console.error(`[SECURITY] Symlink skipped during index rebuild: ${file}`);
-            continue;
-          }
+          // SECURITY (ZAFİYET 4): Avoid TOCTOU race condition (lstat then readFile)
+          // Open the file with O_NOFOLLOW to fail atomically if it's a symlink
+          fileHandle = await open(filepath, constants.O_RDONLY | constants.O_NOFOLLOW);
+          
+          const stat = await fileHandle.stat();
           // SECURITY: Skip oversized files — prevent OOM during rebuild
           if (stat.size > 64 * 1024 * 1024) { // 64MB cap per file
             console.warn(`[SECURITY] Skipping oversized file during rebuild: ${file} (${stat.size} bytes)`);
+            await fileHandle.close();
             continue;
           }
-          const data = await readFile(filepath, 'utf-8');
+          
+          const data = await fileHandle.readFile('utf-8');
+          await fileHandle.close();
+          fileHandle = null;
+          
           const session = verifyAndUnwrap<RecordingSession>(data);
           this.sessionIndex.set(session.id, file);
           
@@ -285,7 +298,14 @@ export class FileStorage {
           const traceIds = this.traceIndex.get(session.traceId) ?? [];
           traceIds.push(session.id);
           this.traceIndex.set(session.traceId, traceIds);
-        } catch (err) {
+        } catch (err: any) {
+          if (fileHandle) {
+             try { await fileHandle.close(); } catch {}
+          }
+          if (err.code === 'ELOOP') {
+            console.error(`[SECURITY] Symlink skipped during index rebuild: ${file}`);
+            continue;
+          }
           if (err instanceof ChecksumError) {
             await this.quarantine(file, err.message);
           }

@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest';
 import { generateLicense, generateLicenseJSON } from './license-generator.js';
-import { validateLicense, hasFeature, isAtLeastTier, loadLicense, getTierDisplay } from './license-validator.js';
+import { validateLicense, hasFeature, isAtLeastTier, loadLicense, getTierDisplay, __test_setPublicKey } from './license-validator.js';
 import type { LicenseValidation, SignedLicense } from './license-types.js';
 import { TIER_FEATURES, TIER_LIMITS } from './license-types.js';
 import { writeFileSync, unlinkSync, existsSync } from 'node:fs';
@@ -63,7 +63,7 @@ function createExpiredLicense(): SignedLicense {
 // ── Test Suite ─────────────────────────────────────────────────────
 
 beforeAll(() => {
-  process.env.ERGENEKON_TEST_PUBLIC_KEY = TEST_PUBLIC_KEY;
+  __test_setPublicKey(TEST_PUBLIC_KEY);
 });
 
 describe('License Generator', () => {
