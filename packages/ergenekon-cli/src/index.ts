@@ -247,8 +247,18 @@ async function cmdExport(sessionId: string, outputFile?: string): Promise<void> 
   const resolvedOutPath = require('node:path').resolve(outputFile || `${sessionId}.ergenekon.json`);
   
   // SECURITY (H-28): Prevent overwriting sensitive files (Unix and Windows paths)
-  if (resolvedOutPath.match(/[\/\\]\.(bashrc|zshrc|profile|ssh|aws)\b/i)) {
-      console.error(`${c.red}SECURITY: Refusing to export to potentially sensitive system path: ${resolvedOutPath}${c.reset}`);
+  const normalizedPath = resolvedOutPath.toLowerCase().replace(/\\/g, '/');
+  const isDangerous = [
+    '/etc/', '/var/', '/usr/', '/bin/', '/sbin/', '/boot/', '/sys/', '/dev/',
+    '/windows/', '/programdata/', '/program files/', '/appdata/',
+    '/startup/', '/start menu/',
+    '/.ssh/', '/.aws/', '/.gnupg/', '/.npmrc/'
+  ].some(dir => normalizedPath.includes(dir)) || 
+  normalizedPath.match(/\.(bashrc|zshrc|profile|bat|cmd|exe|ps1|sh|vbs|dll|sys|ini)$/i) ||
+  normalizedPath.match(/\/\.[^\/]+$/);
+
+  if (isDangerous) {
+      console.error(`${c.red}SECURITY: Refusing to export to a sensitive, hidden, or executable path: ${resolvedOutPath}${c.reset}`);
       process.exit(1);
   }
 

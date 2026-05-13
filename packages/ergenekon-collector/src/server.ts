@@ -347,10 +347,16 @@ export class CollectorServer {
         res.end(JSON.stringify({ error: 'Invalid trace ID' }));
         return;
       }
-      const sessions = await this.storage.findByTraceId(traceId);
+      
+      const limit = parseInt(url.searchParams.get('limit') || '100', 10);
+      const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+      const safeLimit = Math.min(Math.max(1, limit), 100);
+      const safeOffset = Math.max(0, offset);
+
+      const sessions = await this.storage.findByTraceId(traceId, safeLimit, safeOffset);
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ traceId, sessions }));
+      res.end(JSON.stringify({ traceId, sessions, limit: safeLimit, offset: safeOffset }));
       return;
     }
 

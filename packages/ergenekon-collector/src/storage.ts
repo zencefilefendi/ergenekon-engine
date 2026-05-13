@@ -16,7 +16,7 @@
 // ============================================================================
 
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, rename as fsRename, lstat, open } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename as fsRename, lstat, open, appendFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import type { RecordingSession } from '@ergenekon/core';
@@ -28,6 +28,9 @@ import { wrapWithChecksum, verifyAndUnwrap, ChecksumError } from './checksum.js'
 const SAFE_SESSION_ID = /^[a-zA-Z0-9_\-]{1,128}$/;
 // SECURITY: Prevent Windows Native I/O DOS via reserved names (CON, PRN, etc.)
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])$/i;
+
+// SECURITY: Prevent OOM by bounding the number of sessions per trace
+const MAX_SESSIONS_PER_TRACE = 1000;
 
 function validateSessionId(id: string): void {
   if (!id || typeof id !== 'string') {
@@ -116,14 +119,16 @@ export class FileStorage {
       // Update in-memory index
       this.sessionIndex.set(session.id, filename);
       
-      this.sessionMetadata.set(session.id, {
+      const meta = {
         traceId: session.traceId,
         serviceName: session.serviceName,
         startedAt: session.startedAt,
         endedAt: session.endedAt,
         eventCount: session.events?.length || 0,
         hasError: session.metadata?.hasError || false,
-      });
+      };
+
+      this.sessionMetadata.set(session.id, meta);
 
       // SECURITY (HIGH-28): Use Set to prevent duplicate trace index entries
       if (!this.traceIndex.has(session.traceId)) {
@@ -131,8 +136,15 @@ export class FileStorage {
       }
       const traceIds = this.traceIndex.get(session.traceId)!;
       if (!traceIds.includes(session.id)) {
+        if (traceIds.length >= MAX_SESSIONS_PER_TRACE) {
+          throw new SessionIdError(`[SECURITY] Too many sessions for traceId: ${session.traceId}`);
+        }
         traceIds.push(session.id);
       }
+
+      // Fast path index writing (append-only log) to avoid Startup DoS
+      const indexEntry = JSON.stringify({ id: session.id, ...meta }) + '\n';
+      await appendFile(join(this.indexDir, 'index.jsonl'), indexEntry, 'utf-8').catch(() => {});
     } finally {
       this.inFlightWrites.delete(session.id);
     }
@@ -180,11 +192,13 @@ export class FileStorage {
   }
 
   /** Find all sessions for a given trace ID */
-  async findByTraceId(traceId: string): Promise<RecordingSession[]> {
+  async findByTraceId(traceId: string, limit: number = 100, offset: number = 0): Promise<RecordingSession[]> {
     const sessionIds = this.traceIndex.get(traceId) ?? [];
     const sessions: RecordingSession[] = [];
 
-    for (const id of sessionIds) {
+    const pageIds = sessionIds.slice(offset, offset + limit);
+
+    for (const id of pageIds) {
       const session = await this.load(id);
       if (session) sessions.push(session);
     }
@@ -260,6 +274,39 @@ export class FileStorage {
     this.sessionMetadata.clear();
     this._corruptCount = 0;
 
+    // Fast path: attempt to read the index.jsonl append-only log
+    try {
+      const indexData = await readFile(join(this.indexDir, 'index.jsonl'), 'utf-8');
+      const lines = indexData.split('\n');
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const meta = JSON.parse(line);
+          this.sessionIndex.set(meta.id, `${meta.id}.json`);
+          this.sessionMetadata.set(meta.id, {
+            traceId: meta.traceId,
+            serviceName: meta.serviceName,
+            startedAt: meta.startedAt,
+            endedAt: meta.endedAt,
+            eventCount: meta.eventCount,
+            hasError: meta.hasError,
+          });
+          const traceIds = this.traceIndex.get(meta.traceId) ?? [];
+          if (!traceIds.includes(meta.id)) {
+            if (traceIds.length < MAX_SESSIONS_PER_TRACE) {
+              traceIds.push(meta.id);
+            }
+          }
+          this.traceIndex.set(meta.traceId, traceIds);
+        } catch (e) {
+          // ignore corrupted lines
+        }
+      }
+      return; // Fast path successful!
+    } catch (err) {
+      // Ignore if index.jsonl doesn't exist, fallback to full rebuild
+    }
+
     try {
       const files = await readdir(this.sessionsDir);
       for (const file of files) {
@@ -296,7 +343,9 @@ export class FileStorage {
           });
 
           const traceIds = this.traceIndex.get(session.traceId) ?? [];
-          traceIds.push(session.id);
+          if (!traceIds.includes(session.id) && traceIds.length < MAX_SESSIONS_PER_TRACE) {
+            traceIds.push(session.id);
+          }
           this.traceIndex.set(session.traceId, traceIds);
         } catch (err: any) {
           if (fileHandle) {
