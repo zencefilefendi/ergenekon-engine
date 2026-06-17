@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 
 # Install all dependencies for build
@@ -15,7 +15,7 @@ RUN npm run build --workspace=packages/ergenekon-core
 RUN npm run build --workspace=license-server || (cd license-server && npx tsc)
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:26-alpine AS production
 WORKDIR /app
 
 COPY package.json package-lock.json ./
